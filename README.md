@@ -6,7 +6,7 @@ Welcome to the Pet Projects repository. This repository contains personal projec
 
 ## Table of Contents
 
-1. [Project 1: NLP Semantic Search](#project-1-azerbaijani-legal-acts-search-engine-alase)
+1. [Project 1: NLP Semantic Search](#project-1-nlp-semantic-search)
 2. [Project 2: Project Name](#project-2-project-name)
 3. [Project 3: Project Name](#project-3-project-name)
 
