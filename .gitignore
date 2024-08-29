@@ -1,0 +1,25 @@
+# Binaries for programs and examples
+*.exe
+*.so
+*.dylib
+*.dll
+*.rlib
+
+# Cargo package manager
+/target/
+/Cargo.lock
+
+# Build artifacts
+**/build/*
+**/*.o
+**/*.d
+**/*.rlib
+**/*.exe
+**/*.dll
+**/*.dylib
+**/*.so
+
+# Rust/cargo specific
+/.cargo
+**/*.rs.bk
+**/*.rs.old
