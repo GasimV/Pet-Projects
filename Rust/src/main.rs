@@ -1,3 +1,7 @@
+fn print(message: &str) {
+    println!("{}", message);
+}
+
 fn main() {
-    println!("Hello World!");
+    print(&"Hello, World!");
 }
