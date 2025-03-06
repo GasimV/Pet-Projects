@@ -1,0 +1,75 @@
+# Ignore VS Code specific settings
+.vscode/
+
+# Ignore build files and output
+output/
+build/
+cmake-build-debug/
+cmake-build-release/
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+*.txt
+!CMakeLists.txt
+*.svg
+*.json
+
+# Ignore binary and object files
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.out
+
+# Ignore debug files
+*.log
+*.stackdump
+*.pch
+*.pdb
+*.ilk
+
+# Ignore auto-generated files
+*.gch
+*.class
+*.pyc
+*.DS_Store
+*.swp
+
+# Ignore IDE files
+.idea/
+*.iml
+
+# Ignore compiled library files
+*.a
+*.lib
+
+# Ignore compiled Latex files
+*.aux
+*.bbl
+*.blg
+*.log
+*.synctex.gz
+*.toc
+
+# Ignore test coverage files
+*.gcno
+*.gcda
+*.gcov
+
+# Ignore dependency directories
+deps/
+third_party/
+external/
+
+# Ignore executables
+*.out
+*.app
+
+# Ignore cache
+.cache/
+
+# Ignore user-specific CMake generator files
+CMakeUserPresets.json
