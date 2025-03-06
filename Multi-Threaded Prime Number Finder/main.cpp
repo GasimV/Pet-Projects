@@ -22,7 +22,7 @@ int main() {
     std::cin >> numThreads;
     
     // Ensure user does not enter more threads than available
-    if (numThreads > availableThreads) {
+    if (numThreads > static_cast<int>(availableThreads)) {
         std::cout << "Warning: You entered more threads than available (" << availableThreads << ").\n";
         std::cout << "Setting number of threads to " << availableThreads << ".\n";
         numThreads = availableThreads;
