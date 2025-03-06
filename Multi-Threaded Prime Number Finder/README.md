@@ -32,7 +32,7 @@
 
 1️⃣ **Run the program**  
 ```sh
-./MultiThreadedPrimeFinder
+./mt_prime_finder (mt_prime_finder.exe)
 ```
 
 2️⃣ **Enter the number range** (start and end):  
