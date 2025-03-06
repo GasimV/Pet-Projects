@@ -68,16 +68,16 @@ Prime numbers saved to primes.txt
 ---
 
 ## **📊 Performance Example**
-For **1 to 10,000,000** with 8 threads:
+For **1 to 10,000,000** with 4 threads:
 ```
 Primes found: 664579
-Time taken: 1.90145 seconds
+Time taken: 0.715531 seconds
 ```
 
 For **1 to 10,000,000** with 1 thread:
 ```
 Primes found: 664579
-Time taken: 5.89 seconds
+Time taken: 1.66443 seconds
 ```
 💪 **Multi-threading significantly speeds up execution!**  
 
