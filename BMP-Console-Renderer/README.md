@@ -41,7 +41,7 @@ This is a **C++ console application** that loads a **black-and-white BMP image**
 ---
 
 ## **License**
-This project is open-source**.
+This project is open-source.
 
 ---
 
