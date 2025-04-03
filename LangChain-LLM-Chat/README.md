@@ -29,8 +29,8 @@ This is a simple hands-on LangChain project to understand how to use LangChain w
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/GasimV/Pet_Projects/LangChain Chat with an LLM.git
-cd "LangChain Chat with an LLM"
+git clone https://github.com/GasimV/Pet_Projects/LangChain-LLM-Chat.git
+cd LangChain-LLM-Chat
 ```
 
 ### 2. Install Dependencies
