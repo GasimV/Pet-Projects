@@ -1,6 +1,5 @@
 ---
 
-```markdown
 # 🤖 LangChain Chat with an LLM
 
 This is a simple hands-on LangChain project to understand how to use LangChain with OpenAI models and Streamlit. It creates a lightweight chat interface where you can talk to an AI assistant.
