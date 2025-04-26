@@ -13,13 +13,6 @@ The aim of this repo is to:
 
 ## 🛠️ Tools & Libraries
 
-- 🧠 Hugging Face Transformers & Datasets
-- 🔊 ESPnet, OpenAI Whisper, Fairseq
-- 🐍 Python (PyTorch, NumPy, Librosa, etc.)
-- 🎛️ Custom scripts for preprocessing, training, and evaluation
-
-## 🛠️ Tools & Libraries
-
 - 🧠 [Hugging Face Transformers & Datasets](https://huggingface.co/) — for model fine-tuning, tokenization, and dataset handling.
 - 🗣️ [finetune-hf-vits](https://github.com/ylacombe/finetune-hf-vits) — a helpful starter for fine-tuning VITS-based TTS models using Hugging Face pipelines.
 - 🎼 [Orpheus-TTS](https://github.com/canopyai/Orpheus-TTS) — a high-quality multilingual TTS pipeline, useful for vocoder and synthesis experiments.
