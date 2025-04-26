@@ -1,6 +1,6 @@
 ---
 
-```markdown
+```
 # 🗣️ Speech Processing for Azerbaijani
 
 Welcome to the **Speech Processing** repository! This is a collection of my personal projects focused on **fine-tuning and adapting STT (Speech-to-Text)** and **TTS (Text-to-Speech)** models for the **Azerbaijani language**.
