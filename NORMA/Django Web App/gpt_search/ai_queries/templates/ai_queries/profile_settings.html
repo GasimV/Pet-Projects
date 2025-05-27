@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil Parametrləri</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            margin: 80px auto; /* Center content vertically with top margin */
+            position: relative;
+        }
+
+        .container h2 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #007bff;
+            text-align: center;
+        }
+
+        .container label {
+            font-size: 14px;
+            margin-bottom: 5px;
+            display: block;
+            color: #333;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            padding-right: 40px; /* Space for the icon */
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .input-group i {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #777;
+        }
+
+        .container button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .container button:hover {
+            background-color: #0056b3;
+        }
+
+        .error-message {
+            color: #dc3545;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .form-error {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .exit-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .exit-button a {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .exit-button a:hover {
+            background-color: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <!-- Exit Button -->
+    <div class="exit-button">
+        <a href="/home/">Ana Səhifəyə Qayıt</a>
+    </div>
+
+    <div class="container">
+        <h2>Profil Parametrləri</h2>
+        <form method="POST" action="{% url 'profile_settings' %}">
+            {% csrf_token %}
+
+            <!-- Display form errors -->
+            {% if messages %}
+                <div class="error-message">
+                    {% for message in messages %}
+                        <p>{{ message }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Profile Section -->
+            <h3>Şəxsi Məlumatlar</h3>
+            <label for="username">İstifadəçi adı:</label>
+            <div class="input-group">
+                <input type="text" id="username" name="username" value="{{ user.username }}" placeholder="İstifadəçi adı" readonly>
+            </div>
+
+            <label for="email">E-poçt:</label>
+            <div class="input-group">
+                <input type="email" id="email" name="email" value="{{ profile_form.email.value }}" placeholder="E-poçtunuzu daxil edin">
+                {% if profile_form.email.errors %}
+                    <div class="form-error">
+                        {% for error in profile_form.email.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <label for="phone">Telefon:</label>
+            <div class="input-group">
+                <input type="text" id="phone" name="phone" value="{{ profile_form.phone.value }}" placeholder="Telefon nömrənizi daxil edin">
+                {% if profile_form.phone.errors %}
+                    <div class="form-error">
+                        {% for error in profile_form.phone.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <label for="name">Ad:</label>
+            <div class="input-group">
+                <input type="text" id="name" name="name" value="{{ profile_form.name.value }}" placeholder="Adınız (İstəyə görə)">
+                {% if profile_form.name.errors %}
+                    <div class="form-error">
+                        {% for error in profile_form.name.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Password Section -->
+            <h3>Şifrəni Yeniləyin</h3>
+
+            <!-- Old Password Field -->
+            <label for="old-password">Köhnə Parol:</label>
+            <div class="input-group">
+                <input type="password" id="old-password" name="old_password" placeholder="Köhnə parol daxil edin" autocomplete="current-password">
+                <i class="fa fa-eye-slash" id="toggle-old-password"></i>
+                {% if password_form.old_password.errors %}
+                    <div class="form-error">
+                        {% for error in password_form.old_password.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- New Password Field 1 -->
+            <label for="new-password1">Yeni Parol:</label>
+            <div class="input-group">
+                <input type="password" id="new-password1" name="new_password1" placeholder="Yeni parol daxil edin" autocomplete="new-password">
+                <i class="fa fa-eye-slash" id="toggle-new-password1"></i>
+                {% if password_form.new_password1.errors %}
+                    <div class="form-error">
+                        {% for error in password_form.new_password1.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- New Password Field 2 -->
+            <label for="new-password2">Yeni Parolu Təkrarlayın:</label>
+            <div class="input-group">
+                <input type="password" id="new-password2" name="new_password2" placeholder="Yeni parolu təkrar daxil edin" autocomplete="new-password">
+                <i class="fa fa-eye-slash" id="toggle-new-password2"></i>
+                {% if password_form.new_password2.errors %}
+                    <div class="form-error">
+                        {% for error in password_form.new_password2.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit">Dəyişiklikləri Yadda Saxla</button>
+        </form>
+    </div>
+
+    <script>
+        // Toggle password visibility
+        const togglePassword = (toggleId, inputId) => {
+            const toggle = document.getElementById(toggleId);
+            const input = document.getElementById(inputId);
+
+            toggle.addEventListener('click', () => {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    toggle.classList.remove('fa-eye-slash');
+                    toggle.classList.add('fa-eye');
+                } else {
+                    input.type = 'password';
+                    toggle.classList.remove('fa-eye');
+                    toggle.classList.add('fa-eye-slash');
+                }
+            });
+        };
+
+        togglePassword('toggle-old-password', 'old-password');
+        togglePassword('toggle-new-password1', 'new-password1');
+        togglePassword('toggle-new-password2', 'new-password2');
+    </script>
+
+</body>
+</html>

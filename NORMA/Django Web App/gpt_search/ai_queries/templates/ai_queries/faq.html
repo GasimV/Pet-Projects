@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tez-tez verilən suallar</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .accordion {
+            margin: 20px 0;
+        }
+
+        .accordion-item {
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .accordion-header {
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .accordion-body {
+            display: none;
+            padding: 10px;
+            border-top: 1px solid #ddd;
+            background: #f9f9f9;
+        }
+
+        .exit-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .exit-button a {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .exit-button a:hover {
+            background-color: #5a6268;
+        }
+    </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const headers = document.querySelectorAll(".accordion-header");
+            headers.forEach(header => {
+                header.addEventListener("click", function() {
+                    const body = this.nextElementSibling;
+                    const isOpen = body.style.display === "block";
+                    document.querySelectorAll(".accordion-body").forEach(b => b.style.display = "none");
+                    body.style.display = isOpen ? "none" : "block";
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <!-- Exit Button -->
+    <div class="exit-button">
+        <a href="/home/">Ana Səhifəyə Qayıt</a>
+    </div>
+
+    <div class="container">
+        <h1>Tez-tez verilən suallar</h1>
+        <div class="accordion">
+            <div class="accordion-item">
+                <div class="accordion-header">Məlumatların mənbələri haradan götürülür?</div>
+                <div class="accordion-body">
+                    Məlumatlar Azərbaycan Respublikasının qanunvericilik bazasından, hüquqi sənədlərdən və digər etibarlı mənbələrdən götürülür.
+                </div>
+            </div>
+            <div class="accordion-item">
+                <div class="accordion-header">Nəticə dəqiqliyini artırmaq üçün nə edə bilərəm?</div>
+                <div class="accordion-body">
+                    Sorğunuzu mümkün qədər dəqiq yazmağa çalışın. Qanunvericilik aktlarında qeyd olunan ifadə və xüsusi terminlərin istifadəsi nəticə dəqiqliyini artıracaqdır.
+                </div>
+            </div>
+            <div class="accordion-item">
+                <div class="accordion-header">Sistem necə təkmilləşdirilir?</div>
+                <div class="accordion-body">
+                    Model istifadəçilərin rəyləri əsasında təkmilləşdirilir. Verilən cavabların dəqiqliyini artırmaq üçün süni intellekt daim öyrədilir.
+                </div>
+            </div>
+            <div class="accordion-item">
+                <div class="accordion-header">Digər axtarış sistemlərindən üstünlüyümüz nədədir?</div>
+                <div class="accordion-body">
+                    <ul>
+                        <li><strong>Etibarlılıq:</strong> Məlumatlar Azərbaycan Respublikasının qanunvericilik bazasından, hüquqi sənədlərdən və digər etibarlı mənbələrdən götürülür.</li>
+                        <li><strong>Dəqiqlik:</strong> Sistemimiz Azərbaycan qanunvericiliyi üzrə məna (semantik) axtarışını həyata keçirir və hüquqi aktların konkret maddə və bəndləri üzrə istifadəçi üçün dəqiq və uyğunlaşdırılmış cavab verir.</li>
+                        <li><strong>Aktuallıq:</strong> Sistem sorğularınıza uyğun olaraq, ən əhəmiyyətli qanun maddələrini və aidiyyəti sənədləri seçib təqdim edir.</li>
+                        <li><strong>Operativlik:</strong> Süni intellektdən istifadə etməklə hüquqi sorğularınızın ən qısa müddətdə dəqiq şərhi təmin olunur.</li>
+                        <li><strong>Davamlı öyrənmə:</strong> Sistem istifadəçilərin rəy və sorğuları əsasında özünü təkmilləşdirir, nəticələrin daha dəqiq və əhatəli olmasını təmin edir.</li>
+                        <li><strong>Dərin məlumat bazası:</strong> Sistem qanunvericiliklə bağlı geniş məlumat bazasına sahibdir və bu məlumatları yüksək keyfiyyətli axtarış imkanları ilə təqdim edir.</li>
+                        <li><strong>Fərdi məlumatların qorunması:</strong> Sizin fərdi məlumatlarınız mövcud qanunvericilik tələblərinə uyğun qorunur və razılığınız olmadığı təqdirdə üçüncü tərəflərə ötürülmür.</li>
+                        <li><strong>Aydın interfeys:</strong> İstifadəsi sadə və rahat interfeysimiz hüquqi məlumatların daha əlçatan olmasını təmin edir.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <div class="accordion-header">Sistemdə xəta baş verdiyində bu haqda necə məlumat verə bilərəm?</div>
+                <div class="accordion-body">
+                    <p>Əgər sistemdə hər hansı bir xəta və ya texniki problem ilə qarşılaşsanız, bizimlə aşağıdakı elektron poçt vasitəsilə əlaqə saxlamağınız xahiş olunur:</p>
+                    <ul>
+                        <li><strong>E-poçt:</strong> <a href="mailto:semanticsolver@gmail.com">semanticsolver@gmail.com</a></li>
+                    </ul>
+                    <p>Problemin təsviri ilə yanaşı, mümkün olduqda ekran görüntüsünü də göndərməyiniz prosesi sürətləndirməyə kömək edəcək.</p>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <div class="accordion-header">Sistem ödənişlidirmi?</div>
+                <div class="accordion-body">
+                    <p>Sistemimizdən istifadəni daha da asanlaşdırmaq və sizə faydalı olmaq üçün sistem fəaliyyətə başladığı günnən etibarən xidmətlərdən 1 ay müddətində tamamilə odənişsiz əsasda istifadə edə bilərsiniz, lakin sistemin dayanıqlığını təmin etmək məqsədilə hər istifadəçi üçün 24 saat ərzində <strong>10 sorğu məhdudiyyəti</strong> müəyyən olunmuşdur. 1 ay müddəti başa çatdıqdan sonra xidmətlər ödənişli əsaslarla həyətə keçiriləcək. Bu, sistemin keyfiyyətli xidmət göstərməsi və uzunmüddətli fəaliyyətini təmin etmək üçün vacibdir. Qiymət planları ilə bağlı ətraflı məlumat yaxın zamanda təqdim ediləcək.</p>
+                    <p>Sistemimizin ödənişli olmasının bir neçə səbəbi var:</p>
+                    <ul>
+                        <li><strong>Yüksək keyfiyyətli xidmət:</strong> Süni intellekt texnologiyalarının, o cümlədən hüquqi məlumatların dəqiq işlənməsi üçün qabaqcıl alqoritmlərin istifadəsi ciddi resurs tələb edir.</li>
+                        <li><strong>Texniki dəstək və inkişaf:</strong> Sistemimizi mütəmadi olaraq təkmilləşdirmək, yeni xüsusiyyətlər əlavə etmək və mövcud olanları optimallaşdırmaq üçün inkişaf komandası ilə çalışırıq.</li>
+                        <li><strong>Davamlılıq:</strong> Xidmətin davamlı olmasını təmin etmək və məlumat bazasının aktuallığını saxlamaq üçün maliyyə dəstəyi lazımdır.</li>
+                    </ul>
+                    <p>Bununla yanaşı, sizə yüksək səviyyədə dəqiq və əhatəli hüquqi məlumatlar təqdim etmək üçün uyğun qiymət siyasətinə riayət etməyə çalışırıq.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

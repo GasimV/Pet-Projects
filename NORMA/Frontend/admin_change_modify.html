@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Change Book</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        .content {
+            margin: 20px;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .content input, .content textarea, .content select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .buttons button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .buttons .danger {
+            background-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Change Book</h1>
+    </header>
+
+    <div class="content">
+        <form>
+            <label for="title">Title:</label>
+            <input type="text" id="title" name="title" value="The Name of the Wind">
+
+            <label for="author">Author:</label>
+            <input type="text" id="author" name="author" value="Rothfuss, Patrick">
+
+            <label for="summary">Summary:</label>
+            <textarea id="summary" name="summary" rows="4">Told in Kvothe's own voice, this is the tale of the magically gifted young man...</textarea>
+
+            <label for="isbn">ISBN:</label>
+            <input type="text" id="isbn" name="isbn" value="9781473211896">
+
+            <label for="genre">Genre:</label>
+            <select id="genre" name="genre" multiple>
+                <option selected>Fantasy</option>
+                <option>Science Fiction</option>
+                <option>Western</option>
+                <option>French Poetry</option>
+            </select>
+
+            <div class="buttons">
+                <button type="submit">Save</button>
+                <button type="button" class="danger">Delete</button>
+                <button type="submit">Save and continue editing</button>
+                <button type="submit">Save and add another</button>
+            </div>
+        </form>
+    </div>
+
+</body>
+</html>

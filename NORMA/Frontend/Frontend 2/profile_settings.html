@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Settings</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .container h2 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #007bff;
+            text-align: center;
+        }
+
+        .container label {
+            font-size: 14px;
+            margin-bottom: 5px;
+            display: block;
+            color: #333;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            padding-right: 40px; /* Space for the icon */
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .input-group i {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #777;
+        }
+
+        input[type="email"],
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+        }
+
+        .container button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .container button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Profil Parametrləri</h2>
+        <form id="profile-settings-form">
+            <label for="email">E-poçt:</label>
+            <div class="input-group">
+                <input type="email" id="email" name="email" placeholder="E-poçtunuzu daxil edin" required>
+            </div>
+
+            <label for="new-password">Yeni Parol:</label>
+            <div class="input-group">
+                <input type="password" id="new-password" name="new-password" placeholder="Yeni parol daxil edin">
+                <i class="fa fa-eye-slash" id="toggle-new-password"></i>
+            </div>
+
+            <label for="repeat-new-password">Yeni parolu təkrarlayın:</label>
+            <div class="input-group">
+                <input type="password" id="repeat-new-password" name="repeat-new-password" placeholder="Yeni parolu təkrar daxil edin">
+                <i class="fa fa-eye-slash" id="toggle-repeat-new-password"></i>
+            </div>
+
+            <label for="phone">Telefon:</label>
+            <div class="input-group">
+                <input type="text" id="phone" name="phone" placeholder="Telefon nömrənizi daxil edin">
+            </div>
+
+            <button type="submit">Dəyişiklikləri Yadda Saxla</button>
+        </form>
+    </div>
+
+    <script>
+        // Toggle password visibility
+        const togglePassword = (toggleId, inputId) => {
+            const toggle = document.getElementById(toggleId);
+            const input = document.getElementById(inputId);
+
+            toggle.addEventListener('click', () => {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    toggle.classList.remove('fa-eye-slash');
+                    toggle.classList.add('fa-eye');
+                } else {
+                    input.type = 'password';
+                    toggle.classList.remove('fa-eye');
+                    toggle.classList.add('fa-eye-slash');
+                }
+            });
+        };
+
+        togglePassword('toggle-new-password', 'new-password');
+        togglePassword('toggle-repeat-new-password', 'repeat-new-password');
+
+        // Handle profile settings form submission
+        document.getElementById('profile-settings-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const newPassword = document.getElementById('new-password').value;
+            const repeatNewPassword = document.getElementById('repeat-new-password').value;
+
+            if (newPassword && newPassword !== repeatNewPassword) {
+                alert('New passwords do not match. Please try again.');
+                return;
+            }
+
+            // Simulate saving changes
+            alert('Profile settings updated successfully!');
+        });
+    </script>
+</body>
+</html>

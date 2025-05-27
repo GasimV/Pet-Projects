@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Süni intellekt modelinin cavabı</title>
+    <style>
+        /* Reset some default styles */
+        body, h1, ul, li, a {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            text-decoration: none;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: lightblue;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            background: #ffffff;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            width: 85vw;
+            height: 85vh;
+            padding: 30px;
+            position: relative;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #333;
+        }
+
+        .header img {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+        }
+
+        .search-section {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .search-section input[type="text"] {
+            padding: 10px;
+            width: 60%;
+            border: 1px solid #555; /* Darker border */
+            <!-- background-color: #333; /* Darker background */ -->
+            color: white; /* Make text color white for better contrast */
+            border-radius: 20px 0 0 20px;
+            outline: none;
+            font-size: 16px;
+        }
+
+        .search-section button {
+            padding: 10px 20px;
+            border: 1px solid #ddd;
+            border-left: none;
+            border-radius: 0 20px 20px 0;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .search-section button:hover {
+            background-color: #0056b3;
+        }
+
+        .results {
+            margin: 20px 0;
+            padding: 10px;
+            max-height: 60%;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin: 5px 0;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .result-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        #menu ul {
+            padding: 0;
+            margin: 0;
+        }
+
+        #menu li {
+            list-style: none;
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        #menu li:hover {
+            background-color: #f0f0f0;
+        }
+
+        #menu a {
+            text-decoration: none;
+            color: #333;
+        }
+
+        #feedbackWindow h3 {
+            margin: 0 0 15px;
+            font-size: 18px;
+            color: #333;
+        }
+
+        #feedbackWindow input, #feedbackWindow textarea {
+            font-size: 14px;
+        }
+
+        #feedbackWindow button {
+            font-size: 14px;
+        }
+
+        /* Tooltip container */
+        .tooltip-container {
+            display: inline-block;
+            position: relative;
+        }
+
+        .tooltip-icon {
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .tooltip-text {
+            display: none;
+            position: absolute;
+            background-color: #333;
+            color: #fff;
+            padding: 5px;
+            border-radius: 5px;
+            width: 250px;
+            top: -10px;
+            left: 30px;
+            z-index: 1001;
+            font-size: 12px;
+            white-space: normal; /* Ensure the text wraps properly */
+        }
+
+        .tooltip-container:hover .tooltip-text {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Süni intellekt modelinin cavabı</h1>
+            <img src="https://cdn-icons-png.flaticon.com/512/25/25694.png" alt="User Icon">
+        </div>
+        <div id="loading" style="display: none; text-align: center; font-size: 18px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+            Loading...
+        </div>
+        <div class="results" id="results">
+            <!-- Search results will appear here -->
+        </div>
+        <div class="search-section">
+            <textarea id="searchInput" placeholder="Axtarış sorğunuzu daxil edin..." rows="1" style="width: 60%; padding: 10px; border: 1px solid #555; border-radius: 20px 0 0 20px; outline: none; font-size: 16px;"></textarea>
+            <button id="searchButton">Enter</button>
+        </div>
+        <div id="menu" style="display: none; position: absolute; top: 50px; right: 50px; background: #fff; border: 1px solid #ddd; border-radius: 5px; box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); z-index: 10; padding: 10px;">
+            <ul>
+                <li><a href="#" id="profileLink">Profil (Hələ işləmir)</a></li>
+                <li><a href="#" id="feedbackLink">Düzgün cavabı əlavə et</a></li>
+            </ul>
+        </div>
+
+        <div id="feedbackWindow" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.2); z-index: 1000; padding: 20px; width: 400px;">
+            <h3>Düz Cavab
+                <div class="tooltip-container">
+                    <span class="tooltip-icon">?</span>
+                    <div class="tooltip-text">Rəyiniz hansı cavabların düzgün olduğunu və ya təkmilləşdirməyə ehtiyacı olduğunu anlamağa imkan verməklə modelin dəqiqliyini artırmağa kömək edir. Bu, gələcək model cavablarında daha yaxşı nəticələri təmin edir.</div>
+                </div>
+            </h3>
+
+            <form id="feedbackForm">
+                <div style="margin-bottom: 10px;">
+                    <label for="docTitle" style="display: block; margin-bottom: 5px;">Hüquqi aktın adı:</label>
+                    <input type="text" id="docTitle" name="docTitle" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;" required>
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label for="relevantArticle" style="display: block; margin-bottom: 5px;">Düzgün maddə (bənd, yarımbənd və s.):</label>
+                    <input type="text" id="relevantArticle" name="relevantArticle" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;" required>
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label for="feedbackText" style="display: block; margin-bottom: 5px;">Sərbəst formada rəy:</label>
+                    <textarea id="feedbackText" name="feedbackText" rows="4" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;" required></textarea>
+                </div>
+                <div style="text-align: right;">
+                    <button type="button" id="cancelFeedback" style="padding: 8px 12px; margin-right: 5px; border: none; background: #f5f5f5; border-radius: 5px; cursor: pointer;">Cancel</button>
+                    <button type="submit" style="padding: 8px 12px; border: none; background: #007bff; color: #fff; border-radius: 5px; cursor: pointer;">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("searchButton").addEventListener("click", performSearch);
+        document.getElementById("searchInput").addEventListener("keyup", function(event) {
+            if (event.key === "Enter" && !event.shiftKey) {
+                performSearch();
+            }
+        });
+
+        function performSearch() {
+            const searchTerm = document.getElementById("searchInput").value.trim();
+            const resultsContainer = document.getElementById("results");
+            const loadingIndicator = document.getElementById("loading");
+
+            if (searchTerm) {
+                // Clear the search input
+                document.getElementById("searchInput").value = "";
+
+                // Show the loading indicator
+                loadingIndicator.style.display = "block";
+                resultsContainer.innerHTML = ""; // Clear previous results
+
+                fetch('/generate-response/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': csrfToken // Include the CSRF token here
+                    },
+                    body: new URLSearchParams({ 'user_input': searchTerm })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    loadingIndicator.style.display = "none"; // Hide the loading indicator
+                    const resultItem = document.createElement("div");
+                    resultItem.className = "result-item";
+                    resultItem.innerHTML = data.response.replace(/\n/g, '<br>');
+                    resultsContainer.appendChild(resultItem);
+                    resultsContainer.setAttribute("data-query-id", data.query_id); // Store the query ID
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    loadingIndicator.style.display = "none"; // Hide the loading indicator even on error
+                    alert("An error occurred. Please try again.");
+                });
+            } else {
+                alert("Please enter a search term.");
+            }
+        }
+
+        const homeIcon = document.querySelector(".header img");
+        const menu = document.getElementById("menu");
+        
+        homeIcon.addEventListener("click", function() {
+            // Toggle the visibility of the menu
+            menu.style.display = menu.style.display === "none" ? "block" : "none";
+        });
+
+        // Close the menu when clicking outside of it
+        document.addEventListener("click", function(event) {
+            if (!menu.contains(event.target) && event.target !== homeIcon) {
+                menu.style.display = "none";
+            }
+        });
+
+        // Event listeners for menu options
+        document.getElementById("profileLink").addEventListener("click", function(event) {
+            event.preventDefault();
+            alert("Redirecting to Profile Page...");
+            // Implement your actual redirect logic here
+            window.location.href = "/profile";
+        });
+
+        document.getElementById("feedbackLink").addEventListener("click", function(event) {
+            event.preventDefault();
+            alert("Providing Feedback...");
+            // Implement your feedback logic here
+        });
+
+        // Show the feedback window when the "Provide Feedback" link is clicked
+        document.getElementById("feedbackLink").addEventListener("click", function(event) {
+            event.preventDefault();
+            document.getElementById("feedbackWindow").style.display = "block";
+            menu.style.display = "none"; // Hide the main menu
+        });
+
+        // Handle the feedback form submission
+        document.getElementById("feedbackForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            // Collect the feedback data
+            const docTitle = document.getElementById("docTitle").value.trim();
+            const relevantArticle = document.getElementById("relevantArticle").value.trim();
+            const feedbackText = document.getElementById("feedbackText").value.trim();
+
+            if (docTitle && relevantArticle && feedbackText) {
+                // Here you can send the feedback data to your server
+                console.log("Feedback submitted:", { docTitle, relevantArticle, feedbackText });
+
+                // Display a success message
+                alert("Thank you for your feedback!");
+
+                // Clear the form
+                document.getElementById("feedbackForm").reset();
+
+                // Hide the feedback window
+                document.getElementById("feedbackWindow").style.display = "none";
+            } else {
+                alert("Please fill in all fields.");
+            }
+        });
+
+        // Close the feedback window when the "Cancel" button is clicked
+        document.getElementById("cancelFeedback").addEventListener("click", function() {
+            document.getElementById("feedbackWindow").style.display = "none";
+        });
+
+        // Close the feedback window when clicking outside of it
+        document.addEventListener("click", function(event) {
+            const feedbackWindow = document.getElementById("feedbackWindow");
+            const feedbackLink = document.getElementById("feedbackLink");
+
+            // Check if the click is outside the feedback window
+            if (feedbackWindow.style.display === "block" && !feedbackWindow.contains(event.target) && event.target !== feedbackLink) {
+                feedbackWindow.style.display = "none";
+            }
+        });
+    </script>
+</body>
+</html>

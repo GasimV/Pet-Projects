@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
+        }
+
+        .login-container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-container h2 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #007bff;
+            text-align: center;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            padding-right: 40px; /* Space for the icon */
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .input-group i {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #777;
+        }
+
+        .login-container input[type="checkbox"] {
+            margin-right: 10px;
+        }
+
+        .login-container label {
+            font-size: 14px;
+            margin-bottom: 5px;
+            display: block;
+            color: #333;
+        }
+
+        .login-container button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .login-container button:hover {
+            background-color: #0056b3;
+        }
+
+        .error-message {
+            color: #dc3545;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .register-link {
+            margin-top: 15px;
+            display: block;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .register-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h2>Giriş</h2>
+        <form method="POST" action="{% url 'login' %}">
+            {% csrf_token %}
+
+            <!-- Display error messages from the backend -->
+            {% if messages %}
+                <div class="error-message">
+                    {% for message in messages %}
+                        <p>{{ message }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Username Field with Placeholder -->
+            <label for="id_username">İstifadəçi adı</label>
+            <div class="input-group">
+                <input type="text" name="username" id="id_username" placeholder="İstifadəçi adınızı daxil edin" required>
+            </div>
+
+            <!-- Password Field with Placeholder and Toggle Visibility -->
+            <label for="id_password">Parol</label>
+            <div class="input-group">
+                <input type="password" name="password" id="id_password" placeholder="Sizin Pass123!" required>
+                <i class="fa fa-eye-slash" id="toggle-password"></i>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit">Daxil ol</button>
+        </form>
+        <p class="register-link">Hələ qeydiyyatdan keçməmisiniz? <a href="{% url 'register' %}">Burada qeydiyyatdan keçin</a></p>
+    </div>
+
+    <script>
+        // Toggle password visibility
+        const togglePassword = document.getElementById('toggle-password');
+        const passwordInput = document.getElementById('id_password');
+
+        togglePassword.addEventListener('click', () => {
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                togglePassword.classList.remove('fa-eye-slash');
+                togglePassword.classList.add('fa-eye');
+            } else {
+                passwordInput.type = 'password';
+                togglePassword.classList.remove('fa-eye');
+                togglePassword.classList.add('fa-eye-slash');
+            }
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Süni intellekt modelinin cavabı</title>
+    {% load static %}
+    <style>
+        /* Reset some default styles */
+        body, h1, ul, li, a {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            text-decoration: none;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: lightblue;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            background: #ffffff;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            width: 85vw;
+            height: 85vh;
+            padding: 30px;
+            position: relative;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #333;
+        }
+
+        .header img {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+        }
+
+        .search-section {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .search-section input[type="text"] {
+            padding: 10px;
+            width: 60%;
+            border: 1px solid #555; /* Darker border */
+            <!-- background-color: #333; /* Darker background */ -->
+            color: white; /* Make text color white for better contrast */
+            border-radius: 20px 0 0 20px;
+            outline: none;
+            font-size: 16px;
+        }
+
+        .search-section button {
+            padding: 10px 20px;
+            border: 1px solid #ddd;
+            border-left: none;
+            border-radius: 0 20px 20px 0;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .search-section button:hover {
+            background-color: #0056b3;
+        }
+
+        .results {
+            margin: 20px 0;
+            padding: 10px;
+            max-height: 60%;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin: 5px 0;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .result-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        #menu ul {
+            padding: 0;
+            margin: 0;
+        }
+
+        #menu li {
+            list-style: none;
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        #menu li:hover {
+            background-color: #f0f0f0;
+        }
+
+        #menu a {
+            text-decoration: none;
+            color: #333;
+        }
+
+        #feedbackWindow h3 {
+            margin: 0 0 15px;
+            font-size: 18px;
+            color: #333;
+        }
+
+        #feedbackWindow input, #feedbackWindow textarea {
+            font-size: 14px;
+        }
+
+        #feedbackWindow button {
+            font-size: 14px;
+        }
+
+        /* Tooltip container */
+        .tooltip-container {
+            display: inline-block;
+            position: relative;
+        }
+
+        .tooltip-icon {
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .tooltip-text {
+            display: none;
+            position: absolute;
+            background-color: #333;
+            color: #fff;
+            padding: 5px;
+            border-radius: 5px;
+            width: 250px;
+            top: -10px;
+            left: 30px;
+            z-index: 1001;
+            font-size: 12px;
+            white-space: normal; /* Ensure the text wraps properly */
+        }
+
+        .tooltip-container:hover .tooltip-text {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Süni intellekt modelinin cavabı</h1>
+            <img src="https://cdn-icons-png.flaticon.com/512/25/25694.png" alt="User Icon">
+        </div>
+        <div id="loading" style="display: none; text-align: center; font-size: 18px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+            Sorğunuz işlənilir...
+        </div>
+        <div class="results" id="results">
+            <!-- Search results will appear here -->
+        </div>
+        <div class="search-section">
+            <textarea id="searchInput" placeholder="Axtarış sorğunuzu daxil edin..." rows="1" style="width: 60%; padding: 10px; border: 1px solid #555; border-radius: 20px 0 0 20px; outline: none; font-size: 16px;"></textarea>
+            <button id="searchButton">Göndər</button>
+            <div class="tooltip-container" style="margin-right: 10px; display: inline-block; float: left;">
+                <span class="tooltip-icon">?</span>
+                <div class="tooltip-text" style="width: 350px; right: 0; left: auto;">
+                    Sorğunuz dəqiq cavab almadıqda, xahiş edirik, sorğunuzu yenidən ifadə edin və ya tənzimləyin. Ən dəqiq cavabları almaq üçün, mümkün qədər qanunvericilikdə istifadə olunan dəqiq ifadələri yazmağa çalışın. Sistem hələ təkmilləşdirilir və daha dəqiq cavablar təmin etmək üçün öyrənir.
+                </div>
+            </div>
+        </div>
+        <div id="menu" style="display: none; position: absolute; top: 50px; right: 50px; background: #fff; border: 1px solid #ddd; border-radius: 5px; box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); z-index: 10; padding: 10px;">
+            <ul>
+                <li><a href="#" id="profileLink">Şəxsi kabinet (Hələ işləmir)</a></li>
+                <li><a href="#" id="feedbackLink">Əks əlaqə</a></li>
+                <li><a href="/faq" id="faqLink">Tez-tez verilən suallar</a></li>
+                <li><a href="/lawyers" id="lawyersLink">Hüquqşunaslarımız</a></li>
+                <li><a href="/about" id="aboutLink">Haqqimizda</a></li>
+                <li><a href="/contact" id="contactLink">Əlaqə</a></li>
+            </ul>
+        </div>
+
+        <div id="feedbackWindow" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.2); z-index: 1000; padding: 20px; width: 400px;">
+            <h3>Düz Cavab
+                <div class="tooltip-container">
+                    <span class="tooltip-icon">?</span>
+                    <div class="tooltip-text">Rəyiniz hansı cavabların düzgün olduğunu və ya təkmilləşdirməyə ehtiyacı olduğunu anlamağa imkan verməklə modelin dəqiqliyini artırmağa kömək edir. Bu, gələcək model cavablarında daha yaxşı nəticələri təmin edir.</div>
+                </div>
+            </h3>
+
+            <form id="feedbackForm">
+                {% csrf_token %}
+                <div style="margin-bottom: 10px;">
+                    <label for="docTitle" style="display: block; margin-bottom: 5px;">Hüquqi aktın adı:</label>
+                    <input type="text" id="docTitle" name="docTitle" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;" required>
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label for="relevantArticle" style="display: block; margin-bottom: 5px;">Düzgün maddə (bənd, yarımbənd və s.):</label>
+                    <input type="text" id="relevantArticle" name="relevantArticle" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;" required>
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label for="feedbackText" style="display: block; margin-bottom: 5px;">Sərbəst formada rəy:</label>
+                    <textarea id="feedbackText" name="feedbackText" rows="4" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;" required></textarea>
+                </div>
+                <div style="text-align: right;">
+                    <button type="button" id="cancelFeedback" style="padding: 8px 12px; margin-right: 5px; border: none; background: #f5f5f5; border-radius: 5px; cursor: pointer;">Cancel</button>
+                    <button type="submit" style="padding: 8px 12px; border: none; background: #007bff; color: #fff; border-radius: 5px; cursor: pointer;">Submit</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Chat Server Frontend -->
+        <div id="chatPopup" style="position: fixed; bottom: 20px; right: 20px; width: 300px; height: 400px; background: #fff; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2); display: none; z-index: 1000; flex-direction: column;">
+            <!-- Chat Header -->
+            <div style="background: #007bff; color: #fff; padding: 10px; border-top-left-radius: 10px; border-top-right-radius: 10px; cursor: pointer;" id="chatHeader">
+                <strong>Çat</strong>
+                <span id="chatClose" style="float: right; cursor: pointer;">&times;</span>
+            </div>
+            <!-- Chat Content -->
+            <div id="chatContent" style="flex: 1; padding: 10px; overflow-y: auto;">
+                <!-- Chat messages will appear here -->
+            </div>
+            <!-- Chat Input -->
+            <div style="padding: 10px; border-top: 1px solid #ddd; display: flex; flex-direction: column; gap: 5px; align-items: center;">
+                <textarea id="chatInput" placeholder="Sualınızı daxil edin..."
+                          style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 5px; resize: none; box-sizing: border-box;" rows="2"></textarea>
+                <button id="chatSend"
+                        style="width: 100%; padding: 5px 10px; background: #007bff; color: #fff; border: none; border-radius: 5px; cursor: pointer; box-sizing: border-box;">Göndər</button>
+            </div>
+        </div>
+        <div id="chatToggle" style="position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: #007bff; color: #fff; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 1000;">
+            💬
+        </div>
+
+    </div>
+
+    <script>
+        document.getElementById("searchButton").addEventListener("click", performSearch);
+        document.getElementById("searchInput").addEventListener("keyup", function(event) {
+            if (event.key === "Enter" && !event.shiftKey) {
+                performSearch();
+            }
+        });
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const csrfToken = getCookie('csrftoken');
+
+        function performSearch() {
+            const searchTerm = document.getElementById("searchInput").value.trim();
+            const resultsContainer = document.getElementById("results");
+            const loadingIndicator = document.getElementById("loading");
+
+            if (searchTerm) {
+                // Clear the search input
+                document.getElementById("searchInput").value = "";
+
+                // Show the loading indicator
+                loadingIndicator.style.display = "block";
+                resultsContainer.innerHTML = ""; // Clear previous results
+
+                fetch('/generate-response/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': csrfToken // Include the CSRF token here
+                    },
+                    body: new URLSearchParams({ 'user_input': searchTerm })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    loadingIndicator.style.display = "none"; // Hide the loading indicator
+                    const resultItem = document.createElement("div");
+                    resultItem.className = "result-item";
+
+                    // Format the response text
+                    let formattedResponse = data.response
+                        .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>") // Replace **...** with bold
+                        .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color: blue; text-decoration: underline;">$1</a>') // Replace [text](URL) with clickable links
+                        // Only match numbered list items at the start of lines
+                        .replace(/(^|\n)(\d+\.)/g, '<br><strong>$2</strong>')
+                        // Add bullet points for items starting with "-"
+                        .replace(/(^|\n)-\s/g, '<br>&nbsp;&nbsp;&bull;&nbsp;');
+
+                    // Ensure it retains structure with line breaks
+                    formattedResponse = formattedResponse.replace(/\n/g, '<br>');
+
+                    resultItem.innerHTML = formattedResponse;
+                    resultsContainer.appendChild(resultItem);
+                    resultsContainer.setAttribute("data-query-id", data.query_id); // Store the query ID
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    loadingIndicator.style.display = "none"; // Hide the loading indicator even on error
+                    alert("An error occurred. Please try again.");
+                });
+            } else {
+                alert("Please enter a search term.");
+            }
+        }
+
+        const homeIcon = document.querySelector(".header img");
+        const menu = document.getElementById("menu");
+
+        homeIcon.addEventListener("click", function() {
+            // Toggle the visibility of the menu
+            menu.style.display = menu.style.display === "none" ? "block" : "none";
+        });
+
+        // Close the menu when clicking outside of it
+        document.addEventListener("click", function(event) {
+            if (!menu.contains(event.target) && event.target !== homeIcon) {
+                menu.style.display = "none";
+            }
+        });
+
+        // Event listeners for menu options
+        document.getElementById("profileLink").addEventListener("click", function(event) {
+            event.preventDefault();
+            alert("Redirecting to Profile Page...");
+            // Implement your actual redirect logic here
+            window.location.href = "/profile";
+        });
+
+        document.getElementById("faqLink").addEventListener("click", function(event) {
+            event.preventDefault();
+            alert("Redirecting to FAQ page...");
+            window.location.href = "/faq"; // Replace with the actual URL
+        });
+
+        document.getElementById("lawyersLink").addEventListener("click", function(event) {
+            event.preventDefault();
+            alert("Redirecting to Lawyers page...");
+            window.location.href = "/lawyers"; // Replace with the actual URL
+        });
+
+        document.getElementById("aboutLink").addEventListener("click", function(event) {
+            event.preventDefault();
+            alert("Redirecting to About Us page...");
+            window.location.href = "/about"; // Replace with the actual URL
+        });
+
+        document.getElementById("contactLink").addEventListener("click", function(event) {
+            event.preventDefault();
+            alert("Redirecting to Contact page...");
+            window.location.href = "/contact"; // Replace with the actual URL
+        });
+
+        document.getElementById("feedbackLink").addEventListener("click", function(event) {
+            event.preventDefault();
+            alert("Providing Feedback...");
+            // Implement your feedback logic here
+        });
+
+        // Show the feedback window when the "Provide Feedback" link is clicked
+        document.getElementById("feedbackLink").addEventListener("click", function(event) {
+            event.preventDefault();
+            document.getElementById("feedbackWindow").style.display = "block";
+            menu.style.display = "none"; // Hide the main menu
+        });
+
+        // Handle the feedback form submission
+        document.getElementById("feedbackForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            // Collect the feedback data
+            const queryId = document.getElementById("results").getAttribute("data-query-id"); // Ensure you set this ID when displaying results
+            const docTitle = document.getElementById("docTitle").value.trim();
+            const relevantArticle = document.getElementById("relevantArticle").value.trim();
+            const feedbackText = document.getElementById("feedbackText").value.trim();
+
+            if (docTitle && relevantArticle && feedbackText) {
+                fetch('/save-feedback/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': csrfToken // Include the CSRF token here
+                    },
+                    body: new URLSearchParams({
+                        'query_id': queryId,
+                        'docTitle': docTitle,
+                        'relevantArticle': relevantArticle,
+                        'feedbackText': feedbackText
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert("Thank you for your feedback!");
+                        document.getElementById("feedbackForm").reset();
+                        document.getElementById("feedbackWindow").style.display = "none";
+                    } else {
+                        alert("Error: " + data.message);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            } else {
+                alert("Please fill in all fields.");
+            }
+        });
+
+        // Close the feedback window when the "Cancel" button is clicked
+        document.getElementById("cancelFeedback").addEventListener("click", function() {
+            document.getElementById("feedbackWindow").style.display = "none";
+        });
+
+        // Close the feedback window when clicking outside of it
+        document.addEventListener("click", function(event) {
+            const feedbackWindow = document.getElementById("feedbackWindow");
+            const feedbackLink = document.getElementById("feedbackLink");
+
+            // Check if the click is outside the feedback window
+            if (feedbackWindow.style.display === "block" && !feedbackWindow.contains(event.target) && event.target !== feedbackLink) {
+                feedbackWindow.style.display = "none";
+            }
+        });
+
+        // Chat Functionality
+        const chatToggle = document.getElementById("chatToggle");
+        const chatPopup = document.getElementById("chatPopup");
+        const chatClose = document.getElementById("chatClose");
+        const chatSend = document.getElementById("chatSend");
+        const chatInput = document.getElementById("chatInput");
+        const chatContent = document.getElementById("chatContent");
+
+        // WebSocket connection
+        # const chatSocket = new WebSocket('ws://' + window.location.host + '/ws/chat/general/');
+        const roomName = "chat_room"; // Ensure this matches the room name in your consumer
+        const chatSocket = new WebSocket(`ws://${window.location.host}/ws/chat/${roomName}/`);
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            const botMessage = document.createElement("div");
+            botMessage.style.margin = "5px 0";
+            botMessage.style.textAlign = "left";
+            botMessage.innerHTML = `<div style="display: inline-block; background: #ddd; color: #333; padding: 5px 10px; border-radius: 10px; max-width: 80%;">${data.message}</div>`;
+            chatContent.appendChild(botMessage);
+            chatContent.scrollTop = chatContent.scrollHeight; // Auto-scroll
+        };
+
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        // Open chat popup
+        chatToggle.addEventListener("click", () => {
+            chatPopup.style.display = "flex"; // Open as flex container
+            chatToggle.style.display = "none"; // Hide toggle button
+            chatInput.focus(); // Automatically focus on the input
+        });
+
+        // Close chat popup
+        chatClose.addEventListener("click", () => {
+            chatPopup.style.display = "none";
+            chatToggle.style.display = "flex";
+        });
+
+        // Send chat message
+        chatSend.addEventListener("click", () => {
+            const message = chatInput.value.trim();
+            if (message) {
+                const sender = "User"; // Set sender name dynamically if needed
+                chatSocket.send(JSON.stringify({
+                    message: message,
+                    sender: sender
+                }));
+
+                // Display the sent message immediately
+                const userMessage = document.createElement("div");
+                userMessage.style.margin = "5px 0";
+                userMessage.style.textAlign = "right";
+                userMessage.innerHTML = `<div style="display: inline-block; background: #007bff; color: #fff; padding: 5px 10px; border-radius: 10px; max-width: 80%;">${message}</div>`;
+                chatContent.appendChild(userMessage);
+                chatContent.scrollTop = chatContent.scrollHeight; // Auto-scroll
+                chatInput.value = ""; // Clear input
+            }
+        });
+
+        // Allow pressing Enter to send message
+        chatInput.addEventListener("keyup", (event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                chatSend.click();
+            }
+        });
+
+    </script>
+</body>
+</html>

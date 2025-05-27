@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="auth-container">
+    <div class="auth-card">
+        <h2>Вход</h2>
+        <form id="login-form">
+            <label for="email-login">Введите email и пароль.</label>
+            <input type="email" id="email-login" name="email" placeholder="Email" required>
+            <input type="password" id="password" name="password" placeholder="Пароль" required>
+            <div class="login-options">
+                <div class="remember-me">
+                    <input type="checkbox" id="remember-me" name="remember-me">
+                    <label for="remember-me">Запомнить меня</label>
+                </div>
+                <a href="#" class="forgot-password">Забыли пароль?</a>
+            </div>
+            <button type="submit">Войти</button>
+        </form>
+        <div class="switch-auth">
+            <span>Нет аккаунта?</span> <a href="registration.html">Зарегистрироваться</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

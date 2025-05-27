@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qeydiyyat Səhifəsi</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
+        }
+
+        .registration-container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .registration-container h2 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #007bff;
+            text-align: center;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            padding-right: 40px; /* Space for the icon */
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .input-group i {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #777;
+        }
+
+        .registration-container label {
+            font-size: 14px;
+            margin-bottom: 5px;
+            display: block;
+            color: #333;
+        }
+
+        .registration-container button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .registration-container button:hover {
+            background-color: #0056b3;
+        }
+
+        .error-message {
+            color: #dc3545;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .form-error {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .login-link {
+            margin-top: 15px;
+            display: block;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .login-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="registration-container">
+        <h2>Qeydiyyat</h2>
+        <form method="POST" action="{% url 'register' %}">
+            {% csrf_token %}
+
+            <!-- Display form errors -->
+            {% if form.errors %}
+                <div class="error-message">
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Username Field -->
+            <div class="input-group">
+                <input type="text" name="username" id="id_username" placeholder="İstifadəçi adı" value="{{ form.username.value|default_if_none:'' }}" required>
+                {% if form.username.errors %}
+                    <div class="form-error">
+                        {% for error in form.username.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Password Field -->
+            <div class="input-group">
+                <input type="password" name="password1" id="id_password1" placeholder="Parol" required>
+                <i class="fa fa-eye-slash" id="toggle-password1"></i>
+                {% if form.password1.errors %}
+                    <div class="form-error">
+                        {% for error in form.password1.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Confirm Password Field -->
+            <div class="input-group">
+                <input type="password" name="password2" id="id_password2" placeholder="Parolu təsdiqləyin" required>
+                <i class="fa fa-eye-slash" id="toggle-password2"></i>
+                {% if form.password2.errors %}
+                    <div class="form-error">
+                        {% for error in form.password2.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Optional Fields -->
+            <div class="input-group">
+                <input type="text" name="name" id="id_name" placeholder="Adınız (İstəyə görə)" value="{{ form.name.value|default_if_none:'' }}">
+                {% if form.name.errors %}
+                    <div class="form-error">
+                        {% for error in form.name.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="input-group">
+                <input type="email" name="email" id="id_email" placeholder="E-poçt (İstəyə görə)" value="{{ form.email.value|default_if_none:'' }}">
+                {% if form.email.errors %}
+                    <div class="form-error">
+                        {% for error in form.email.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="input-group">
+                <input type="tel" name="phone" id="id_phone" placeholder="Telefon nömrəsi (İstəyə görə)" value="{{ form.phone.value|default_if_none:'' }}">
+                {% if form.phone.errors %}
+                    <div class="form-error">
+                        {% for error in form.phone.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Terms Checkbox -->
+            <label>
+                <input type="checkbox" id="terms" required>
+                <a href="#">Xidmət Şərtləri</a>&nbsp;ilə Razıyam
+            </label>
+
+            <!-- Submit Button -->
+            <button type="submit">Qeydiyyatdan keç</button>
+        </form>
+        <p class="login-link">Artıq qeydiyyatdan keçmisiniz? <a href="{% url 'login' %}">Buradan daxil olun</a></p>
+    </div>
+
+    <script>
+        // Toggle password visibility
+        const togglePassword = (toggleId, inputId) => {
+            const toggle = document.getElementById(toggleId);
+            const input = document.getElementById(inputId);
+
+            toggle.addEventListener('click', () => {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    toggle.classList.remove('fa-eye-slash');
+                    toggle.classList.add('fa-eye');
+                } else {
+                    input.type = 'password';
+                    toggle.classList.remove('fa-eye');
+                    toggle.classList.add('fa-eye-slash');
+                }
+            });
+        };
+
+        togglePassword('toggle-password1', 'id_password1');
+        togglePassword('toggle-password2', 'id_password2');
+
+        // Focus on the first input field when the page loads
+        window.onload = function() {
+            document.getElementById('id_username').focus();
+        };
+    </script>
+
+</body>
+</html>

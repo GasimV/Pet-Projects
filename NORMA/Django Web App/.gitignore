@@ -1,0 +1,65 @@
+# Ignore Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignore the SQLite database
+db.sqlite3
+
+# Ignore Django migrations
+*/migrations/*.py
+*/migrations/*.pyc
+
+# Ignore environment variables and settings
+.env
+*.env
+
+# Ignore virtual environments
+venv/
+.env/
+.venv/
+env/
+ENV/
+
+# Ignore PyCharm project files
+.idea/
+
+# Ignore logs and temporary files
+*.log
+*.pot
+*.pyc
+*.swp
+*.swo
+*~
+*.bak
+*.tmp
+*.temp
+*.~*
+
+# Ignore media and static files
+/media/*
+!/media/.gitkeep
+/static/*
+!/static/.gitkeep
+
+# Ignore compiled files
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Ignore JetBrains .idea workspace and project files
+.idea/
+
+# Ignore any VS Code settings if using both
+.vscode/
+
+# Ignore Django secret keys
+SECRET_KEY=
+
+# Ignore cache
+*.cache
+.cache/
+__pycache__/
+*.py[cod]
+*$py.class

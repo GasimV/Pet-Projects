@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semantic Act Finder</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        /* Header */
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        /* Hamburger Menu */
+        .hamburger-menu {
+            display: block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        /* Navigation Menu */
+        .nav-menu {
+            display: none;
+            background-color: #0056b3;
+            padding: 10px 20px;
+        }
+
+        .nav-menu ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-menu ul li {
+            margin: 10px 0;
+        }
+
+        .nav-menu ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .nav-menu ul li a:hover {
+            text-decoration: underline;
+        }
+
+        /* Filter Section in Nav Menu */
+        .filter-section {
+            margin: 20px 0;
+            color: white;
+        }
+
+        .filter-section label {
+            margin-right: 10px;
+        }
+
+        /* Search Container */
+        .search-container {
+            margin: 20px;
+            text-align: center;
+        }
+
+        .search-container input[type="text"] {
+            width: 60%;
+            padding: 12px 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .search-container button {
+            padding: 12px 20px;
+            margin-left: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .search-container button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Results Container */
+        .results-container {
+            margin: 20px;
+            overflow: visible;
+        }
+
+        .accordion-item {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            overflow: visible;
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .accordion-header {
+            padding: 15px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f1f1f1;
+        }
+
+        .accordion-header:hover {
+            background-color: #e2e2e2;
+        }
+
+        .accordion-content {
+            display: none;
+            padding: 20px;
+            background-color: #fff;
+            position: relative;
+            overflow: visible;
+        }
+
+        /* More Details Table */
+        .more-details {
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+
+        .more-details table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .more-details th,
+        .more-details td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+            position: relative;
+        }
+
+        .more-details th {
+            background-color: #f9f9f9;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .button-container button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            opacity: 0.6;
+            font-weight: bold;
+            color: #000;
+        }
+
+        .button-container .correct {
+            background-color: #28a745;
+        }
+
+        .button-container .incorrect {
+            background-color: #dc3545;
+        }
+
+        .button-container button.active {
+            opacity: 1;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1000;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            white-space: normal;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Aesthetic Tooltip Icon */
+        .tooltip-icon {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+            line-height: 18px;
+            font-size: 14px;
+            margin-left: 5px;
+            font-weight: bold;
+        }
+
+        /* Submit Button */
+        .submit-button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .submit-button-container button {
+            padding: 12px 30px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .submit-button-container button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Semantic Threshold */
+        .threshold-container {
+            margin: 20px;
+            text-align: center;
+        }
+
+        .threshold-slider {
+            width: 30%;
+        }
+
+        .threshold-input {
+            width: 70px;
+            text-align: center;
+        }
+
+        /* Footer */
+        footer {
+            background-color: #007bff;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        /* Dynamic Popup Window */
+        .popup-window {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 1000;
+            padding: 20px;
+            width: 700px;
+            height: 500px;
+        }
+
+        .popup-window input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .popup-window textarea {
+            resize: both; /* Allow vertical resizing */
+            height: 300px; /* Initial height for the text area */
+            width: 690px; /* Set initial width for the text area */
+        }
+
+        .popup-window button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .popup-window button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Overlay for popup */
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .search-container input[type="text"],
+            .threshold-slider {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            .search-container button,
+            .threshold-input {
+                width: 100%;
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <h1>Semantic Act Finder</h1>
+    </header>
+
+    <!-- Hamburger Menu -->
+    <div class="hamburger-menu">
+        &#9776; Menu
+    </div>
+
+    <!-- Navigation Menu -->
+    <div class="nav-menu">
+        <ul>
+            <li><a href="#">Ana Səhifə</a></li>
+            <li><a href="#">Profil</a></li>
+            <li><a href="#">Əlaqə</a></li>
+        </ul>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <h3>Sənədlər filtri</h3>
+            <label><input type="checkbox" class="filter-checkbox" value="Konstitusiya və Referendum Aktları"> Konstitusiya və Referendum Aktları</label>
+            <label><input type="checkbox" class="filter-checkbox" value="Məcəllələr"> Məcəllələr</label>
+            <label><input type="checkbox" class="filter-checkbox" value="Qanunlar"> Qanunlar</label>
+            <label><input type="checkbox" class="filter-checkbox" value="Fərmanlar"> Fərmanlar</label>
+            <label><input type="checkbox" class="filter-checkbox" value="Qərarlar"> Qərarlar</label>
+            <label><input type="checkbox" class="filter-checkbox" value="Sərəncamlar"> Sərəncamlar</label>
+        </div>
+    </div>
+
+    <!-- Search Container -->
+    <div class="search-container">
+        <input type="text" id="search-input" placeholder="Axtarış sorğunuzu daxil edin...">
+        <button id="search-button">Axtar</button>
+    </div>
+
+    <!-- Semantic Threshold Setting -->
+    <div class="threshold-container">
+        <label for="threshold-slider">Semantik Hədd:</label>
+        <input type="range" id="threshold-slider" class="threshold-slider" min="0" max="1" step="0.01" value="0.5">
+        <input type="number" id="threshold-input" class="threshold-input" min="0" max="1" step="0.01" value="0.5">
+        <div class="tooltip">
+            <span class="tooltip-icon">?</span>
+            <span class="tooltip-text">Semantik hədd modelin axtarış nəticələrinin uyğunluq səviyyəsini müəyyən edir. Əgər uyğun akt tapılmayıbsa, həddi azaltmaqla daha çox nəticə əldə edə bilərsiniz, lakin səhv nəticələrin sayı arta bilər. Həddi artırmaqla daha dəqiq, lakin az nəticə əldə edəcəksiniz. Eksperiment edin və modelin daha yaxşı təlimi üçün kömək edin.</span>
+        </div>
+    </div>
+
+    <!-- Results Container -->
+    <div class="results-container" id="results-container">
+        <!-- Accordion Item for Konstitusiya və Referendum Aktları -->
+        <div class="accordion-item" data-type="Konstitusiya və Referendum Aktları">
+            <div class="accordion-header">
+                1. Azərbaycan Respublikasının Konstitusiyası
+                <span>&#x25BC;</span>
+            </div>
+            <div class="accordion-content">
+                <p><strong>Növü:</strong> Konstitusiya və Referendum Aktları</p>
+                <button class="show-more-button">Daha Ətraflı Oxu</button>
+                <div class="more-details">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Hüquqi Aktın Adı</th>
+                                <th>Hüquqi Aktın Mətni</th>
+                                <th>e-qanun</th>
+                                <th>Qiymət
+                                    <div class="tooltip">
+                                        <span class="tooltip-icon">?</span>
+                                        <span class="tooltip-text">Qiymətləndirmələriniz modelin dəqiqliyini artırmaq üçün vacibdir. Sizin verdiyiniz qiymətlər modelin təliminə kömək edir, beləliklə, axtarış nəticələri sizin üçün daha doğru olur. Nəticələri yadda saxlamaq üçün sonda 'Təsdiqlə' düyməsini klikləməyi unutmayın.</span>
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Misal Aktı Adı</td>
+                                <td>Misal Aktı Mətn</td>
+                                <td><a href="https://e-qanun.az/" target="_blank">e-qanun</a></td>
+                                <td class="button-container">
+                                    <button type="button" class="correct">Doğru</button>
+                                    <button type="button" class="incorrect">Səhv</button>
+                                    <button type="button" class="add-answer">Düzgün Cavab Əlavə Etmək</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accordion Item for Məcəllələr -->
+        <div class="accordion-item" data-type="Məcəllələr">
+            <div class="accordion-header">
+                2. Azərbaycan Respublikasının Rəqabət Məcəlləsi
+                <span>&#x25BC;</span>
+            </div>
+            <div class="accordion-content">
+                <p><strong>Növü:</strong> Məcəllələr</p>
+                <button class="show-more-button">Daha Ətraflı Oxu</button>
+                <div class="more-details">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Hüquqi Aktın Adı</th>
+                                <th>Hüquqi Aktın Mətni</th>
+                                <th>e-qanun</th>
+                                <th>Qiymət
+                                    <div class="tooltip">
+                                        <span class="tooltip-icon">?</span>
+                                        <span class="tooltip-text">Qiymətləndirmələriniz modelin dəqiqliyini artırmaq üçün vacibdir. Sizin verdiyiniz qiymətlər modelin təliminə kömək edir, beləliklə, axtarış nəticələri sizin üçün daha doğru olur. Nəticələri yadda saxlamaq üçün sonda 'Təsdiqlə' düyməsini klikləməyi unutmayın.</span>
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Misal Aktı Adı</td>
+                                <td>Misal Aktı Mətn</td>
+                                <td><a href="https://e-qanun.az/" target="_blank">e-qanun</a></td>
+                                <td class="button-container">
+                                    <button type="button" class="correct">Doğru</button>
+                                    <button type="button" class="incorrect">Səhv</button>
+                                    <button type="button" class="add-answer">Düzgün Cavab Əlavə Etmək</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accordion Item for Qanunlar -->
+        <div class="accordion-item" data-type="Qanunlar">
+            <div class="accordion-header">
+                3. Azərbaycan Respublikasının Dövlət Sərhədi Haqqında Qanunu
+                <span>&#x25BC;</span>
+            </div>
+            <div class="accordion-content">
+                <p><strong>Növü:</strong> Qanunlar</p>
+                <button class="show-more-button">Daha Ətraflı Oxu</button>
+                <div class="more-details">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Hüquqi Aktın Adı</th>
+                                <th>Hüquqi Aktın Mətni</th>
+                                <th>e-qanun</th>
+                                <th>Qiymət
+                                    <div class="tooltip">
+                                        <span class="tooltip-icon">?</span>
+                                        <span class="tooltip-text">Qiymətləndirmələriniz modelin dəqiqliyini artırmaq üçün vacibdir. Sizin verdiyiniz qiymətlər modelin təliminə kömək edir, beləliklə, axtarış nəticələri sizin üçün daha doğru olur. Nəticələri yadda saxlamaq üçün sonda 'Təsdiqlə' düyməsini klikləməyi unutmayın.</span>
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Misal Aktı Adı</td>
+                                <td>Misal Aktı Mətn</td>
+                                <td><a href="https://e-qanun.az/" target="_blank">e-qanun</a></td>
+                                <td class="button-container">
+                                    <button type="button" class="correct">Doğru</button>
+                                    <button type="button" class="incorrect">Səhv</button>
+                                    <button type="button" class="add-answer">Düzgün Cavab Əlavə Etmək</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accordion Item for Fərmanlar -->
+        <div class="accordion-item" data-type="Fərmanlar">
+            <div class="accordion-header">
+                4. Azərbaycan Respublikası Prezidentinin Fərmanı
+                <span>&#x25BC;</span>
+            </div>
+            <div class="accordion-content">
+                <p><strong>Növü:</strong> Fərmanlar</p>
+                <button class="show-more-button">Daha Ətraflı Oxu</button>
+                <div class="more-details">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Hüquqi Aktın Adı</th>
+                                <th>Hüquqi Aktın Mətni</th>
+                                <th>e-qanun</th>
+                                <th>Qiymət
+                                    <div class="tooltip">
+                                        <span class="tooltip-icon">?</span>
+                                        <span class="tooltip-text">Qiymətləndirmələriniz modelin dəqiqliyini artırmaq üçün vacibdir. Sizin verdiyiniz qiymətlər modelin təliminə kömək edir, beləliklə, axtarış nəticələri sizin üçün daha doğru olur. Nəticələri yadda saxlamaq üçün sonda 'Təsdiqlə' düyməsini klikləməyi unutmayın.</span>
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Misal Aktı Adı</td>
+                                <td>Misal Aktı Mətn</td>
+                                <td><a href="https://e-qanun.az/" target="_blank">e-qanun</a></td>
+                                <td class="button-container">
+                                    <button type="button" class="correct">Doğru</button>
+                                    <button type="button" class="incorrect">Səhv</button>
+                                    <button type="button" class="add-answer">Düzgün Cavab Əlavə Etmək</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accordion Item for Qərarlar -->
+        <div class="accordion-item" data-type="Qərarlar">
+            <div class="accordion-header">
+                5. Azərbaycan Respublikası Nazirlər Kabinetinin Qərarı
+                <span>&#x25BC;</span>
+            </div>
+            <div class="accordion-content">
+                <p><strong>Növü:</strong> Qərarlar</p>
+                <button class="show-more-button">Daha Ətraflı Oxu</button>
+                <div class="more-details">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Hüquqi Aktın Adı</th>
+                                <th>Hüquqi Aktın Mətni</th>
+                                <th>e-qanun</th>
+                                <th>Qiymət
+                                    <div class="tooltip">
+                                        <span class="tooltip-icon">?</span>
+                                        <span class="tooltip-text">Qiymətləndirmələriniz modelin dəqiqliyini artırmaq üçün vacibdir. Sizin verdiyiniz qiymətlər modelin təliminə kömək edir, beləliklə, axtarış nəticələri sizin üçün daha doğru olur. Nəticələri yadda saxlamaq üçün sonda 'Təsdiqlə' düyməsini klikləməyi unutmayın.</span>
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Misal Aktı Adı</td>
+                                <td>Misal Aktı Mətn</td>
+                                <td><a href="https://e-qanun.az/" target="_blank">e-qanun</a></td>
+                                <td class="button-container">
+                                    <button type="button" class="correct">Doğru</button>
+                                    <button type="button" class="incorrect">Səhv</button>
+                                    <button type="button" class="add-answer">Düzgün Cavab Əlavə Etmək</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accordion Item for Sərəncamlar -->
+        <div class="accordion-item" data-type="Sərəncamlar">
+            <div class="accordion-header">
+                6. Azərbaycan Respublikası Prezidentinin Sərəncamı
+                <span>&#x25BC;</span>
+            </div>
+            <div class="accordion-content">
+                <p><strong>Növü:</strong> Sərəncamlar</p>
+                <button class="show-more-button">Daha Ətraflı Oxu</button>
+                <div class="more-details">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Hüquqi Aktın Adı</th>
+                                <th>Hüquqi Aktın Mətni</th>
+                                <th>e-qanun</th>
+                                <th>Qiymət
+                                    <div class="tooltip">
+                                        <span class="tooltip-icon">?</span>
+                                        <span class="tooltip-text">Qiymətləndirmələriniz modelin dəqiqliyini artırmaq üçün vacibdir. Sizin verdiyiniz qiymətlər modelin təliminə kömək edir, beləliklə, axtarış nəticələri sizin üçün daha doğru olur. Nəticələri yadda saxlamaq üçün sonda 'Təsdiqlə' düyməsini klikləməyi unutmayın.</span>
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Misal Aktı Adı</td>
+                                <td>Misal Aktı Mətn</td>
+                                <td><a href="https://e-qanun.az/" target="_blank">e-qanun</a></td>
+                                <td class="button-container">
+                                    <button type="button" class="correct">Doğru</button>
+                                    <button type="button" class="incorrect">Səhv</button>
+                                    <button type="button" class="add-answer">Düzgün Cavab Əlavə Etmək</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Dynamic Popup Window -->
+    <div class="overlay"></div>
+    <div class="popup-window">
+        <input type="text" id="title-input" placeholder="Sənədin adını daxil edin..."> <!-- Title input -->
+        <textarea id="text-input" placeholder="Sənədin mətnini daxil edin..."></textarea> <!-- Document text textarea -->
+        <button id="enter-button">Enter</button>
+    </div>
+
+    <!-- Submit Button -->
+    <div class="submit-button-container">
+        <button id="submit-button">Təsdiqlə</button>
+        <div class="tooltip">
+            <span class="tooltip-icon">?</span>
+            <span class="tooltip-text">"Təsdiqlə" düyməsini klikləyərək daxil etdiyiniz məlumatlar yadda saxlanılır! Əks halda, nəticələr modelin təkmilləşdirilməsi üçün yadda saxlanılmayacaq. Sizin fikriniz nəticələrin dəqiqləşdirilməsinə kömək edir.</span>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>Əlaqə | semanticsolver@gmail.com</p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // Toggle Navigation Menu
+        document.querySelector('.hamburger-menu').addEventListener('click', function () {
+            const navMenu = document.querySelector('.nav-menu');
+            navMenu.style.display = navMenu.style.display === 'block' ? 'none' : 'block';
+        });
+
+        // Accordion Functionality
+        document.querySelectorAll('.accordion-header').forEach(header => {
+            header.addEventListener('click', function () {
+                const content = this.nextElementSibling;
+                const arrow = this.querySelector('span');
+                if (content.style.display === 'block') {
+                    content.style.display = 'none';
+                    arrow.innerHTML = '&#x25BC;';
+                } else {
+                    content.style.display = 'block';
+                    arrow.innerHTML = '&#x25B2;';
+                }
+            });
+        });
+
+        // Show More Details Functionality
+        document.querySelectorAll('.show-more-button').forEach(button => {
+            button.addEventListener('click', function () {
+                const moreDetails = this.nextElementSibling;
+                if (moreDetails.style.display === 'block') {
+                    moreDetails.style.display = 'none';
+                    this.textContent = 'Daha Ətraflı Oxu';
+                } else {
+                    moreDetails.style.display = 'block';
+                    this.textContent = 'Daha Ətraflı Oxunu Gizlət';
+                }
+            });
+        });
+
+        // Filter Functionality
+        document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function () {
+                const selectedFilters = Array.from(document.querySelectorAll('.filter-checkbox:checked')).map(cb => cb.value);
+                document.querySelectorAll('.accordion-item').forEach(item => {
+                    const itemType = item.getAttribute('data-type');
+                    if (selectedFilters.length === 0 || selectedFilters.includes(itemType)) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // Correct and Incorrect Button Toggle
+        document.querySelectorAll('.button-container').forEach(container => {
+            const correctButton = container.querySelector('.correct');
+            const incorrectButton = container.querySelector('.incorrect');
+
+            correctButton.addEventListener('click', function () {
+                correctButton.classList.toggle('active');
+                incorrectButton.classList.remove('active');
+            });
+
+            incorrectButton.addEventListener('click', function () {
+                incorrectButton.classList.toggle('active');
+                correctButton.classList.remove('active');
+            });
+        });
+
+        // Threshold Slider and Input Sync
+        const thresholdSlider = document.getElementById('threshold-slider');
+        const thresholdInput = document.getElementById('threshold-input');
+
+        thresholdSlider.addEventListener('input', function () {
+            thresholdInput.value = thresholdSlider.value;
+        });
+
+        thresholdInput.addEventListener('input', function () {
+            thresholdSlider.value = thresholdInput.value;
+        });
+
+        // Show Popup Window for Adding Correct Answer
+        document.querySelectorAll('.add-answer').forEach(button => {
+            button.addEventListener('click', function () {
+                document.querySelector('.overlay').style.display = 'block';
+                document.querySelector('.popup-window').style.display = 'block';
+            });
+        });
+
+        // Hide Popup Window
+        document.querySelector('.overlay').addEventListener('click', function () {
+            document.querySelector('.overlay').style.display = 'none';
+            document.querySelector('.popup-window').style.display = 'none';
+        });
+
+        // Handle Enter Button in Popup
+        document.getElementById('enter-button').addEventListener('click', function () {
+            const titleInput = document.getElementById('title-input').value;
+            const textInput = document.getElementById('text-input').value;
+
+            if (titleInput && textInput) {
+                console.log('Entered Title:', titleInput);
+                console.log('Entered Text:', textInput);
+                alert('Düzgün cavab əlavə edildi: ' + titleInput + ' - ' + textInput);
+
+                // Hide Popup
+                document.querySelector('.overlay').style.display = 'none';
+                document.querySelector('.popup-window').style.display = 'none';
+
+                // Clear input fields
+                document.getElementById('title-input').value = '';
+                document.getElementById('text-input').value = '';
+            } else {
+                alert('Zəhmət olmasa bütün sahələri doldurun.');
+            }
+        });
+
+        // Submit Button Functionality
+        document.getElementById('submit-button').addEventListener('click', function () {
+            const results = [];
+            document.querySelectorAll('.more-details table tbody tr').forEach(row => {
+                const actName = row.cells[0].innerText;
+                const actText = row.cells[1].innerText;
+                const actLink = row.cells[2].querySelector('a').href;
+                const correctButton = row.cells[3].querySelector('.correct');
+                const incorrectButton = row.cells[3].querySelector('.incorrect');
+
+                let status = null;
+                if (correctButton.classList.contains('active')) {
+                    status = 'Doğru';
+                } else if (incorrectButton.classList.contains('active')) {
+                    status = 'Səhv';
+                }
+
+                if (status) {
+                    results.push({
+                        search_query: document.getElementById('search-input').value || '',
+                        act_name: actName,
+                        act_text: actText,
+                        act_link: actLink,
+                        status: status
+                    });
+                }
+            });
+
+            if (results.length > 0) {
+                fetch('/submit-data/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(results),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Success:', data);
+                    alert('Daxil etdiyiniz məlumatlar modeli təkmilləşdirmək üçün yadda saxlanıldı. Təşəkkürlər!');
+
+                    // Hide the "Təsdiqlə" button
+                    document.getElementById('submit-button').style.display = 'none';
+
+                    // Optionally, reset all selections
+                    document.querySelectorAll('.button-container button').forEach(button => {
+                        button.classList.remove('active');
+                    });
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    alert('Məlumat göndərilərkən xəta baş verdi!');
+                });
+            } else {
+                alert('Zəhmət olmasa, ən azı bir nəticə seçin.');
+            }
+        });
+
+        // Reset the "Təsdiqlə" button when a new search is triggered
+        document.getElementById('search-button').addEventListener('click', function () {
+            alert('Axtarış funksionallığı hələ tətbiq edilməyib.');
+
+            // Show the "Təsdiqlə" button again for the next search
+            document.getElementById('submit-button').style.display = 'block';
+        });
+
+        // Search Button Placeholder Functionality
+        document.getElementById('search-button').addEventListener('click', function () {
+            alert('Axtarış funksionallığı hələ tətbiq edilməyib.');
+        });
+    </script>
+
+</body>
+</html>

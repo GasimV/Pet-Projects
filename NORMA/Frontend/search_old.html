@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1E1E1E;
+            color: #C7C7C7;
+            margin: 0;
+            padding: 0;
+        }
+
+        .search-container {
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 10px 0;
+            background-color: #1E1E1E;
+            text-align: center;
+            z-index: 1000;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 50%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            background-color: #252526;
+            color: #C7C7C7;
+        }
+
+        input[type="submit"],
+        button {
+            padding: 12px 20px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 4px;
+            background-color: #0078D7;
+            color: white;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover,
+        button:hover {
+            background-color: #0056a3;
+        }
+
+        .result-table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            margin-top: 70px; /* Added top margin to avoid overlap */
+        }
+
+        .result-table th,
+        .result-table td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .result-table th {
+            background-color: #333;
+        }
+
+        .result-table td {
+            background-color: #252526;
+        }
+
+        .result-table .button-container {
+            text-align: center;
+        }
+
+        .result-table button {
+            padding: 6px 12px;
+            margin: 0 2px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            opacity: 0.6; /* Set initial opacity to 0.6 */
+        }
+
+        .result-table .correct {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .result-table .incorrect {
+            background-color: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+<div class="search-container">
+    <form name="search_form" action="{% url 'search_view' %}">
+        <input type="text" id="search" name="search" placeholder="Type here to search...">
+        <input type="submit" value="Search">
+    </form>
+</div>
+{% if data %}
+<form id="result-form" method="POST">
+    <div id="table-container">
+        <table class="result-table">
+            <thead>
+            <tr>
+                <th>Normativ Aktın Adı</th>
+                <th>Normativ aktın mətni</th>
+                <th>e-qanun</th>
+                <th>Qiymət</th>
+            </tr>
+            </thead>
+            <tbody id="table-body">
+            {% for row in data %}
+            <tr>
+                <td>{{ row.name }}</td>
+                <td>{{ row.text }}</td>
+                <td><a href="{{ row.url }}" target="_blank">e-qanun</a></td>
+                <td class="button-container">
+                    <label>
+                        <input type="checkbox" name="{{ row.text }}" value="{{query}}" style="display:none;">
+                        <button type="button" class="correct" onclick="toggleCheckbox(this)">Doğru</button>
+                    </label>
+                    <label>
+                        <input type="checkbox" name="{{ row.text }}" value="{{query}}" style="display:none;">
+                        <button type="button" class="incorrect" onclick="toggleCheckbox(this)">Səhv</button>
+                    </label>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <div style="text-align: center;">
+            <button type="button" id="submit-button" onclick="submitTableData()">Submit</button>
+
+        </div>
+    </div>
+</form>
+{% endif %}
+<script>
+    function toggleCheckbox(button) {
+        const checkbox = button.previousElementSibling;
+        checkbox.checked = !checkbox.checked;
+        if (checkbox.checked) {
+            button.style.opacity = '1'; // Set opacity to 1 when checked
+            disableOtherCheckbox(button, true);
+        } else {
+            button.style.opacity = '0.6'; // Set opacity to 0.6 when unchecked
+            disableOtherCheckbox(button, false);
+        }
+    }
+
+    function disableOtherCheckbox(button, disable) {
+        const row = button.closest('tr');
+        const buttons = row.querySelectorAll('button');
+        buttons.forEach(btn => {
+            if (btn !== button) {
+                btn.disabled = disable;
+            }
+        });
+    }
+
+function submitTableData() {
+    const table = document.getElementById('table-body');
+    const rows = table.getElementsByTagName('tr');
+    const data = [];
+
+    for (let i = 0; i < rows.length; i++) {
+        const cells = rows[i].getElementsByTagName('td');
+        const name = cells[0].innerText;
+        const text = cells[1].innerText;
+        const url = cells[2].getElementsByTagName('a')[0].href;
+
+        // Получаем значение из скрытого input
+        const correctInput = cells[3].querySelector('.correct').previousElementSibling;
+        const incorrectInput = cells[3].querySelector('.incorrect').previousElementSibling;
+
+        const correct = correctInput.checked;
+        const incorrect = incorrectInput.checked;
+
+        // Условие, чтобы пропустить строки без значений true
+        if (!correct && !incorrect) {
+            continue; // Пропускаем эту строку
+        }
+
+        const search_input = correctInput.value || incorrectInput.value; // Используем значение из скрытого input
+
+        data.push({
+            search: search_input,
+            name: name,
+            text: text,
+            url: url,
+            correct: correct,
+            incorrect: incorrect
+        });
+    }
+
+    // Если есть данные для отправки, выполняем запрос
+    if (data.length > 0) {
+        const jsonString = JSON.stringify(data);
+
+        fetch('/submit-data/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: jsonString,
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Success:', data);
+            document.getElementById("submit-button").style.display = 'none'; // Hide the button
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    }
+}
+</script>
+
+</body>
+
+</html>
