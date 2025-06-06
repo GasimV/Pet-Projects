@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Azerconnect-AI Home UI</title>
+  <title>DataTalks-AI Home UI</title>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -104,47 +104,37 @@
 <body>
   <div class="sidebar">
     <div>
-      <div class="logo">🤖 Azerconnect-AI</div>
+      <div class="logo">🤖 DataTalks-AI</div>
       <h4 style="display: flex; justify-content: space-between; align-items: center;">
         Mövzular
         <button onclick="addThread()" style="font-size: 14px; border: none; background: none; color: #3b82f6; cursor: pointer;">+ Yeni</button>
       </h4>
-      <ul id="thread-list" style="list-style: none; padding-left: 10px;">
-        <li style="display: flex; justify-content: space-between; align-items: center;">
-          <span>• Müştərilər tərəfindən verilmiş sifarişlər...</span>
-          <div class="thread-menu" onclick="toggleMenu(this)">⋮
-            <div class="menu-popup">
-              <button onclick="deleteThread(this)">Sil</button>
-            </div>
-          </div>
-        </li>
-        <li style="display: flex; justify-content: space-between; align-items: center;">
-          <span>• Ən çox sifariş verilən ilk...</span>
-          <div class="thread-menu" onclick="toggleMenu(this)">⋮
-            <div class="menu-popup">
-              <button onclick="deleteThread(this)">Sil</button>
-            </div>
-          </div>
-        </li>
-      </ul>
+      <ul id="thread-list" style="list-style: none; padding-left: 10px;"></ul>
     </div>
     <div class="footer"><p>⚙ Parametrlər</p></div>
   </div>
 
   <div class="main">
     <div class="menu-bar">
-      <span>Ana səhifə</span>
-      <span>Modelləşdirmə</span>
-      <span>Bilik bazası</span>
+      <span onclick="alert('Bu bölmə tezliklə aktiv olacaq.')">Ana səhifə</span>
+      <span onclick="alert('Bu bölmə tezliklə aktiv olacaq.')">İstifadəçi təlimatı</span>
     </div>
 
-    <h2 class="header">Məlumatlarınız haqqında daha çox məlumat əldə edin</h2>
+    <h2 class="header">Verilənləriniz haqqında daha çox məlumat əldə edin</h2>
 
     <div class="cards">
-      <div class="card" onclick="toggleResponse('ranking')"><small>Ranking</small>Ən çox sifariş alan ilk 3 şəhər hansıdır?</div>
-      <div class="card" onclick="toggleResponse('avg_review')"><small>Aggregation</small>Hər bir şəhərdə müştərilər tərəfindən verilən sifarişlər üçün təqdim olunan rəylərin orta balı neçədir?</div>
-      <div class="card" onclick="toggleResponse('total_payment')"><small>Aggregation</small>Hər rayondan olan müştərilər tərəfindən edilən ödənişlərin ümumi dəyəri nə qədərdir?</div>
+      <div class="card" onclick="useTemplate('Ən çox sifariş alan ilk 3 şəhər hansıdır?')">
+        <small>Reytinq</small>Ən çox sifariş alan ilk 3 şəhər hansıdır?
+      </div>
+      <div class="card" onclick="useTemplate('Hər bir şəhərdə müştərilər tərəfindən verilən sifarişlər üçün təqdim olunan rəylərin orta balı neçədir?')">
+        <small>Ümumiləşdirmə</small>Hər bir şəhərdə müştərilər tərəfindən verilən sifarişlər üçün təqdim olunan rəylərin orta balı neçədir?
+      </div>
+      <div class="card" onclick="useTemplate('Şəhərlər üzrə xərclər')">
+        <small>Ümumiləşdirmə</small>Şəhərlər üzrə xərclər
+      </div>
     </div>
+
+    <div id="loading-message" style="display:none; margin-bottom: 20px; color: #555;">Sorğunuz işlənilir...</div>
 
     <div id="response" class="response-box">
       <div style="display: flex; gap: 12px; margin-bottom: 16px;">
@@ -183,6 +173,7 @@
       <input type="text" placeholder="Məlumatlarınızı araşdırmaq üçün sorğu verin" />
       <button>Soruş</button>
     </div>
+
   </div>
 
   <style>
@@ -265,31 +256,8 @@
     function addThread() {
       const text = prompt("Yeni mövzu daxil edin:");
       if (text) {
-        const li = document.createElement("li");
-        li.style.display = "flex";
-        li.style.justifyContent = "space-between";
-        li.style.alignItems = "center";
-
-        const span = document.createElement("span");
-        span.textContent = "• " + text;
-
-        const menu = document.createElement("div");
-        menu.className = "thread-menu";
-        menu.textContent = "⋮";
-        menu.onclick = function() { toggleMenu(menu); }
-
-        const popup = document.createElement("div");
-        popup.className = "menu-popup";
-
-        const delBtn = document.createElement("button");
-        delBtn.textContent = "Sil";
-        delBtn.onclick = function() { li.remove(); };
-
-        popup.appendChild(delBtn);
-        menu.appendChild(popup);
-        li.appendChild(span);
-        li.appendChild(menu);
-        document.getElementById("thread-list").appendChild(li);
+        inputField.value = text; // Fill the input field with the new query
+        submitQuery();           // Automatically submit it
       }
     }
 
@@ -324,39 +292,136 @@
       }
     }
 
-    document.querySelector(".footer-bar button").addEventListener("click", () => {
-      const query = document.querySelector(".footer-bar input").value;
-      if (!query.trim()) return;
+      const inputField = document.querySelector(".footer-bar input");
+      const askButton = document.querySelector(".footer-bar button");
 
-      fetch("/api/query/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": getCookie("csrftoken"),
-        },
-        body: JSON.stringify({ query }),
-      })
-      .then((res) => res.json())
-      .then((data) => {
-        document.getElementById("response").classList.add("show");
-        showTab("answer");
-        document.getElementById("response-content").innerHTML = `<p>${data.summary}</p>`;
-        document.getElementById("sql-tab").innerText = data.sql;
-        document.getElementById("chart-tab").innerHTML = generateChartHTML(data.table);
-      })
-      .catch((err) => {
-        alert("Xəta baş verdi: " + err.message);
+      const threadResponses = {};
+
+      function addThreadItem(text) {
+        const li = document.createElement("li");
+        li.style.display = "flex";
+        li.style.justifyContent = "space-between";
+        li.style.alignItems = "center";
+
+        const span = document.createElement("span");
+        span.textContent = "• " + text;
+        span.style.cursor = "pointer";
+        span.onclick = function () {
+          const stored = threadResponses[text];
+          if (stored) {
+            document.getElementById("response").classList.add("show");
+            showTab("answer");
+            document.getElementById("response-content").innerHTML = formatSummary(stored.summary);
+            document.getElementById("sql-tab").innerText = stored.sql;
+            document.getElementById("chart-tab").innerHTML = generateChartHTML(stored.table);
+          }
+        };
+
+        const menu = document.createElement("div");
+        menu.className = "thread-menu";
+        menu.textContent = "⋮";
+        menu.onclick = function () {
+          toggleMenu(menu);
+        };
+
+        const popup = document.createElement("div");
+        popup.className = "menu-popup";
+
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "Sil";
+        delBtn.onclick = function () {
+          li.remove();
+        };
+
+        popup.appendChild(delBtn);
+        menu.appendChild(popup);
+        li.appendChild(span);
+        li.appendChild(menu);
+        document.getElementById("thread-list").appendChild(li);
+      }
+
+      function formatSummary(rawText) {
+        // Convert **bold** to <strong>
+        let html = rawText.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
+        // Convert numbered lists (1. 2. 3...) into <ol><li>...</li></ol>
+        html = html.replace(/(?:^|\n)(\d+)\.\s+(.*?)(?=\n\d+\.|\n*$)/gs, (match, num, item) => {
+          // Split by number+dot and wrap in <li>
+          const lines = match.trim().split(/\n\d+\.\s+/).filter(Boolean);
+          if (lines.length > 1 || match.startsWith("1.")) {
+            return `<ol style="padding-left: 20px;">` + lines.map(l => `<li>${l.trim()}</li>`).join("") + `</ol>`;
+          }
+          return match;
+        });
+
+        // Convert "- ..." bullet points to <ul><li>...</li></ul>
+        html = html.replace(/(?:^|\n)-\s+(.*?)(?=\n-\s+|\n*$)/gs, (match) => {
+          const items = match.trim().split(/\n-\s+/).filter(Boolean);
+          return `<ul style="padding-left: 20px;">` + items.map(i => `<li>${i}</li>`).join("") + `</ul>`;
+        });
+
+        return html;
+      }
+
+      function submitQuery() {
+        const query = inputField.value.trim();
+        if (!query) return;
+
+        // Show loading message
+        document.getElementById("loading-message").style.display = "block";
+
+        fetch("/api/query/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken"),
+          },
+          body: JSON.stringify({ query }),
+        })
+        .then((res) => res.json())
+        .then((data) => {
+          document.getElementById("loading-message").style.display = "none"; // hide after response
+          document.getElementById("response").classList.add("show");
+          showTab("answer");
+          document.getElementById("response-content").innerHTML = formatSummary(data.summary);
+          document.getElementById("sql-tab").innerText = data.sql;
+          document.getElementById("chart-tab").innerHTML = generateChartHTML(data.table);
+          threadResponses[query] = data;  // Save the response using the query as key
+          addThreadItem(query);           // Add to sidebar
+        })
+        .catch((err) => {
+          document.getElementById("loading-message").style.display = "none"; // hide on error
+          alert("Xəta baş verdi: " + err.message);
+        });
+
+        inputField.value = ""; // Clear input
+      }
+
+      // Submit on button click
+      askButton.addEventListener("click", submitQuery);
+
+      // Submit on Enter key
+      inputField.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          submitQuery();
+        }
       });
-    });
 
     function generateChartHTML(data) {
       if (!Array.isArray(data)) return "Vizual məlumat tapılmadı.";
+
+      const maxValue = Math.max(...data.map(row => {
+        return Object.values(row).find(v => typeof v === 'number') || 1;
+      }));
+
       return `
         <h4>Nəticələrə əsasən vizual</h4>
         <div style="display: flex; gap: 20px; align-items: flex-end; height: 160px;">
           ${data.map(row => {
-            const height = Math.min(140, row.value || row.amount || 50); // adjust field
-            return `<div style="width: 60px; height: ${height}px; background: linear-gradient(to top, #4f46e5, #a5b4fc); text-align: center; color: white; border-radius: 4px;">${row.customer || row.city || "?"}</div>`;
+            const value = Object.values(row).find(v => typeof v === 'number') || 0;
+            const height = Math.round((value / maxValue) * 140); // scale to max height
+            const label = row.customer || row.city || Object.values(row)[0];
+            return `<div style="width: 60px; height: ${height}px; background: linear-gradient(to top, #4f46e5, #a5b4fc); text-align: center; color: white; border-radius: 4px;">${label}</div>`;
           }).join('')}
         </div>
       `;
@@ -377,6 +442,14 @@
       }
       return cookieValue;
     }
+
+    function useTemplate(text) {
+      const inputField = document.querySelector(".footer-bar input");
+      inputField.value = text;
+      inputField.focus(); // OR submitQuery(); ← optional auto-submit
+    }
+
+
   </script>
 </body>
 </html>
