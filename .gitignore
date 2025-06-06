@@ -1,6 +1,9 @@
 # Ignore VS Code specific settings
 .vscode/
 
+# Ignore databse files
+*.sqlite3
+
 # Ignore build files and output
 output/
 build/
