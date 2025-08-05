@@ -18,6 +18,7 @@ cmake_install.cmake
 *.svg
 *.json
 *.env
+Gemma-Token.txt
 
 # Ignore binary and object files
 *.o
