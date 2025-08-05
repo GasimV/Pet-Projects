@@ -1,5 +1,6 @@
 # Ignore VS Code specific settings
 .vscode/
+.ipynb_checkpoints
 
 # Ignore databse files
 *.sqlite3
