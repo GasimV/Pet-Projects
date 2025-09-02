@@ -85,7 +85,3 @@ It does **not replace professional legal advice**.
 
 MIT License
 
-```
-
----
-
