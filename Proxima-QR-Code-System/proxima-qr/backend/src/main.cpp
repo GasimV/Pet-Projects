@@ -69,10 +69,22 @@ int main(int argc, char* argv[]) {
     std::cout << "Data path: " << dataPath << std::endl;
     
     httplib::Server svr;
-    
+
     // Set static file serving for uploads
     svr.set_mount_point("/uploads", (dataPath + "/uploads").c_str());
-    
+
+    // Serve frontend (index.html)
+    svr.Get("/", [](const httplib::Request&, httplib::Response& res) {
+        std::ifstream file("../../../frontend/index.html");
+        if (file) {
+            std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+            res.set_content(content, "text/html");
+        } else {
+            res.status = 404;
+            res.set_content("Frontend not found. Please check the path.", "text/plain");
+        }
+    });
+
     // OPTIONS handler for CORS preflight
     svr.Options(".*", [](const httplib::Request&, httplib::Response& res) {
         addCorsHeaders(res);
