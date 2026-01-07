@@ -24,19 +24,14 @@ proxima-qr/
 │   │   ├── qrcodegen/
 │   │   ├── sqlite3/
 │   │   └── stb/
+│   ├── build/          (generated)
 │   └── CMakeLists.txt
 ├── frontend/
-│   ├── src/
-│   │   ├── main.tsx
-│   │   ├── App.tsx
-│   │   ├── api/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   └── types/
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── vite.config.ts
-│   └── tailwind.config.js
+│   └── index.html      (static single-page app)
+├── data/               (runtime data directory)
+│   ├── proxima.db
+│   └── uploads/
+├── .gitignore
 └── README.md
 ```
 
@@ -65,11 +60,11 @@ cmake --build . --config Release
 ### Running the Backend
 
 ```bash
-# From backend/build directory
-./proxima_qr --port 8080 --data ../data
+# From backend\build\Release> directory
+./proxima_qr --port 8080 --data ../../../data
 
 # Or on Windows
-.\proxima_qr.exe --port 8080 --data ..\data
+.\proxima_qr.exe --port 8080 --data ..\..\..\data
 ```
 
 The backend will:
@@ -77,27 +72,17 @@ The backend will:
 - Initialize SQLite database (`./data/proxima.db`)
 - Seed admin user: `admin@proxima.local` / `Admin123!`
 - Start HTTP server on port 8080
+- Serve the frontend at `http://localhost:8080`
 
-## Frontend Setup
+## Accessing the Application
 
-### Prerequisites
-- Node.js 18+
-- npm or yarn
+Once the backend is running, open your web browser and navigate to:
 
-### Installation
-
-```bash
-cd frontend
-npm install
+```
+http://localhost:8080
 ```
 
-### Running the Frontend
-
-```bash
-npm run dev
-```
-
-The frontend will start on `http://localhost:5173` and connect to backend at `http://localhost:8080`.
+The backend serves the frontend automatically - no separate frontend build or server is needed.
 
 ## Default Credentials
 
@@ -185,12 +170,10 @@ The frontend will start on `http://localhost:5173` and connect to backend at `ht
 - **Auth**: JWT (simple implementation)
 
 ### Frontend
-- **Framework**: React 18 + TypeScript
-- **Build Tool**: Vite
-- **Styling**: Tailwind CSS
-- **Routing**: React Router
-- **HTTP Client**: Axios
-- **Icons**: Lucide React
+- **Type**: Vanilla JavaScript SPA (Single Page Application)
+- **Styling**: Custom CSS with CSS Variables
+- **Architecture**: Component-based UI with state management
+- **Build**: No build process required - served directly as static HTML
 
 ## Data Storage
 
@@ -232,52 +215,30 @@ This is an MVP for internal use:
 - Custom domains for short URLs
 - API rate limiting
 
-## Backend Implementation Files
+## Quick Start
 
-### CMakeLists.txt
-```cmake
-cmake_minimum_required(VERSION 3.15)
-project(proxima_qr)
+1. **Build the backend:**
+   ```bash
+   cd backend
+   mkdir build && cd build
+   cmake ..
+   cmake --build . --config Release
+   ```
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+2. **Run the server:**
+   ```bash
+   cd Release
+   .\proxima_qr.exe --port 8080 --data ..\..\..\data
+   ```
 
-# Include directories
-include_directories(${CMAKE_SOURCE_DIR}/libs)
-include_directories(${CMAKE_SOURCE_DIR}/libs/cpp-httplib)
-include_directories(${CMAKE_SOURCE_DIR}/libs/json/include)
-include_directories(${CMAKE_SOURCE_DIR}/libs/qrcodegen/cpp)
-include_directories(${CMAKE_SOURCE_DIR}/libs/sqlite3)
-include_directories(${CMAKE_SOURCE_DIR}/libs/stb)
+3. **Open in browser:**
+   ```
+   http://localhost:8080
+   ```
 
-# Source files
-set(SOURCES
-    src/main.cpp
-    src/auth.cpp
-    src/qr_generator.cpp
-    src/storage.cpp
-    src/templates.cpp
-    libs/qrcodegen/cpp/qrcodegen.cpp
-    libs/sqlite3/sqlite3.c
-)
-
-# Create executable
-add_executable(proxima_qr ${SOURCES})
-
-# Platform-specific settings
-if(WIN32)
-    target_link_libraries(proxima_qr ws2_32 wsock32)
-else()
-    target_link_libraries(proxima_qr pthread dl)
-endif()
-
-# Compiler flags
-if(MSVC)
-    target_compile_options(proxima_qr PRIVATE /W4)
-else()
-    target_compile_options(proxima_qr PRIVATE -Wall -Wextra)
-endif()
-```
+4. **Login with default credentials:**
+   - Email: `admin@proxima.local`
+   - Password: `Admin123!`
 
 ## License
 
