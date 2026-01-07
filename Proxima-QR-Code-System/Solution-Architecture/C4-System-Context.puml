@@ -1,0 +1,25 @@
+@startuml
+!pragma layout smetana
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title Proxima QR Code System – System Context
+
+actor Admin
+actor "Internal User" as User
+actor "Public QR Scanner" as Scanner
+
+rectangle "Proxima QR Code System" {
+  component "QR Management Platform" as System
+}
+
+cloud "Object Storage\n(S3-compatible)" as Storage
+database "PostgreSQL" as DB
+
+Admin --> System : Manages users\nand QR codes
+User --> System : Creates & manages\nQR codes
+Scanner --> System : Scans QR code\n(short URL)
+
+System --> DB : Read / Write
+System --> Storage : Upload / Download\n(PDFs, logos, images)
+
+@enduml

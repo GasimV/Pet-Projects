@@ -1,0 +1,1610 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Proxima QR (vCard MVP)</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:#e5e7eb;
+      --blue:#2563eb;
+      --blue2:#1d4ed8;
+      --orange:#f97316;
+      --orange2:#ea580c;
+      --sidebar:#334155;
+      --sidebar2:#475569;
+      --greenbg:#dcfce7;
+      --greentx:#15803d;
+      --graybg:#f3f4f6;
+      --graytx:#374151;
+      --shadow: 0 10px 25px rgba(2,6,23,.08);
+      --radius: 12px;
+      --radius2: 16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-synthesis-weight: none;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      background:var(--bg);
+    }
+    a{color:inherit}
+    button,input,select,textarea{font:inherit}
+    .hidden{display:none !important}
+    .container{max-width:1200px;margin:0 auto;padding:24px}
+
+    /* Buttons */
+    .btn{
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--text);
+      padding:10px 14px;
+      border-radius:10px;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      user-select:none;
+    }
+    .btn:hover{background:#fafafa}
+    .btn:disabled{opacity:.6; cursor:not-allowed}
+    .btn-primary{
+      background:var(--blue);
+      border-color:var(--blue);
+      color:#fff;
+    }
+    .btn-primary:hover{background:var(--blue2)}
+    .btn-orange{
+      background:var(--orange);
+      border-color:var(--orange);
+      color:#fff;
+      padding:10px 16px;
+    }
+    .btn-orange:hover{background:var(--orange2)}
+    .btn-ghost{
+      background:transparent;
+      border-color:transparent;
+    }
+    .btn-ghost:hover{background:rgba(255,255,255,.08)}
+    .btn-danger{
+      color:#dc2626;
+    }
+
+    /* Inputs */
+    .input, .select, .textarea{
+      width:100%;
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:10px 12px;
+      outline:none;
+      background:#fff;
+    }
+    .input:focus, .select:focus, .textarea:focus{border-color:#93c5fd; box-shadow:0 0 0 3px rgba(147,197,253,.35)}
+    .textarea{min-height:110px; resize:vertical}
+    .label{font-size:13px; color:var(--muted); margin-bottom:6px; display:block}
+    .row{display:flex; gap:16px}
+    .col{flex:1}
+
+    /* Login */
+    .login-wrap{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+    .login-card{
+      width:100%;
+      max-width:420px;
+      background:var(--card);
+      border-radius:16px;
+      box-shadow:var(--shadow);
+      padding:28px;
+      border:1px solid var(--border);
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-bottom:18px;
+    }
+    .brand .logo{
+      width:34px;height:34px;border-radius:10px;background:var(--blue);
+      display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;
+    }
+    .brand h1{font-size:22px;margin:0}
+    .error{color:#dc2626;font-size:13px;margin-top:6px}
+
+    /* App layout */
+    .app{min-height:100vh; display:flex}
+    .sidebar{
+      width:260px;
+      background:var(--sidebar);
+      color:#fff;
+      padding:18px;
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+    .navbtn{
+      width:100%;
+      text-align:left;
+      padding:12px 12px;
+      border-radius:12px;
+      border:0;
+      background:transparent;
+      color:#fff;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .navbtn:hover{background:var(--sidebar2)}
+    .navbtn.active{background:var(--sidebar2)}
+    .content{flex:1; overflow:auto}
+    .topbar{
+      background:#fff;
+      border-bottom:1px solid var(--border);
+      padding:14px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    /* Table */
+    .card{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:14px;
+      box-shadow:0 3px 12px rgba(2,6,23,.04);
+    }
+    .table-wrap{overflow:auto}
+    table{width:100%; border-collapse:collapse}
+    thead th{
+      text-align:left;
+      font-size:12px;
+      color:var(--muted);
+      background:#f8fafc;
+      border-bottom:1px solid var(--border);
+      padding:12px 14px;
+      white-space:nowrap;
+    }
+    tbody td{
+      padding:14px;
+      border-bottom:1px solid var(--border);
+      vertical-align:middle;
+      white-space:nowrap;
+    }
+    tbody tr:hover{background:#fafafa}
+    .qrthumb{
+      width:48px;height:48px;border:1px solid var(--border); border-radius:10px;
+      display:flex;align-items:center;justify-content:center; background:#fff;
+      overflow:hidden;
+    }
+    .badge{
+      display:inline-flex;align-items:center;gap:6px;
+      font-size:12px;
+      padding:6px 10px;border-radius:999px;
+    }
+    .badge-active{background:var(--greenbg); color:var(--greentx)}
+    .badge-inactive{background:var(--graybg); color:var(--graytx)}
+    .actions{display:flex;align-items:center;gap:8px; justify-content:flex-end}
+    .btn-small{padding:8px 10px;border-radius:10px;font-size:13px}
+    .menu{
+      position:relative;
+      display:inline-block;
+    }
+    .menu-panel{
+      position:absolute;
+      right:0;
+      top:calc(100% + 6px);
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:12px;
+      box-shadow:var(--shadow);
+      min-width:170px;
+      padding:6px;
+      z-index:50;
+    }
+    .menu-item{
+      width:100%;
+      text-align:left;
+      border:0;
+      background:transparent;
+      padding:10px 10px;
+      border-radius:10px;
+      cursor:pointer;
+      font-size:13px;
+    }
+    .menu-item:hover{background:#f3f4f6}
+    .menu-item.danger{color:#dc2626}
+    .searchbar{
+      position:relative;
+      padding:14px;
+      border-bottom:1px solid var(--border);
+    }
+    .searchbar input{padding-left:40px}
+    .search-icon{
+      position:absolute;
+      left:26px; top:50%; transform:translateY(-50%);
+      color:#94a3b8;
+      font-size:16px;
+    }
+
+    /* Wizard */
+    .wizard{
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+    .wizard-body{display:flex}
+    .wizard-main{
+      flex:1;
+      padding:24px;
+      max-width:980px;
+    }
+    .wizard-side{
+      width:420px;
+      background:#fff;
+      border-left:1px solid var(--border);
+      padding:18px;
+      position:sticky;
+      top:0;
+      height:calc(100vh - 0px);
+      overflow:auto;
+    }
+    .wizard-title{font-size:20px; font-weight:700; margin:0}
+    .h2{font-size:24px;font-weight:800;margin:0 0 16px}
+    .stepper{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      padding:12px 18px;
+      border-top:1px solid var(--border);
+      background:#fff;
+      position:sticky;
+      bottom:0;
+    }
+    .step{
+      display:flex;align-items:center;gap:8px;color:var(--muted); font-size:13px;
+    }
+    .dot{
+      width:26px;height:26px;border-radius:999px;border:1px solid var(--border);
+      display:inline-flex;align-items:center;justify-content:center;
+      background:#fff;
+    }
+    .step.active{color:var(--text)}
+    .step.active .dot{background:#dbeafe;border-color:#93c5fd}
+    .sep{color:#cbd5e1}
+    .type-grid{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:12px;
+    }
+    .type-card{
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:16px;
+      text-align:left;
+      cursor:pointer;
+      background:#fff;
+    }
+    .type-card.enabled{
+      border:2px solid #60a5fa;
+      background:#eff6ff;
+    }
+    .type-card.disabled{
+      opacity:.5;
+      cursor:not-allowed;
+    }
+    .type-card h3{margin:0 0 6px; font-size:16px}
+    .type-card p{margin:0; color:var(--muted); font-size:13px}
+
+    /* Collapsible */
+    .section{
+      border:1px solid var(--border);
+      border-radius:14px;
+      overflow:hidden;
+      background:#fff;
+    }
+    .section-h{
+      padding:14px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      cursor:pointer;
+      user-select:none;
+    }
+    .section-h .left{display:flex;align-items:center;gap:10px}
+    .section-h .icon{
+      width:30px;height:30px;border-radius:10px;background:#f1f5f9;
+      display:flex;align-items:center;justify-content:center;
+    }
+    .section-h .title{font-weight:700}
+    .section-b{
+      border-top:1px solid var(--border);
+      background:#f8fafc;
+      padding:14px;
+    }
+    .chev{transition:transform .18s ease}
+    .chev.open{transform:rotate(180deg)}
+
+    /* Presets + chips */
+    .preset-row{display:flex; gap:8px; flex-wrap:wrap}
+    .preset{
+      width:44px;height:44px;border-radius:12px;border:2px solid var(--border);
+      overflow:hidden; display:flex;
+      cursor:pointer;
+      background:#fff;
+    }
+    .preset:hover{border-color:#93c5fd}
+    .preset div{flex:1}
+    .chips{display:flex; gap:8px; flex-wrap:wrap}
+    .chip{
+      padding:10px 12px;border-radius:12px;border:1px solid var(--border);
+      cursor:pointer;background:#fff;
+      font-size:13px;
+    }
+    .chip.active{border-color:#60a5fa;background:#eff6ff}
+
+    /* Upload */
+    .drop{
+      border:2px dashed #cbd5e1;
+      border-radius:14px;
+      padding:18px;
+      text-align:center;
+      background:#fff;
+    }
+    .drop img{border-radius:999px}
+    .smallmuted{font-size:12px;color:#94a3b8}
+
+    /* Phone preview */
+    .toggle{
+      display:flex;gap:8px;margin-bottom:12px;
+    }
+    .toggle .tab{
+      flex:1;
+      padding:10px 12px;border-radius:12px;border:1px solid var(--border);
+      cursor:pointer;background:#fff;
+    }
+    .toggle .tab.active{
+      background:var(--blue);
+      border-color:var(--blue);
+      color:#fff;
+    }
+    .phone{
+      width:300px;
+      height:600px;
+      margin:0 auto;
+      border:5px solid #0b0b0b;
+      border-radius:34px;
+      padding:14px;
+      background:#111;
+    }
+    .screen{
+      height:100%;
+      border-radius:26px;
+      padding:20px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:12px;
+      overflow:hidden;
+    }
+    .time{font-size:12px;color:rgba(255,255,255,.85); align-self:flex-start}
+    .avatar{
+      width:92px;height:92px;border-radius:999px;background:#fff;object-fit:cover;
+      border:6px solid rgba(255,255,255,.35);
+    }
+    .name{
+      color:#fff;font-size:20px;font-weight:800;margin-top:4px;text-align:center;
+    }
+    .addbtn{
+      background:#0b0b0b;color:#fff;border:0;border-radius:999px;padding:10px 16px;
+      display:flex;gap:8px;align-items:center;cursor:pointer;font-size:13px;
+    }
+    .cards{
+      width:100%;
+      background:#fff;border-radius:16px;padding:12px; flex:1;
+      display:flex;flex-direction:column;gap:10px;
+    }
+    .rowitem{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:10px;border-radius:12px;cursor:pointer;
+    }
+    .rowitem:hover{background:#f8fafc}
+    .rowitem .l{display:flex;gap:10px;align-items:center}
+    .arrow{color:#94a3b8}
+
+    /* QR preview */
+    .qrbox{
+      width:240px;height:240px;border-radius:18px;border:1px solid var(--border);
+      background:#fff;display:flex;align-items:center;justify-content:center;
+      overflow:hidden;
+      margin:0 auto;
+    }
+    .mono{font-family:var(--mono)}
+    .hint{color:var(--muted); font-size:13px}
+    .toast{
+      position:fixed; left:50%; bottom:22px; transform:translateX(-50%);
+      background:#0f172a; color:#fff; padding:10px 14px; border-radius:999px;
+      box-shadow:var(--shadow);
+      font-size:13px;
+      opacity:0; pointer-events:none;
+      transition:opacity .18s ease, transform .18s ease;
+    }
+    .toast.show{opacity:1; transform:translateX(-50%) translateY(-4px)}
+    @media (max-width: 1080px){
+      .wizard-body{flex-direction:column}
+      .wizard-side{width:100%; position:relative; height:auto; border-left:0; border-top:1px solid var(--border)}
+      .phone{height:560px}
+    }
+    @media (max-width: 860px){
+      .sidebar{display:none}
+    }
+  </style>
+</head>
+
+<body>
+  <!-- LOGIN -->
+  <div id="loginView" class="login-wrap">
+    <div class="login-card">
+      <div class="brand">
+        <div class="logo">QR</div>
+        <h1>Proxima QR</h1>
+      </div>
+
+      <form id="loginForm">
+        <label class="label">Email</label>
+        <input id="loginEmail" class="input" type="email" value="admin@proxima.local" required />
+
+        <div style="height:10px"></div>
+
+        <label class="label">Password</label>
+        <input id="loginPassword" class="input" type="password" value="Admin123!" required />
+
+        <div id="loginError" class="error hidden"></div>
+
+        <div style="height:14px"></div>
+
+        <button id="loginBtn" class="btn btn-primary" type="submit" style="width:100%; justify-content:center;">
+          Login
+        </button>
+      </form>
+
+      <div class="hint" style="margin-top:12px">
+        Backend: <span class="mono">http://localhost:8080</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- APP (Dashboard) -->
+  <div id="appView" class="app hidden">
+    <aside class="sidebar">
+      <div class="brand" style="margin:6px 0 10px">
+        <div class="logo" style="background:#60a5fa">QR</div>
+        <h1 style="font-size:18px;margin:0">Proxima QR</h1>
+      </div>
+
+      <button class="navbtn" id="navAnalytics">📊 <span>Analytics</span></button>
+      <button class="navbtn active" id="navQRCodes">🔳 <span>QR codes</span></button>
+      <button class="navbtn" id="navAccount">👤 <span>Account</span></button>
+
+      <div style="flex:1"></div>
+
+      <button class="navbtn" id="logoutBtn">🚪 <span>Log out</span></button>
+    </aside>
+
+    <main class="content">
+      <!-- QR Codes List -->
+      <div id="listPage">
+        <div class="container">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px">
+            <h1 style="margin:0; font-size:30px; font-weight:900;">QR codes</h1>
+            <button class="btn btn-orange" id="createBtn">➕ Create QR code</button>
+          </div>
+
+          <div class="card">
+            <div class="searchbar">
+              <div class="search-icon">🔎</div>
+              <input id="searchInput" class="input" placeholder="Search by QR code name" />
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:46px"><input type="checkbox" /></th>
+                    <th>QR code name</th>
+                    <th>QR code type</th>
+                    <th>Scans</th>
+                    <th>Status</th>
+                    <th>Creation date</th>
+                    <th style="text-align:right"> </th>
+                  </tr>
+                </thead>
+                <tbody id="qrTbody">
+                  <tr><td colspan="7" style="padding:18px; color:var(--muted)">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WIZARD -->
+      <div id="wizardPage" class="wizard hidden">
+        <div class="topbar">
+          <div style="display:flex;align-items:center;gap:14px">
+            <button class="btn btn-ghost" id="wizardBackBtn">← Back</button>
+            <div>
+              <div class="wizard-title" id="wizardTitle">Create vCard QR code</div>
+              <div class="hint">vCard only (MVP)</div>
+            </div>
+          </div>
+          <div class="hint"> </div>
+        </div>
+
+        <div class="wizard-body">
+          <div class="wizard-main">
+            <!-- Step 1 -->
+            <div id="step1">
+              <div class="h2">Choose QR code type</div>
+              <div class="type-grid">
+                <div class="type-card enabled">
+                  <h3>vCard</h3>
+                  <p>Share your electronic business card</p>
+                </div>
+                <div class="type-card disabled"><h3>Website URL</h3><p>Coming soon</p></div>
+                <div class="type-card disabled"><h3>PDF</h3><p>Coming soon</p></div>
+                <div class="type-card disabled"><h3>Images</h3><p>Coming soon</p></div>
+                <div class="type-card disabled"><h3>Social Media</h3><p>Coming soon</p></div>
+                <div class="type-card disabled"><h3>Video</h3><p>Coming soon</p></div>
+                <div class="type-card disabled"><h3>Wi-Fi</h3><p>Coming soon</p></div>
+                <div class="type-card disabled"><h3>Menu</h3><p>Coming soon</p></div>
+              </div>
+
+              <div style="margin-top:16px; display:flex; justify-content:flex-end">
+                <button class="btn btn-primary" id="toStep2">Next →</button>
+              </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div id="step2" class="hidden">
+              <div class="h2">Add content to the vCard QR code</div>
+
+              <div style="display:flex; flex-direction:column; gap:12px">
+                <!-- Design + Customize -->
+                <div class="section" data-section="design" data-open="true">
+                  <div class="section-h">
+                    <div class="left">
+                      <div class="icon">🎨</div>
+                      <div>
+                        <div class="title">Design and customize</div>
+                        <div class="hint">Choose your color scheme</div>
+                      </div>
+                    </div>
+                    <div class="chev">⌄</div>
+                  </div>
+                  <div class="section-b">
+                    <div class="label">Color presets</div>
+                    <div class="preset-row" id="presetRow"></div>
+
+                    <div style="height:14px"></div>
+
+                    <div class="row">
+                      <div class="col">
+                        <label class="label">Primary color</label>
+                        <input id="primaryColor" class="input" type="color" value="#6594FF" style="height:44px; padding:6px" />
+                      </div>
+                      <div class="col">
+                        <label class="label">Secondary color</label>
+                        <input id="secondaryColor" class="input" type="color" value="#FFFFFF" style="height:44px; padding:6px" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- About you -->
+                <div class="section" data-section="about" data-open="true">
+                  <div class="section-h">
+                    <div class="left">
+                      <div class="icon">👤</div>
+                      <div>
+                        <div class="title">About you</div>
+                        <div class="hint">Fill in the information you would like to showcase</div>
+                      </div>
+                    </div>
+                    <div class="chev">⌄</div>
+                  </div>
+                  <div class="section-b">
+                    <label class="label">Full name*</label>
+                    <input id="fullName" class="input" placeholder="e.g. Jane Cooper" />
+
+                    <div style="height:12px"></div>
+
+                    <label class="label">Image</label>
+                    <div class="drop">
+                      <input id="profileFile" type="file" accept="image/*" class="hidden" />
+                      <div id="profilePreviewWrap" class="hidden" style="margin-bottom:10px">
+                        <img id="profilePreview" alt="Profile" class="avatar" style="width:84px;height:84px;border:0" />
+                      </div>
+                      <button type="button" class="btn" id="profileUploadBtn">⬆ Upload image</button>
+                      <div class="smallmuted" style="margin-top:8px">jpg, png, svg • Max 5MB</div>
+                      <div id="profilePath" class="smallmuted mono" style="margin-top:6px"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Contact -->
+                <div class="section" data-section="contact" data-open="false">
+                  <div class="section-h">
+                    <div class="left">
+                      <div class="icon">📞</div>
+                      <div>
+                        <div class="title">Contact details</div>
+                        <div class="hint">Phone, email, website</div>
+                      </div>
+                    </div>
+                    <div class="chev">⌄</div>
+                  </div>
+                  <div class="section-b hidden">
+                    <div style="display:flex; flex-direction:column; gap:10px">
+                      <input id="phone" class="input" placeholder="Phone" />
+                      <input id="email" class="input" placeholder="Email" />
+                      <input id="website" class="input" placeholder="Website" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Company -->
+                <div class="section" data-section="company" data-open="false">
+                  <div class="section-h">
+                    <div class="left">
+                      <div class="icon">🏢</div>
+                      <div>
+                        <div class="title">Company details</div>
+                        <div class="hint">Company, title</div>
+                      </div>
+                    </div>
+                    <div class="chev">⌄</div>
+                  </div>
+                  <div class="section-b hidden">
+                    <div style="display:flex; flex-direction:column; gap:10px">
+                      <input id="company" class="input" placeholder="Company" />
+                      <input id="title" class="input" placeholder="Title" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Summary -->
+                <div class="section" data-section="summary" data-open="false">
+                  <div class="section-h">
+                    <div class="left">
+                      <div class="icon">📝</div>
+                      <div>
+                        <div class="title">Summary</div>
+                        <div class="hint">Short bio</div>
+                      </div>
+                    </div>
+                    <div class="chev">⌄</div>
+                  </div>
+                  <div class="section-b hidden">
+                    <textarea id="summary" class="textarea" placeholder="Add a summary..."></textarea>
+                  </div>
+                </div>
+
+                <!-- Social (minimal MVP) -->
+                <div class="section" data-section="social" data-open="false">
+                  <div class="section-h">
+                    <div class="left">
+                      <div class="icon">👍</div>
+                      <div>
+                        <div class="title">Social networks</div>
+                        <div class="hint">Add social links (MVP)</div>
+                      </div>
+                    </div>
+                    <div class="chev">⌄</div>
+                  </div>
+                  <div class="section-b hidden">
+                    <div class="hint" style="margin-bottom:10px">Pick a platform then add a URL.</div>
+                    <div class="row" style="align-items:flex-end">
+                      <div class="col">
+                        <label class="label">Platform</label>
+                        <select id="socialPlatform" class="select">
+                          <option value="linkedin">LinkedIn</option>
+                          <option value="instagram">Instagram</option>
+                          <option value="facebook">Facebook</option>
+                          <option value="x">X</option>
+                          <option value="tiktok">TikTok</option>
+                          <option value="youtube">YouTube</option>
+                          <option value="telegram">Telegram</option>
+                          <option value="whatsapp">WhatsApp</option>
+                        </select>
+                      </div>
+                      <div class="col">
+                        <label class="label">URL</label>
+                        <input id="socialUrl" class="input" placeholder="https://..." />
+                      </div>
+                      <div>
+                        <button class="btn btn-primary" type="button" id="addSocialBtn">Add</button>
+                      </div>
+                    </div>
+                    <div style="height:10px"></div>
+                    <div id="socialList" style="display:flex;flex-direction:column;gap:8px"></div>
+                  </div>
+                </div>
+
+                <!-- QR name -->
+                <div class="section" data-section="qrname" data-open="true">
+                  <div class="section-h">
+                    <div class="left">
+                      <div class="icon">✏️</div>
+                      <div>
+                        <div class="title">QR code name</div>
+                        <div class="hint">Set a name for your QR code</div>
+                      </div>
+                    </div>
+                    <div class="chev">⌄</div>
+                  </div>
+                  <div class="section-b">
+                    <input id="qrName" class="input" placeholder="e.g. My Business Card" />
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-top:16px; display:flex; justify-content:space-between">
+                <button class="btn" id="backTo1">← Back</button>
+                <button class="btn btn-primary" id="toStep3">Next →</button>
+              </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div id="step3" class="hidden">
+              <div class="h2">Customize QR design</div>
+
+              <div class="card" style="padding:16px">
+                <div style="display:flex;flex-direction:column;gap:16px">
+                  <div>
+                    <div class="label">Pattern</div>
+                    <div class="chips" id="patternChips"></div>
+                  </div>
+
+                  <div>
+                    <div class="label">Frame</div>
+                    <div class="chips" id="frameChips"></div>
+                  </div>
+
+                  <div>
+                    <div class="label">Logo (optional)</div>
+                    <div class="drop">
+                      <input id="logoFile" type="file" accept="image/*" class="hidden" />
+                      <div id="logoPreviewWrap" class="hidden" style="margin-bottom:10px">
+                        <img id="logoPreview" alt="Logo" style="width:74px;height:74px;border-radius:16px;object-fit:contain;background:#fff;border:1px solid var(--border);padding:8px" />
+                      </div>
+                      <button type="button" class="btn" id="logoUploadBtn">⬆ Upload logo</button>
+                      <div class="smallmuted" style="margin-top:8px">jpg, png, svg • Max 5MB</div>
+                      <div id="logoPath" class="smallmuted mono" style="margin-top:6px"></div>
+                    </div>
+                  </div>
+
+                  <div class="hint">
+                    Final QR is generated by backend. If your backend doesn’t support patterns/frames yet,
+                    the UI will still save the chosen values for later.
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-top:16px; display:flex; justify-content:space-between">
+                <button class="btn" id="backTo2">← Back</button>
+                <button class="btn btn-primary" id="saveBtn">Create QR Code</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Side preview -->
+          <div class="wizard-side">
+            <div class="toggle">
+              <button class="tab active" id="tabPreview">Preview</button>
+              <button class="tab" id="tabQR">QR code</button>
+            </div>
+
+            <div id="previewPane">
+              <div class="phone">
+                <div class="screen" id="phoneScreen">
+                  <div class="time">18:45</div>
+                  <img id="phoneAvatar" class="avatar hidden" alt="avatar"/>
+                  <div id="phoneName" class="name hidden"></div>
+                  <button class="addbtn" type="button">➕ Add contact</button>
+
+                  <div class="cards" id="phoneCards">
+                    <!-- items inserted -->
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="qrPane" class="hidden">
+              <div class="qrbox" id="qrPreviewBox">
+                <div class="hint">Save to generate QR preview</div>
+              </div>
+              <div class="hint" style="margin-top:12px">
+                Tip: downloads are available on the dashboard after saving.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stepper">
+          <div class="step" id="st1"><span class="dot">1</span> Choose Type</div>
+          <div class="sep">›</div>
+          <div class="step" id="st2"><span class="dot">2</span> Add content</div>
+          <div class="sep">›</div>
+          <div class="step" id="st3"><span class="dot">3</span> Customize</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast">Copied</div>
+
+<script>
+/** =========================
+ *  Config
+ *  ========================= */
+const API_BASE = "http://localhost:8080";
+const API_URL  = API_BASE + "/api";
+
+/** =========================
+ *  Minimal API client
+ *  ========================= */
+const api = {
+  token: localStorage.getItem("token") || "",
+
+  setToken(t){
+    this.token = t;
+    localStorage.setItem("token", t);
+  },
+  clearToken(){
+    this.token = "";
+    localStorage.removeItem("token");
+  },
+
+  async request(path, opts={}){
+    const headers = Object.assign({}, opts.headers || {});
+    if (!(opts.body instanceof FormData)) {
+      headers["Content-Type"] = headers["Content-Type"] || "application/json";
+    }
+    if (this.token) headers["Authorization"] = "Bearer " + this.token;
+
+    const res = await fetch(API_URL + path, { ...opts, headers });
+    if (!res.ok) {
+      const text = await res.text().catch(()=> "");
+      throw new Error(`${res.status} ${res.statusText} ${text}`);
+    }
+    const ct = res.headers.get("content-type") || "";
+    if (ct.includes("application/json")) return res.json();
+    return res.text();
+  },
+
+  login(email,password){
+    return this.request("/auth/login", {
+      method:"POST",
+      body: JSON.stringify({ email, password })
+    }).then(d => { this.setToken(d.token); return d; });
+  },
+
+  getQRCodes(search=""){
+    return this.request("/qr-codes?search=" + encodeURIComponent(search));
+  },
+  getQRCode(id){
+    return this.request("/qr-codes/" + encodeURIComponent(id));
+  },
+  createQRCode(payload){
+    return this.request("/qr-codes", { method:"POST", body: JSON.stringify(payload) });
+  },
+  updateQRCode(id, payload){
+    return this.request("/qr-codes/" + encodeURIComponent(id), { method:"PUT", body: JSON.stringify(payload) });
+  },
+  deleteQRCode(id){
+    return this.request("/qr-codes/" + encodeURIComponent(id), { method:"DELETE" });
+  },
+  toggleStatus(id, status){
+    return this.request(`/qr-codes/${encodeURIComponent(id)}/status`, {
+      method:"PATCH",
+      body: JSON.stringify({ status })
+    });
+  },
+  async uploadFile(file){
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch(API_URL + "/uploads", {
+      method:"POST",
+      headers: this.token ? { "Authorization": "Bearer " + this.token } : {},
+      body: fd
+    });
+    if (!res.ok) throw new Error("Upload failed: " + res.statusText);
+    return res.json();
+  },
+
+  publicUrl(shortCode){
+    return `${API_BASE}/q/${shortCode}`;
+  },
+  renderUrl(id, format, size=512){
+    return `${API_URL}/qr-codes/${encodeURIComponent(id)}/render.${format}` + (format==="svg" ? "" : `?size=${size}`);
+  }
+};
+
+/** =========================
+ *  UI helpers
+ *  ========================= */
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+function toast(msg){
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(()=> t.classList.remove("show"), 1200);
+}
+
+function fmtDate(iso){
+  try { return new Date(iso).toLocaleDateString(); } catch { return iso || ""; }
+}
+
+function escapeHtml(s){
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+}
+
+/** =========================
+ *  App state & navigation
+ *  ========================= */
+let view = "list"; // list | wizard
+let editId = null;
+
+const state = {
+  // vcard
+  vcard: {
+    fullName: "",
+    phone: "",
+    email: "",
+    website: "",
+    company: "",
+    title: "",
+    summary: "",
+    profileImage: "", // server URL path like /files/...
+    socialLinks: []
+  },
+  design: {
+    primaryColor: "#6594FF",
+    secondaryColor: "#FFFFFF",
+    pattern: "square",
+    frame: "none",
+    logo: "" // server URL path
+  },
+  qrName: "",
+  step: 1
+};
+
+/** =========================
+ *  Login
+ *  ========================= */
+$("#loginForm").addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  $("#loginError").classList.add("hidden");
+  $("#loginBtn").disabled = true;
+
+  try{
+    const email = $("#loginEmail").value.trim();
+    const password = $("#loginPassword").value;
+    await api.login(email, password);
+    showApp();
+  }catch(err){
+    $("#loginError").textContent = "Invalid credentials or backend not running.";
+    $("#loginError").classList.remove("hidden");
+  }finally{
+    $("#loginBtn").disabled = false;
+  }
+});
+
+function showLogin(){
+  $("#loginView").classList.remove("hidden");
+  $("#appView").classList.add("hidden");
+}
+function showApp(){
+  $("#loginView").classList.add("hidden");
+  $("#appView").classList.remove("hidden");
+  showList();
+}
+
+/** =========================
+ *  Dashboard list
+ *  ========================= */
+$("#logoutBtn").addEventListener("click", ()=>{
+  api.clearToken();
+  showLogin();
+});
+
+$("#createBtn").addEventListener("click", ()=>{
+  editId = null;
+  resetWizard();
+  showWizard();
+});
+
+$("#searchInput").addEventListener("input", debounce(()=>{
+  loadList();
+}, 250));
+
+function debounce(fn, ms){
+  let t=null;
+  return (...args)=>{
+    clearTimeout(t);
+    t=setTimeout(()=>fn(...args), ms);
+  };
+}
+
+async function loadList(){
+  const tbody = $("#qrTbody");
+  tbody.innerHTML = `<tr><td colspan="7" style="padding:18px; color:var(--muted)">Loading...</td></tr>`;
+  try{
+    const search = $("#searchInput").value.trim();
+    const items = await api.getQRCodes(search);
+
+    if (!items || items.length===0){
+      tbody.innerHTML = `<tr><td colspan="7" style="padding:18px; color:var(--muted)">No QR codes found</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = "";
+    for (const qr of items){
+      const tr = document.createElement("tr");
+
+      const statusBadge = qr.status === "active"
+        ? `<span class="badge badge-active">✓ Active</span>`
+        : `<span class="badge badge-inactive">Inactive</span>`;
+
+      tr.innerHTML = `
+        <td><input type="checkbox" /></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="qrthumb">
+              <img alt="qr" src="${api.renderUrl(qr.id,'png',128)}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"/>
+            </div>
+            <div style="font-weight:700">${escapeHtml(qr.name)}</div>
+          </div>
+        </td>
+        <td>vCard</td>
+        <td>${qr.scans ?? 0}</td>
+        <td>${statusBadge}</td>
+        <td style="color:var(--muted)">${fmtDate(qr.createdAt)}</td>
+        <td style="text-align:right">
+          <div class="actions">
+            <button class="btn btn-small" data-act="share">🔗 Share</button>
+
+            <div class="menu">
+              <button class="btn btn-small" data-act="download">⬇ Download</button>
+              <div class="menu-panel hidden" data-panel="download">
+                <button class="menu-item" data-dl="png">PNG</button>
+                <button class="menu-item" data-dl="svg">SVG</button>
+                <button class="menu-item" data-dl="jpg">JPG</button>
+              </div>
+            </div>
+
+            <div class="menu">
+              <button class="btn btn-small">⋯</button>
+              <div class="menu-panel hidden" data-panel="more">
+                <button class="menu-item" data-act="edit">Edit</button>
+                <button class="menu-item" data-act="toggle">${qr.status==="active" ? "Deactivate" : "Activate"}</button>
+                <button class="menu-item danger" data-act="delete">Delete</button>
+              </div>
+            </div>
+          </div>
+        </td>
+      `;
+
+      // wire actions
+      const shareBtn = tr.querySelector(`[data-act="share"]`);
+      shareBtn.addEventListener("click", async ()=>{
+        const url = api.publicUrl(qr.shortCode);
+        await navigator.clipboard.writeText(url);
+        toast("Link copied");
+      });
+
+      // download menu toggle
+      const dlMenu = tr.querySelectorAll(".menu")[0];
+      const moreMenu = tr.querySelectorAll(".menu")[1];
+      const dlBtn = dlMenu.querySelector(`[data-act="download"]`);
+      const dlPanel = dlMenu.querySelector(`[data-panel="download"]`);
+      const moreBtn = moreMenu.querySelector("button");
+      const morePanel = moreMenu.querySelector(`[data-panel="more"]`);
+
+      dlBtn.addEventListener("click",(ev)=>{
+        ev.stopPropagation();
+        closeAllMenus();
+        dlPanel.classList.toggle("hidden");
+      });
+      moreBtn.addEventListener("click",(ev)=>{
+        ev.stopPropagation();
+        closeAllMenus();
+        morePanel.classList.toggle("hidden");
+      });
+
+      dlPanel.querySelectorAll("[data-dl]").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          window.open(api.renderUrl(qr.id, btn.dataset.dl, 1024), "_blank");
+          dlPanel.classList.add("hidden");
+        });
+      });
+
+      morePanel.querySelector(`[data-act="edit"]`).addEventListener("click", async ()=>{
+        editId = qr.id;
+        await loadWizardForEdit(qr.id);
+        showWizard();
+      });
+
+      morePanel.querySelector(`[data-act="toggle"]`).addEventListener("click", async ()=>{
+        try{
+          const newStatus = qr.status === "active" ? "inactive" : "active";
+          await api.toggleStatus(qr.id, newStatus);
+          await loadList();
+        }catch{
+          alert("Failed to update status");
+        }
+      });
+
+      morePanel.querySelector(`[data-act="delete"]`).addEventListener("click", async ()=>{
+        if (!confirm("Delete this QR code?")) return;
+        try{
+          await api.deleteQRCode(qr.id);
+          await loadList();
+        }catch{
+          alert("Failed to delete");
+        }
+      });
+
+      tbody.appendChild(tr);
+    }
+  }catch(err){
+    tbody.innerHTML = `<tr><td colspan="7" style="padding:18px; color:#dc2626">Failed to load (check backend + token)</td></tr>`;
+  }
+}
+
+function closeAllMenus(){
+  $$(".menu-panel").forEach(p=>p.classList.add("hidden"));
+}
+document.addEventListener("click", closeAllMenus);
+
+/** =========================
+ *  Wizard
+ *  ========================= */
+$("#wizardBackBtn").addEventListener("click", ()=> {
+  showList();
+});
+$("#toStep2").addEventListener("click", ()=> setStep(2));
+$("#toStep3").addEventListener("click", ()=> setStep(3));
+$("#backTo1").addEventListener("click", ()=> setStep(1));
+$("#backTo2").addEventListener("click", ()=> setStep(2));
+$("#saveBtn").addEventListener("click", saveWizard);
+
+$("#tabPreview").addEventListener("click", ()=>{
+  $("#tabPreview").classList.add("active");
+  $("#tabQR").classList.remove("active");
+  $("#previewPane").classList.remove("hidden");
+  $("#qrPane").classList.add("hidden");
+});
+$("#tabQR").addEventListener("click", ()=>{
+  $("#tabQR").classList.add("active");
+  $("#tabPreview").classList.remove("active");
+  $("#previewPane").classList.add("hidden");
+  $("#qrPane").classList.remove("hidden");
+});
+
+function resetWizard(){
+  state.step = 1;
+  state.vcard = { fullName:"", phone:"", email:"", website:"", company:"", title:"", summary:"", profileImage:"", socialLinks:[] };
+  state.design = { primaryColor:"#6594FF", secondaryColor:"#FFFFFF", pattern:"square", frame:"none", logo:"" };
+  state.qrName = "";
+  editId = null;
+
+  // reset inputs
+  $("#primaryColor").value = state.design.primaryColor;
+  $("#secondaryColor").value = state.design.secondaryColor;
+  $("#fullName").value = "";
+  $("#phone").value = "";
+  $("#email").value = "";
+  $("#website").value = "";
+  $("#company").value = "";
+  $("#title").value = "";
+  $("#summary").value = "";
+  $("#qrName").value = "";
+  $("#profilePath").textContent = "";
+  $("#logoPath").textContent = "";
+  $("#profilePreviewWrap").classList.add("hidden");
+  $("#logoPreviewWrap").classList.add("hidden");
+  $("#socialList").innerHTML = "";
+  setStep(1);
+  updatePreview();
+  updateWizardTitle();
+}
+
+function setStep(n){
+  state.step = n;
+  $("#step1").classList.toggle("hidden", n!==1);
+  $("#step2").classList.toggle("hidden", n!==2);
+  $("#step3").classList.toggle("hidden", n!==3);
+
+  $("#st1").classList.toggle("active", n===1);
+  $("#st2").classList.toggle("active", n===2);
+  $("#st3").classList.toggle("active", n===3);
+
+  // label save button
+  $("#saveBtn").textContent = editId ? "Update QR Code" : "Create QR Code";
+  updateWizardTitle();
+  updatePreview();
+}
+
+function updateWizardTitle(){
+  $("#wizardTitle").textContent = (editId ? "Edit" : "Create") + " vCard QR code";
+}
+
+/* Collapsible sections */
+$$(".section").forEach(sec=>{
+  const head = sec.querySelector(".section-h");
+  const chev = sec.querySelector(".chev");
+  const body = sec.querySelector(".section-b");
+  const open = sec.dataset.open === "true";
+
+  if (!open && body) body.classList.add("hidden");
+  if (open && chev) chev.classList.add("open");
+
+  head.addEventListener("click", ()=>{
+    const isHidden = body.classList.toggle("hidden");
+    chev.classList.toggle("open", !isHidden);
+  });
+});
+
+/* Presets */
+const colorPresets = [
+  ["#6594FF", "#FFFFFF"],
+  ["#E0E0E0", "#000000"],
+  ["#E0E0E0", "#6594FF"],
+  ["#D4E5FF", "#6594FF"],
+  ["#A594FF", "#FFFFFF"],
+  ["#66CC99", "#000000"],
+  ["#FFAA44", "#FFFFFF"],
+];
+
+(function initPresets(){
+  const row = $("#presetRow");
+  row.innerHTML = "";
+  colorPresets.forEach((c, i)=>{
+    const btn = document.createElement("div");
+    btn.className = "preset";
+    btn.title = c[0] + " / " + c[1];
+    btn.innerHTML = `<div style="background:${c[0]}"></div><div style="background:${c[1]}"></div>`;
+    btn.addEventListener("click", ()=>{
+      state.design.primaryColor = c[0];
+      state.design.secondaryColor = c[1];
+      $("#primaryColor").value = c[0];
+      $("#secondaryColor").value = c[1];
+      updatePreview();
+    });
+    row.appendChild(btn);
+  });
+})();
+
+/* Chips: patterns + frames */
+(function initChips(){
+  const patterns = ["square","rounded","dots"];
+  const frames = ["none","frame1","frame2","frame3","frame4"];
+
+  const pWrap = $("#patternChips");
+  pWrap.innerHTML = "";
+  patterns.forEach(p=>{
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip";
+    b.textContent = p[0].toUpperCase()+p.slice(1);
+    b.addEventListener("click", ()=>{
+      state.design.pattern = p;
+      syncChips();
+      updatePreview();
+    });
+    b.dataset.val = p;
+    pWrap.appendChild(b);
+  });
+
+  const fWrap = $("#frameChips");
+  fWrap.innerHTML = "";
+  frames.forEach(f=>{
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip";
+    b.textContent = f==="none" ? "None" : ("Frame " + f.slice(-1));
+    b.addEventListener("click", ()=>{
+      state.design.frame = f;
+      syncChips();
+      updatePreview();
+    });
+    b.dataset.val = f;
+    fWrap.appendChild(b);
+  });
+
+  function syncChips(){
+    pWrap.querySelectorAll(".chip").forEach(x=>x.classList.toggle("active", x.dataset.val===state.design.pattern));
+    fWrap.querySelectorAll(".chip").forEach(x=>x.classList.toggle("active", x.dataset.val===state.design.frame));
+  }
+  window.__syncChips = syncChips;
+  syncChips();
+})();
+
+/* Bind inputs */
+$("#primaryColor").addEventListener("input",(e)=>{
+  state.design.primaryColor = e.target.value;
+  updatePreview();
+});
+$("#secondaryColor").addEventListener("input",(e)=>{
+  state.design.secondaryColor = e.target.value;
+  updatePreview();
+});
+$("#fullName").addEventListener("input",(e)=>{
+  state.vcard.fullName = e.target.value;
+  updatePreview();
+});
+$("#phone").addEventListener("input",(e)=> state.vcard.phone = e.target.value);
+$("#email").addEventListener("input",(e)=> state.vcard.email = e.target.value);
+$("#website").addEventListener("input",(e)=> state.vcard.website = e.target.value);
+$("#company").addEventListener("input",(e)=> { state.vcard.company = e.target.value; updatePreview(); });
+$("#title").addEventListener("input",(e)=> { state.vcard.title = e.target.value; updatePreview(); });
+$("#summary").addEventListener("input",(e)=> { state.vcard.summary = e.target.value; updatePreview(); });
+$("#qrName").addEventListener("input",(e)=> state.qrName = e.target.value);
+
+/* Social */
+$("#addSocialBtn").addEventListener("click", ()=>{
+  const platform = $("#socialPlatform").value;
+  const url = $("#socialUrl").value.trim();
+  if (!url) return;
+
+  state.vcard.socialLinks.push({ platform, url });
+  $("#socialUrl").value = "";
+  renderSocialList();
+  updatePreview();
+});
+
+function renderSocialList(){
+  const list = $("#socialList");
+  list.innerHTML = "";
+  state.vcard.socialLinks.forEach((s, idx)=>{
+    const row = document.createElement("div");
+    row.className = "card";
+    row.style.padding = "10px 12px";
+    row.style.display = "flex";
+    row.style.alignItems = "center";
+    row.style.justifyContent = "space-between";
+    row.innerHTML = `
+      <div style="display:flex;flex-direction:column">
+        <div style="font-weight:700; font-size:13px">${escapeHtml(s.platform)}</div>
+        <div class="smallmuted">${escapeHtml(s.url)}</div>
+      </div>
+      <button class="btn btn-small btn-danger" type="button">Remove</button>
+    `;
+    row.querySelector("button").addEventListener("click", ()=>{
+      state.vcard.socialLinks.splice(idx, 1);
+      renderSocialList();
+      updatePreview();
+    });
+    list.appendChild(row);
+  });
+}
+
+/* Uploads */
+$("#profileUploadBtn").addEventListener("click", ()=> $("#profileFile").click());
+$("#logoUploadBtn").addEventListener("click", ()=> $("#logoFile").click());
+
+$("#profileFile").addEventListener("change", async (e)=>{
+  const file = e.target.files?.[0];
+  if (!file) return;
+  try{
+    const up = await api.uploadFile(file);
+    // expect { url: "/files/..." } or similar
+    state.vcard.profileImage = up.url || up.path || "";
+    $("#profilePath").textContent = state.vcard.profileImage;
+    if (state.vcard.profileImage){
+      $("#profilePreview").src = API_BASE + state.vcard.profileImage;
+      $("#profilePreviewWrap").classList.remove("hidden");
+    }
+    updatePreview();
+  }catch{
+    alert("Failed to upload profile image");
+  }finally{
+    e.target.value = "";
+  }
+});
+
+$("#logoFile").addEventListener("change", async (e)=>{
+  const file = e.target.files?.[0];
+  if (!file) return;
+  try{
+    const up = await api.uploadFile(file);
+    state.design.logo = up.url || up.path || "";
+    $("#logoPath").textContent = state.design.logo;
+    if (state.design.logo){
+      $("#logoPreview").src = API_BASE + state.design.logo;
+      $("#logoPreviewWrap").classList.remove("hidden");
+    }
+    updatePreview();
+  }catch{
+    alert("Failed to upload logo");
+  }finally{
+    e.target.value = "";
+  }
+});
+
+/* Preview rendering */
+function updatePreview(){
+  // phone gradient
+  const scr = $("#phoneScreen");
+  const p = state.design.primaryColor || "#6594FF";
+  scr.style.background = `linear-gradient(180deg, ${p} 0%, ${p}dd 100%)`;
+
+  // avatar
+  const av = $("#phoneAvatar");
+  if (state.vcard.profileImage){
+    av.src = API_BASE + state.vcard.profileImage;
+    av.classList.remove("hidden");
+  } else {
+    av.classList.add("hidden");
+  }
+
+  // name
+  const nm = $("#phoneName");
+  if (state.vcard.fullName){
+    nm.textContent = state.vcard.fullName;
+    nm.classList.remove("hidden");
+  } else {
+    nm.classList.add("hidden");
+  }
+
+  // cards list
+  const cards = $("#phoneCards");
+  cards.innerHTML = "";
+
+  function addRow(icon, label, enabled){
+    if (!enabled) return;
+    const div = document.createElement("div");
+    div.className = "rowitem";
+    div.innerHTML = `
+      <div class="l"><span>${icon}</span><span>${label}</span></div>
+      <span class="arrow">→</span>
+    `;
+    cards.appendChild(div);
+  }
+
+  addRow("📞", "Contact", !!(state.vcard.phone || state.vcard.email || state.vcard.website));
+  addRow("🏢", "Company", !!(state.vcard.company || state.vcard.title));
+  addRow("📝", "Summary", !!(state.vcard.summary));
+  addRow("👍", "Social media", !!(state.vcard.socialLinks && state.vcard.socialLinks.length));
+}
+
+/* Save wizard */
+async function saveWizard(){
+  const name = ($("#qrName").value || "").trim();
+  const fullName = ($("#fullName").value || "").trim();
+  if (!name || !fullName){
+    alert("Please fill required fields: Full name and QR code name.");
+    return;
+  }
+
+  // update state from fields (in case)
+  state.qrName = name;
+  state.vcard.fullName = fullName;
+
+  const payload = {
+    name: state.qrName,
+    vcard: state.vcard,
+    design: state.design
+  };
+
+  $("#saveBtn").disabled = true;
+  try{
+    if (editId){
+      await api.updateQRCode(editId, payload);
+      toast("Updated");
+    } else {
+      await api.createQRCode(payload);
+      toast("Created");
+    }
+    showList();
+  }catch(err){
+    console.error(err);
+    alert("Failed to save (check backend endpoints + auth).");
+  }finally{
+    $("#saveBtn").disabled = false;
+  }
+}
+
+/* Load wizard for edit */
+async function loadWizardForEdit(id){
+  resetWizard();
+  editId = id;
+  try{
+    const d = await api.getQRCode(id);
+    state.qrName = d.name || "";
+    state.vcard = Object.assign(state.vcard, d.vcard || {});
+    state.design = Object.assign(state.design, d.design || {});
+
+    // sync inputs
+    $("#qrName").value = state.qrName;
+    $("#fullName").value = state.vcard.fullName || "";
+    $("#phone").value = state.vcard.phone || "";
+    $("#email").value = state.vcard.email || "";
+    $("#website").value = state.vcard.website || "";
+    $("#company").value = state.vcard.company || "";
+    $("#title").value = state.vcard.title || "";
+    $("#summary").value = state.vcard.summary || "";
+    $("#primaryColor").value = state.design.primaryColor || "#6594FF";
+    $("#secondaryColor").value = state.design.secondaryColor || "#FFFFFF";
+
+    if (state.vcard.profileImage){
+      $("#profilePath").textContent = state.vcard.profileImage;
+      $("#profilePreview").src = API_BASE + state.vcard.profileImage;
+      $("#profilePreviewWrap").classList.remove("hidden");
+    }
+    if (state.design.logo){
+      $("#logoPath").textContent = state.design.logo;
+      $("#logoPreview").src = API_BASE + state.design.logo;
+      $("#logoPreviewWrap").classList.remove("hidden");
+    }
+
+    if (window.__syncChips) window.__syncChips();
+    renderSocialList();
+    updateWizardTitle();
+    updatePreview();
+  }catch(e){
+    alert("Failed to load QR for editing.");
+  }
+}
+
+/** =========================
+ *  Page switching
+ *  ========================= */
+function showList(){
+  view = "list";
+  $("#listPage").classList.remove("hidden");
+  $("#wizardPage").classList.add("hidden");
+  loadList();
+}
+
+function showWizard(){
+  view = "wizard";
+  $("#listPage").classList.add("hidden");
+  $("#wizardPage").classList.remove("hidden");
+  setStep(1);
+  updatePreview();
+  updateWizardTitle();
+
+  // switch to Preview tab by default
+  $("#tabPreview").click();
+
+  // If editing, show QR preview in QR tab once saved (optional)
+}
+
+/** =========================
+ *  Boot
+ *  ========================= */
+(function boot(){
+  if (api.token){
+    showApp();
+  } else {
+    showLogin();
+  }
+})();
+</script>
+</body>
+</html>
