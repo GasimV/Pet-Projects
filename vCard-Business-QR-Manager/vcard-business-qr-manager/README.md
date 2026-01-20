@@ -5,7 +5,7 @@ A simple MVP web application for creating and managing vCard QR codes.
 ## Project Structure
 
 ```
-proxima-qr/
+vcard-business-qr-manager/
 ├── backend/
 │   ├── src/
 │   │   ├── main.cpp
