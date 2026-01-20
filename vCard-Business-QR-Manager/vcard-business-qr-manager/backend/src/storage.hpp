@@ -25,6 +25,7 @@ struct QRCode {
     std::string status;
     std::string shortCode;
     std::string vcardData;
+    std::string businesspageData;
     std::string designData;
     int scans;
     std::string createdAt;

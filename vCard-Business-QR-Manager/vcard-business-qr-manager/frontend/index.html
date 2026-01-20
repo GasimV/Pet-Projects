@@ -557,13 +557,16 @@
             <div id="step1">
               <div class="h2">Choose QR code type</div>
               <div class="type-grid">
-                <div class="type-card enabled">
+                <div class="type-card" data-type="vcard">
                   <h3>vCard</h3>
                   <p>Share your electronic business card</p>
                 </div>
+                <div class="type-card" data-type="businesspage">
+                  <h3>Business Page</h3>
+                  <p>Share your business information</p>
+                </div>
                 <div class="type-card disabled"><h3>Website URL</h3><p>Coming soon</p></div>
                 <div class="type-card disabled"><h3>PDF</h3><p>Coming soon</p></div>
-                <div class="type-card disabled"><h3>Images</h3><p>Coming soon</p></div>
                 <div class="type-card disabled"><h3>Social Media</h3><p>Coming soon</p></div>
                 <div class="type-card disabled"><h3>Video</h3><p>Coming soon</p></div>
                 <div class="type-card disabled"><h3>Wi-Fi</h3><p>Coming soon</p></div>
@@ -575,8 +578,8 @@
               </div>
             </div>
 
-            <!-- Step 2 -->
-            <div id="step2" class="hidden">
+            <!-- Step 2 vCard -->
+            <div id="step2vcard" class="hidden">
               <div class="h2">Add content to the vCard QR code</div>
 
               <div style="display:flex; flex-direction:column; gap:12px">
@@ -765,6 +768,417 @@
               </div>
             </div>
 
+            <!-- Step 2 Business Page -->
+            <div id="step2business" class="hidden">
+              <div class="h2">Add content to the Business Page QR code</div>
+
+              <div style="display:flex; flex-direction:column; gap:12px">
+                <!-- Design + Customize -->
+                <div class="section" data-section="businessdesign" data-open="true">
+                  <div class="section-h">
+                    <div class="left">
+                      <div class="icon">🎨</div>
+                      <div>
+                        <div class="title">Design and customize</div>
+                        <div class="hint">Choose your color scheme</div>
+                      </div>
+                    </div>
+                    <div class="chev">⌄</div>
+                  </div>
+                  <div class="section-b">
+                    <div class="label">Color presets</div>
+                    <div class="preset-row" id="businessPresetRow"></div>
+
+                    <div style="height:14px"></div>
+
+                    <div class="row">
+                      <div class="col">
+                        <label class="label">Primary color</label>
+                        <input id="businessPrimaryColor" class="input" type="color" value="#6594FF" style="height:44px; padding:6px" />
+                      </div>
+                      <div class="col">
+                        <label class="label">Secondary color</label>
+                        <input id="businessSecondaryColor" class="input" type="color" value="#FFFFFF" style="height:44px; padding:6px" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Add Image -->
+                <div class="section" data-section="businessimage" data-open="true">
+                  <div class="section-h">
+                    <div class="left">
+                      <div class="icon">🖼️</div>
+                      <div>
+                        <div class="title">Add Image</div>
+                        <div class="hint">Upload an image for your business</div>
+                      </div>
+                    </div>
+                    <div class="chev">⌄</div>
+                  </div>
+                  <div class="section-b">
+                    <label class="label">Upload image (jpg, png, svg)</label>
+                    <div class="drop">
+                      <input id="businessImageFile" type="file" accept="image/*" class="hidden" />
+                      <div id="businessImagePreviewWrap" class="hidden" style="margin-bottom:10px">
+                        <img id="businessImagePreview" alt="Business" style="width:200px;border-radius:12px;object-fit:cover" />
+                      </div>
+                      <button type="button" class="btn" id="businessImageUploadBtn">⬆ Upload image</button>
+                      <div class="smallmuted" style="margin-top:8px">Maximum size: 5MB</div>
+                      <div id="businessImagePath" class="smallmuted mono" style="margin-top:6px"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Business information -->
+                <div class="section" data-section="businessinfo" data-open="true">
+                  <div class="section-h">
+                    <div class="left">
+                      <div class="icon">ℹ️</div>
+                      <div>
+                        <div class="title">Business information</div>
+                        <div class="hint">Provide details about your business</div>
+                      </div>
+                    </div>
+                    <div class="chev">⌄</div>
+                  </div>
+                  <div class="section-b">
+                    <div style="display:flex; flex-direction:column; gap:10px">
+                      <div>
+                        <label class="label">Company name*</label>
+                        <input id="businessCompanyName" class="input" placeholder="e.g. My Company" />
+                      </div>
+                      <div class="row">
+                        <div class="col">
+                          <label class="label">Title</label>
+                          <input id="businessTitle" class="input" placeholder="e.g. Animation Studio" />
+                        </div>
+                      </div>
+                      <div>
+                        <label class="label">Subtitle</label>
+                        <input id="businessSubtitle" class="input" placeholder="e.g. Creating animated videos since 1994" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Contact information -->
+                <div class="section" data-section="businesscontact" data-open="false">
+                  <div class="section-h">
+                    <div class="left">
+                      <div class="icon">📞</div>
+                      <div>
+                        <div class="title">Contact information</div>
+                        <div class="hint">Provide contact details</div>
+                      </div>
+                    </div>
+                    <div class="chev">⌄</div>
+                  </div>
+                  <div class="section-b hidden">
+                    <div style="display:flex; flex-direction:column; gap:10px">
+                      <div>
+                        <label class="label">Full name</label>
+                        <input id="businessFullName" class="input" placeholder="e.g. Mike Smith" />
+                      </div>
+                      <div>
+                        <label class="label">Phone number</label>
+                        <input id="businessPhone" class="input" placeholder="e.g. +1809999999" />
+                      </div>
+                      <div>
+                        <label class="label">Alternative phone number</label>
+                        <input id="businessAltPhone" class="input" placeholder="e.g. +1809999999" />
+                      </div>
+                      <div>
+                        <label class="label">Website</label>
+                        <input id="businessWebsite" class="input" placeholder="e.g. https://pauljones.com" />
+                      </div>
+                      <div>
+                        <label class="label">Email</label>
+                        <input id="businessEmail" class="input" placeholder="e.g. name@email.com" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Location -->
+                <div class="section" data-section="businesslocation" data-open="false">
+                  <div class="section-h">
+                    <div class="left">
+                      <div class="icon">📍</div>
+                      <div>
+                        <div class="title">Location</div>
+                        <div class="hint">Provide your business address if you have one</div>
+                      </div>
+                    </div>
+                    <div class="chev">⌄</div>
+                  </div>
+                  <div class="section-b hidden">
+                    <div style="display:flex; flex-direction:column; gap:10px">
+                      <div>
+                        <label class="label">Street</label>
+                        <input id="businessStreet" class="input" placeholder="e.g. Spring Avenue, 9/18" />
+                      </div>
+                      <div class="row">
+                        <div class="col">
+                          <label class="label">Postal code</label>
+                          <input id="businessPostalCode" class="input" placeholder="e.g. 10005" />
+                        </div>
+                        <div class="col">
+                          <label class="label">City</label>
+                          <input id="businessCity" class="input" placeholder="e.g. New York City" />
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col">
+                          <label class="label">State</label>
+                          <input id="businessState" class="input" placeholder="e.g. New York" />
+                        </div>
+                        <div class="col">
+                          <label class="label">Country</label>
+                          <input id="businessCountry" class="input" placeholder="e.g. United States" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Opening hours -->
+                <div class="section" data-section="businesshours" data-open="false">
+                  <div class="section-h">
+                    <div class="left">
+                      <div class="icon">🕐</div>
+                      <div>
+                        <div class="title">Opening hours</div>
+                        <div class="hint">If applicable, provide your business hours</div>
+                      </div>
+                    </div>
+                    <div class="chev">⌄</div>
+                  </div>
+                  <div class="section-b hidden">
+                    <div class="chips" style="margin-bottom:12px">
+                      <button class="chip active" data-hours-mode="ampm" type="button">AM/PM</button>
+                      <button class="chip" data-hours-mode="24hrs" type="button">24 hrs</button>
+                      <button class="chip" data-hours-mode="24/7" type="button">Open 24/7</button>
+                    </div>
+                    <div id="hoursContainer" style="display:flex; flex-direction:column; gap:10px">
+                      <div class="row" style="align-items:center">
+                        <div style="width:50px">
+                          <input type="checkbox" id="hoursMonFri" checked style="width:18px;height:18px" />
+                        </div>
+                        <div style="flex:1"><label for="hoursMonFri">Monday - Friday</label></div>
+                        <div class="col">
+                          <input id="hoursMonFriStart" class="input" placeholder="10:00 AM" />
+                        </div>
+                        <div class="col">
+                          <input id="hoursMonFriEnd" class="input" placeholder="08:00 PM" />
+                        </div>
+                      </div>
+                      <div style="text-align:center; color:var(--muted)">OR</div>
+                      <div class="row" style="align-items:center">
+                        <div style="width:50px">
+                          <input type="checkbox" id="hoursMon" />
+                        </div>
+                        <div style="flex:1"><label for="hoursMon">Monday</label></div>
+                        <div class="col">
+                          <input id="hoursMon Start" class="input" placeholder="10:00 AM" />
+                        </div>
+                        <div class="col">
+                          <input id="hoursMonEnd" class="input" placeholder="08:00 PM" />
+                        </div>
+                      </div>
+                      <div class="row" style="align-items:center">
+                        <div style="width:50px">
+                          <input type="checkbox" id="hoursTue" />
+                        </div>
+                        <div style="flex:1"><label for="hoursTue">Tuesday</label></div>
+                        <div class="col">
+                          <input id="hoursTueStart" class="input" placeholder="10:00 AM" />
+                        </div>
+                        <div class="col">
+                          <input id="hoursTueEnd" class="input" placeholder="08:00 PM" />
+                        </div>
+                      </div>
+                      <div class="row" style="align-items:center">
+                        <div style="width:50px">
+                          <input type="checkbox" id="hoursWed" />
+                        </div>
+                        <div style="flex:1"><label for="hoursWed">Wednesday</label></div>
+                        <div class="col">
+                          <input id="hoursWedStart" class="input" placeholder="10:00 AM" />
+                        </div>
+                        <div class="col">
+                          <input id="hoursWedEnd" class="input" placeholder="08:00 PM" />
+                        </div>
+                      </div>
+                      <div class="row" style="align-items:center">
+                        <div style="width:50px">
+                          <input type="checkbox" id="hoursThu" />
+                        </div>
+                        <div style="flex:1"><label for="hoursThu">Thursday</label></div>
+                        <div class="col">
+                          <input id="hoursThuStart" class="input" placeholder="10:00 AM" />
+                        </div>
+                        <div class="col">
+                          <input id="hoursThuEnd" class="input" placeholder="08:00 PM" />
+                        </div>
+                      </div>
+                      <div class="row" style="align-items:center">
+                        <div style="width:50px">
+                          <input type="checkbox" id="hoursFri" />
+                        </div>
+                        <div style="flex:1"><label for="hoursFri">Friday</label></div>
+                        <div class="col">
+                          <input id="hoursFriStart" class="input" placeholder="10:00 AM" />
+                        </div>
+                        <div class="col">
+                          <input id="hoursFriEnd" class="input" placeholder="08:00 PM" />
+                        </div>
+                      </div>
+                      <div class="row" style="align-items:center">
+                        <div style="width:50px">
+                          <input type="checkbox" id="hoursSat" />
+                        </div>
+                        <div style="flex:1"><label for="hoursSat">Saturday</label></div>
+                        <div class="col">
+                          <input id="hoursSatStart" class="input" placeholder="10:00 AM" />
+                        </div>
+                        <div class="col">
+                          <input id="hoursSatEnd" class="input" placeholder="08:00 PM" />
+                        </div>
+                      </div>
+                      <div class="row" style="align-items:center">
+                        <div style="width:50px">
+                          <input type="checkbox" id="hoursSun" />
+                        </div>
+                        <div style="flex:1"><label for="hoursSun">Sunday</label></div>
+                        <div class="col">
+                          <input id="hoursSunStart" class="input" placeholder="10:00 AM" />
+                        </div>
+                        <div class="col">
+                          <input id="hoursSunEnd" class="input" placeholder="08:00 PM" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Facilities -->
+                <div class="section" data-section="businessfacilities" data-open="false">
+                  <div class="section-h">
+                    <div class="left">
+                      <div class="icon">☺️</div>
+                      <div>
+                        <div class="title">Facilities</div>
+                        <div class="hint">Select relevant icons below to showcase business facilities</div>
+                      </div>
+                    </div>
+                    <div class="chev">⌄</div>
+                  </div>
+                  <div class="section-b hidden">
+                    <div class="chips" id="facilitiesChips" style="flex-wrap:wrap">
+                      <button class="chip" data-facility="wifi" type="button">📶 Wi-Fi</button>
+                      <button class="chip" data-facility="train" type="button">🚊 Train</button>
+                      <button class="chip" data-facility="seating" type="button">🪑 Seating</button>
+                      <button class="chip" data-facility="taxi" type="button">🚕 Taxi</button>
+                      <button class="chip" data-facility="accessible" type="button">♿ Accessible</button>
+                      <button class="chip" data-facility="accommodation" type="button">🛏️ Accommodation</button>
+                      <button class="chip" data-facility="toilet" type="button">🚽 Toilet</button>
+                      <button class="chip" data-facility="cafe" type="button">☕ Cafe</button>
+                      <button class="chip" data-facility="childfriendly" type="button">👶 Child-friendly</button>
+                      <button class="chip" data-facility="bar" type="button">🍺 Bar</button>
+                      <button class="chip" data-facility="petfriendly" type="button">🐾 Pet-friendly</button>
+                      <button class="chip" data-facility="restaurant" type="button">🍽️ Restaurant</button>
+                      <button class="chip" data-facility="parking" type="button">🅿️ Parking</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- About the company -->
+                <div class="section" data-section="businessabout" data-open="false">
+                  <div class="section-h">
+                    <div class="left">
+                      <div class="icon">🏢</div>
+                      <div>
+                        <div class="title">About the company</div>
+                        <div class="hint">Provide a summary about your company</div>
+                      </div>
+                    </div>
+                    <div class="chev">⌄</div>
+                  </div>
+                  <div class="section-b hidden">
+                    <label class="label">Summary</label>
+                    <textarea id="businessSummary" class="textarea" placeholder="e.g. Our company provides a wide variety of services"></textarea>
+                  </div>
+                </div>
+
+                <!-- Social networks -->
+                <div class="section" data-section="businesssocial" data-open="false">
+                  <div class="section-h">
+                    <div class="left">
+                      <div class="icon">👍</div>
+                      <div>
+                        <div class="title">Social networks</div>
+                        <div class="hint">Click on the icons below to add social media channels you'd like to display</div>
+                      </div>
+                    </div>
+                    <div class="chev">⌄</div>
+                  </div>
+                  <div class="section-b hidden">
+                    <div class="hint" style="margin-bottom:10px">Pick a platform then add a URL.</div>
+                    <div class="row" style="align-items:flex-end">
+                      <div class="col">
+                        <label class="label">Platform</label>
+                        <select id="businessSocialPlatform" class="select">
+                          <option value="facebook">Facebook</option>
+                          <option value="instagram">Instagram</option>
+                          <option value="twitter">Twitter/X</option>
+                          <option value="linkedin">LinkedIn</option>
+                          <option value="tiktok">TikTok</option>
+                          <option value="youtube">YouTube</option>
+                          <option value="whatsapp">WhatsApp</option>
+                          <option value="telegram">Telegram</option>
+                          <option value="snapchat">Snapchat</option>
+                          <option value="yelp">Yelp</option>
+                          <option value="google">Google</option>
+                        </select>
+                      </div>
+                      <div class="col">
+                        <label class="label">URL</label>
+                        <input id="businessSocialUrl" class="input" placeholder="https://..." />
+                      </div>
+                      <div>
+                        <button class="btn btn-primary" type="button" id="addBusinessSocialBtn">Add</button>
+                      </div>
+                    </div>
+                    <div style="height:10px"></div>
+                    <div id="businessSocialList" style="display:flex;flex-direction:column;gap:8px"></div>
+                  </div>
+                </div>
+
+                <!-- QR name -->
+                <div class="section" data-section="businessqrname" data-open="true">
+                  <div class="section-h">
+                    <div class="left">
+                      <div class="icon">✏️</div>
+                      <div>
+                        <div class="title">QR code name</div>
+                        <div class="hint">Set a name for your QR code</div>
+                      </div>
+                    </div>
+                    <div class="chev">⌄</div>
+                  </div>
+                  <div class="section-b">
+                    <input id="businessQrName" class="input" placeholder="e.g. My Business QR" />
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-top:16px; display:flex; justify-content:space-between">
+                <button class="btn" id="backTo1Business">← Back</button>
+                <button class="btn btn-primary" id="toStep3Business">Next →</button>
+              </div>
+            </div>
+
             <!-- Step 3 -->
             <div id="step3" class="hidden">
               <div class="h2">Customize QR design</div>
@@ -858,7 +1272,8 @@
 /** =========================
  *  Config
  *  ========================= */
-const API_BASE = "http://localhost:8080";
+// Auto-detect server URL from browser location
+const API_BASE = window.location.origin;
 const API_URL  = API_BASE + "/api";
 
 /** =========================
@@ -967,6 +1382,7 @@ function escapeHtml(s){
  *  ========================= */
 let view = "list"; // list | wizard
 let editId = null;
+let qrType = "vcard"; // vcard | businesspage
 
 const state = {
   // vcard
@@ -979,6 +1395,37 @@ const state = {
     title: "",
     summary: "",
     profileImage: "", // server URL path like /files/...
+    socialLinks: []
+  },
+  // business page
+  businesspage: {
+    companyName: "",
+    title: "",
+    subtitle: "",
+    businessImage: "",
+    fullName: "",
+    phone: "",
+    altPhone: "",
+    website: "",
+    email: "",
+    street: "",
+    postalCode: "",
+    city: "",
+    state: "",
+    country: "",
+    hoursMode: "ampm",
+    openingHours: {
+      monFri: { enabled: true, start: "10:00 AM", end: "08:00 PM" },
+      mon: { enabled: false, start: "", end: "" },
+      tue: { enabled: false, start: "", end: "" },
+      wed: { enabled: false, start: "", end: "" },
+      thu: { enabled: false, start: "", end: "" },
+      fri: { enabled: false, start: "", end: "" },
+      sat: { enabled: false, start: "", end: "" },
+      sun: { enabled: false, start: "", end: "" }
+    },
+    facilities: [],
+    summary: "",
     socialLinks: []
   },
   design: {
@@ -1112,8 +1559,33 @@ async function loadList(){
       const shareBtn = tr.querySelector(`[data-act="share"]`);
       shareBtn.addEventListener("click", async ()=>{
         const url = api.publicUrl(qr.shortCode);
-        await navigator.clipboard.writeText(url);
-        toast("Link copied");
+
+        // Try modern clipboard API first
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          try {
+            await navigator.clipboard.writeText(url);
+            toast("Link copied");
+            return;
+          } catch (err) {
+            console.error("Clipboard API failed:", err);
+          }
+        }
+
+        // Fallback: create temporary input element
+        try {
+          const input = document.createElement("input");
+          input.value = url;
+          input.style.position = "fixed";
+          input.style.opacity = "0";
+          document.body.appendChild(input);
+          input.select();
+          document.execCommand("copy");
+          document.body.removeChild(input);
+          toast("Link copied");
+        } catch (err) {
+          console.error("Fallback copy failed:", err);
+          alert("Failed to copy. Please copy manually: " + url);
+        }
       });
 
       // download menu toggle
@@ -1183,6 +1655,15 @@ document.addEventListener("click", closeAllMenus);
 /** =========================
  *  Wizard
  *  ========================= */
+// Type card selection
+$$(".type-card:not(.disabled)").forEach(card => {
+  card.addEventListener("click", ()=> {
+    $$(".type-card").forEach(c => c.classList.remove("enabled"));
+    card.classList.add("enabled");
+    qrType = card.dataset.type || "vcard";
+  });
+});
+
 $("#wizardBackBtn").addEventListener("click", ()=> {
   showList();
 });
@@ -1190,6 +1671,8 @@ $("#toStep2").addEventListener("click", ()=> setStep(2));
 $("#toStep3").addEventListener("click", ()=> setStep(3));
 $("#backTo1").addEventListener("click", ()=> setStep(1));
 $("#backTo2").addEventListener("click", ()=> setStep(2));
+$("#backTo1Business").addEventListener("click", ()=> setStep(1));
+$("#toStep3Business").addEventListener("click", ()=> setStep(3));
 $("#saveBtn").addEventListener("click", saveWizard);
 
 $("#tabPreview").addEventListener("click", ()=>{
@@ -1208,11 +1691,30 @@ $("#tabQR").addEventListener("click", ()=>{
 function resetWizard(){
   state.step = 1;
   state.vcard = { fullName:"", phone:"", email:"", website:"", company:"", title:"", summary:"", profileImage:"", socialLinks:[] };
+  state.businesspage = {
+    companyName: "", title: "", subtitle: "", businessImage: "", fullName: "", phone: "", altPhone: "",
+    website: "", email: "", street: "", postalCode: "", city: "", state: "", country: "",
+    hoursMode: "ampm",
+    openingHours: {
+      monFri: { enabled: true, start: "10:00 AM", end: "08:00 PM" },
+      mon: { enabled: false, start: "", end: "" }, tue: { enabled: false, start: "", end: "" },
+      wed: { enabled: false, start: "", end: "" }, thu: { enabled: false, start: "", end: "" },
+      fri: { enabled: false, start: "", end: "" }, sat: { enabled: false, start: "", end: "" },
+      sun: { enabled: false, start: "", end: "" }
+    },
+    facilities: [], summary: "", socialLinks: []
+  };
   state.design = { primaryColor:"#6594FF", secondaryColor:"#FFFFFF", pattern:"square", frame:"none", logo:"" };
   state.qrName = "";
   editId = null;
+  qrType = "vcard";
 
-  // reset inputs
+  // Reset type cards
+  $$(".type-card").forEach(c => c.classList.remove("enabled"));
+  const vcardCard = $(".type-card[data-type='vcard']");
+  if (vcardCard) vcardCard.classList.add("enabled");
+
+  // reset vCard inputs
   $("#primaryColor").value = state.design.primaryColor;
   $("#secondaryColor").value = state.design.secondaryColor;
   $("#fullName").value = "";
@@ -1228,6 +1730,33 @@ function resetWizard(){
   $("#profilePreviewWrap").classList.add("hidden");
   $("#logoPreviewWrap").classList.add("hidden");
   $("#socialList").innerHTML = "";
+
+  // reset business page inputs
+  $("#businessPrimaryColor").value = state.design.primaryColor;
+  $("#businessSecondaryColor").value = state.design.secondaryColor;
+  $("#businessCompanyName").value = "";
+  $("#businessTitle").value = "";
+  $("#businessSubtitle").value = "";
+  $("#businessFullName").value = "";
+  $("#businessPhone").value = "";
+  $("#businessAltPhone").value = "";
+  $("#businessWebsite").value = "";
+  $("#businessEmail").value = "";
+  $("#businessStreet").value = "";
+  $("#businessPostalCode").value = "";
+  $("#businessCity").value = "";
+  $("#businessState").value = "";
+  $("#businessCountry").value = "";
+  $("#businessSummary").value = "";
+  $("#businessQrName").value = "";
+  $("#businessImagePath").textContent = "";
+  $("#businessImagePreviewWrap").classList.add("hidden");
+  $("#businessSocialList").innerHTML = "";
+  $$("[data-facility]").forEach(btn => btn.classList.remove("active"));
+  $$("[data-hours-mode]").forEach(btn => btn.classList.remove("active"));
+  const ampmBtn = $("[data-hours-mode='ampm']");
+  if (ampmBtn) ampmBtn.classList.add("active");
+
   setStep(1);
   updatePreview();
   updateWizardTitle();
@@ -1236,7 +1765,16 @@ function resetWizard(){
 function setStep(n){
   state.step = n;
   $("#step1").classList.toggle("hidden", n!==1);
-  $("#step2").classList.toggle("hidden", n!==2);
+
+  // Show correct step 2 based on type
+  if (qrType === "vcard") {
+    $("#step2vcard").classList.toggle("hidden", n!==2);
+    $("#step2business").classList.add("hidden");
+  } else {
+    $("#step2business").classList.toggle("hidden", n!==2);
+    $("#step2vcard").classList.add("hidden");
+  }
+
   $("#step3").classList.toggle("hidden", n!==3);
 
   $("#st1").classList.toggle("active", n===1);
@@ -1250,7 +1788,8 @@ function setStep(n){
 }
 
 function updateWizardTitle(){
-  $("#wizardTitle").textContent = (editId ? "Edit" : "Create") + " vCard QR code";
+  const typeName = qrType === "vcard" ? "vCard" : "Business Page";
+  $("#wizardTitle").textContent = (editId ? "Edit" : "Create") + " " + typeName + " QR code";
 }
 
 /* Collapsible sections */
@@ -1403,9 +1942,117 @@ function renderSocialList(){
   });
 }
 
+/* Business Page inputs */
+$("#businessPrimaryColor").addEventListener("input",(e)=>{
+  state.design.primaryColor = e.target.value;
+  updatePreview();
+});
+$("#businessSecondaryColor").addEventListener("input",(e)=>{
+  state.design.secondaryColor = e.target.value;
+  updatePreview();
+});
+$("#businessCompanyName").addEventListener("input",(e)=> { state.businesspage.companyName = e.target.value; updatePreview(); });
+$("#businessTitle").addEventListener("input",(e)=> { state.businesspage.title = e.target.value; updatePreview(); });
+$("#businessSubtitle").addEventListener("input",(e)=> { state.businesspage.subtitle = e.target.value; updatePreview(); });
+$("#businessFullName").addEventListener("input",(e)=> state.businesspage.fullName = e.target.value);
+$("#businessPhone").addEventListener("input",(e)=> state.businesspage.phone = e.target.value);
+$("#businessAltPhone").addEventListener("input",(e)=> state.businesspage.altPhone = e.target.value);
+$("#businessWebsite").addEventListener("input",(e)=> state.businesspage.website = e.target.value);
+$("#businessEmail").addEventListener("input",(e)=> state.businesspage.email = e.target.value);
+$("#businessStreet").addEventListener("input",(e)=> state.businesspage.street = e.target.value);
+$("#businessPostalCode").addEventListener("input",(e)=> state.businesspage.postalCode = e.target.value);
+$("#businessCity").addEventListener("input",(e)=> state.businesspage.city = e.target.value);
+$("#businessState").addEventListener("input",(e)=> state.businesspage.state = e.target.value);
+$("#businessCountry").addEventListener("input",(e)=> state.businesspage.country = e.target.value);
+$("#businessSummary").addEventListener("input",(e)=> state.businesspage.summary = e.target.value);
+$("#businessQrName").addEventListener("input",(e)=> state.qrName = e.target.value);
+
+// Business hours mode
+$$("[data-hours-mode]").forEach(btn => {
+  btn.addEventListener("click", ()=> {
+    $$("[data-hours-mode]").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    state.businesspage.hoursMode = btn.dataset.hoursMode;
+  });
+});
+
+// Business facilities
+$("#facilitiesChips").querySelectorAll("[data-facility]").forEach(btn => {
+  btn.addEventListener("click", ()=> {
+    btn.classList.toggle("active");
+    const facility = btn.dataset.facility;
+    const idx = state.businesspage.facilities.indexOf(facility);
+    if (idx > -1) {
+      state.businesspage.facilities.splice(idx, 1);
+    } else {
+      state.businesspage.facilities.push(facility);
+    }
+  });
+});
+
+// Business social
+$("#addBusinessSocialBtn").addEventListener("click", ()=>{
+  const platform = $("#businessSocialPlatform").value;
+  const url = $("#businessSocialUrl").value.trim();
+  if (!url) return;
+
+  state.businesspage.socialLinks.push({ platform, url });
+  $("#businessSocialUrl").value = "";
+  renderBusinessSocialList();
+  updatePreview();
+});
+
+function renderBusinessSocialList(){
+  const list = $("#businessSocialList");
+  list.innerHTML = "";
+  state.businesspage.socialLinks.forEach((s, idx)=>{
+    const row = document.createElement("div");
+    row.className = "card";
+    row.style.padding = "10px 12px";
+    row.style.display = "flex";
+    row.style.alignItems = "center";
+    row.style.justifyContent = "space-between";
+    row.innerHTML = `
+      <div style="display:flex;flex-direction:column">
+        <div style="font-weight:700; font-size:13px">${escapeHtml(s.platform)}</div>
+        <div class="smallmuted">${escapeHtml(s.url)}</div>
+      </div>
+      <button class="btn btn-small btn-danger" type="button">Remove</button>
+    `;
+    row.querySelector("button").addEventListener("click", ()=>{
+      state.businesspage.socialLinks.splice(idx, 1);
+      renderBusinessSocialList();
+      updatePreview();
+    });
+    list.appendChild(row);
+  });
+}
+
+// Business preset colors
+(function initBusinessPresets(){
+  const row = $("#businessPresetRow");
+  if (!row) return;
+  row.innerHTML = "";
+  colorPresets.forEach((c, i)=>{
+    const btn = document.createElement("div");
+    btn.className = "preset";
+    btn.title = c[0] + " / " + c[1];
+    btn.innerHTML = `<div style="background:${c[0]}"></div><div style="background:${c[1]}"></div>`;
+    btn.addEventListener("click", ()=>{
+      state.design.primaryColor = c[0];
+      state.design.secondaryColor = c[1];
+      $("#businessPrimaryColor").value = c[0];
+      $("#businessSecondaryColor").value = c[1];
+      updatePreview();
+    });
+    row.appendChild(btn);
+  });
+})();
+
 /* Uploads */
 $("#profileUploadBtn").addEventListener("click", ()=> $("#profileFile").click());
 $("#logoUploadBtn").addEventListener("click", ()=> $("#logoFile").click());
+$("#businessImageUploadBtn").addEventListener("click", ()=> $("#businessImageFile").click());
 
 $("#profileFile").addEventListener("change", async (e)=>{
   const file = e.target.files?.[0];
@@ -1446,86 +2093,176 @@ $("#logoFile").addEventListener("change", async (e)=>{
   }
 });
 
+$("#businessImageFile").addEventListener("change", async (e)=>{
+  const file = e.target.files?.[0];
+  if (!file) return;
+  try{
+    const up = await api.uploadFile(file);
+    state.businesspage.businessImage = up.url || up.path || "";
+    $("#businessImagePath").textContent = state.businesspage.businessImage;
+    if (state.businesspage.businessImage){
+      $("#businessImagePreview").src = API_BASE + state.businesspage.businessImage;
+      $("#businessImagePreviewWrap").classList.remove("hidden");
+    }
+    updatePreview();
+  }catch{
+    alert("Failed to upload business image");
+  }finally{
+    e.target.value = "";
+  }
+});
+
 /* Preview rendering */
 function updatePreview(){
-  // phone gradient
   const scr = $("#phoneScreen");
   const p = state.design.primaryColor || "#6594FF";
   scr.style.background = `linear-gradient(180deg, ${p} 0%, ${p}dd 100%)`;
 
-  // avatar
   const av = $("#phoneAvatar");
-  if (state.vcard.profileImage){
-    av.src = API_BASE + state.vcard.profileImage;
-    av.classList.remove("hidden");
-  } else {
-    av.classList.add("hidden");
-  }
-
-  // name
   const nm = $("#phoneName");
-  if (state.vcard.fullName){
-    nm.textContent = state.vcard.fullName;
-    nm.classList.remove("hidden");
-  } else {
-    nm.classList.add("hidden");
-  }
-
-  // cards list
   const cards = $("#phoneCards");
-  cards.innerHTML = "";
 
-  function addRow(icon, label, enabled){
-    if (!enabled) return;
-    const div = document.createElement("div");
-    div.className = "rowitem";
-    div.innerHTML = `
-      <div class="l"><span>${icon}</span><span>${label}</span></div>
-      <span class="arrow">→</span>
-    `;
-    cards.appendChild(div);
+  if (qrType === "vcard") {
+    // vCard preview
+    if (state.vcard.profileImage){
+      av.src = API_BASE + state.vcard.profileImage;
+      av.classList.remove("hidden");
+    } else {
+      av.classList.add("hidden");
+    }
+
+    if (state.vcard.fullName){
+      nm.textContent = state.vcard.fullName;
+      nm.classList.remove("hidden");
+    } else {
+      nm.classList.add("hidden");
+    }
+
+    cards.innerHTML = "";
+
+    function addRow(icon, label, enabled){
+      if (!enabled) return;
+      const div = document.createElement("div");
+      div.className = "rowitem";
+      div.innerHTML = `
+        <div class="l"><span>${icon}</span><span>${label}</span></div>
+        <span class="arrow">→</span>
+      `;
+      cards.appendChild(div);
+    }
+
+    addRow("📞", "Contact", !!(state.vcard.phone || state.vcard.email || state.vcard.website));
+    addRow("🏢", "Company", !!(state.vcard.company || state.vcard.title));
+    addRow("📝", "Summary", !!(state.vcard.summary));
+    addRow("👍", "Social media", !!(state.vcard.socialLinks && state.vcard.socialLinks.length));
+  } else {
+    // Business Page preview
+    if (state.businesspage.businessImage){
+      av.src = API_BASE + state.businesspage.businessImage;
+      av.classList.remove("hidden");
+    } else {
+      av.classList.add("hidden");
+    }
+
+    if (state.businesspage.companyName){
+      nm.textContent = state.businesspage.companyName;
+      nm.classList.remove("hidden");
+    } else {
+      nm.classList.add("hidden");
+    }
+
+    cards.innerHTML = "";
+
+    function addBusinessRow(icon, label, enabled){
+      if (!enabled) return;
+      const div = document.createElement("div");
+      div.className = "rowitem";
+      div.innerHTML = `
+        <div class="l"><span>${icon}</span><span>${label}</span></div>
+        <span class="arrow">→</span>
+      `;
+      cards.appendChild(div);
+    }
+
+    addBusinessRow("🕐", "Open hours", state.businesspage.hoursMode === "24/7" || !!(state.businesspage.openingHours.monFri.enabled));
+    addBusinessRow("📍", "Location", !!(state.businesspage.street || state.businesspage.city));
+    addBusinessRow("☺️", "Facilities", !!(state.businesspage.facilities && state.businesspage.facilities.length));
   }
-
-  addRow("📞", "Contact", !!(state.vcard.phone || state.vcard.email || state.vcard.website));
-  addRow("🏢", "Company", !!(state.vcard.company || state.vcard.title));
-  addRow("📝", "Summary", !!(state.vcard.summary));
-  addRow("👍", "Social media", !!(state.vcard.socialLinks && state.vcard.socialLinks.length));
 }
 
 /* Save wizard */
 async function saveWizard(){
-  const name = ($("#qrName").value || "").trim();
-  const fullName = ($("#fullName").value || "").trim();
-  if (!name || !fullName){
-    alert("Please fill required fields: Full name and QR code name.");
-    return;
-  }
+  let name, requiredField;
 
-  // update state from fields (in case)
-  state.qrName = name;
-  state.vcard.fullName = fullName;
-
-  const payload = {
-    name: state.qrName,
-    vcard: state.vcard,
-    design: state.design
-  };
-
-  $("#saveBtn").disabled = true;
-  try{
-    if (editId){
-      await api.updateQRCode(editId, payload);
-      toast("Updated");
-    } else {
-      await api.createQRCode(payload);
-      toast("Created");
+  if (qrType === "vcard") {
+    name = ($("#qrName").value || "").trim();
+    requiredField = ($("#fullName").value || "").trim();
+    if (!name || !requiredField){
+      alert("Please fill required fields: Full name and QR code name.");
+      return;
     }
-    showList();
-  }catch(err){
-    console.error(err);
-    alert("Failed to save (check backend endpoints + auth).");
-  }finally{
-    $("#saveBtn").disabled = false;
+
+    state.qrName = name;
+    state.vcard.fullName = requiredField;
+
+    const payload = {
+      name: state.qrName,
+      type: "vcard",
+      vcard: state.vcard,
+      design: state.design
+    };
+
+    $("#saveBtn").disabled = true;
+    try{
+      if (editId){
+        await api.updateQRCode(editId, payload);
+        toast("Updated");
+      } else {
+        await api.createQRCode(payload);
+        toast("Created");
+      }
+      showList();
+    }catch(err){
+      console.error(err);
+      alert("Failed to save (check backend endpoints + auth).");
+    }finally{
+      $("#saveBtn").disabled = false;
+    }
+  } else {
+    // Business Page
+    name = ($("#businessQrName").value || "").trim();
+    requiredField = ($("#businessCompanyName").value || "").trim();
+    if (!name || !requiredField){
+      alert("Please fill required fields: Company name and QR code name.");
+      return;
+    }
+
+    state.qrName = name;
+    state.businesspage.companyName = requiredField;
+
+    const payload = {
+      name: state.qrName,
+      type: "businesspage",
+      businesspage: state.businesspage,
+      design: state.design
+    };
+
+    $("#saveBtn").disabled = true;
+    try{
+      if (editId){
+        await api.updateQRCode(editId, payload);
+        toast("Updated");
+      } else {
+        await api.createQRCode(payload);
+        toast("Created");
+      }
+      showList();
+    }catch(err){
+      console.error(err);
+      alert("Failed to save (check backend endpoints + auth).");
+    }finally{
+      $("#saveBtn").disabled = false;
+    }
   }
 }
 

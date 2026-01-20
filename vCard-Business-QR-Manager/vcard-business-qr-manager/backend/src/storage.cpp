@@ -55,6 +55,7 @@ bool Storage::init(const std::string& dbPath) {
             status TEXT NOT NULL,
             short_code TEXT UNIQUE NOT NULL,
             vcard_data TEXT,
+            businesspage_data TEXT,
             design_data TEXT,
             scans INTEGER DEFAULT 0,
             created_at TEXT NOT NULL,
@@ -163,25 +164,25 @@ std::vector<QRCode> Storage::getQRCodes(const std::string& userId, const std::st
     std::vector<QRCode> qrCodes;
     sqlite3_stmt* stmt;
     
-    std::string sql = "SELECT id, user_id, name, type, status, short_code, vcard_data, design_data, scans, created_at, updated_at FROM qr_codes WHERE user_id = ?";
-    
+    std::string sql = "SELECT id, user_id, name, type, status, short_code, vcard_data, businesspage_data, design_data, scans, created_at, updated_at FROM qr_codes WHERE user_id = ?";
+
     if (!search.empty()) {
         sql += " AND name LIKE ?";
     }
-    
+
     sql += " ORDER BY created_at DESC";
-    
+
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         return qrCodes;
     }
-    
+
     sqlite3_bind_text(stmt, 1, userId.c_str(), -1, SQLITE_STATIC);
-    
+
     if (!search.empty()) {
         std::string searchPattern = "%" + search + "%";
         sqlite3_bind_text(stmt, 2, searchPattern.c_str(), -1, SQLITE_TRANSIENT);
     }
-    
+
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         QRCode qr;
         qr.id = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
@@ -191,11 +192,12 @@ std::vector<QRCode> Storage::getQRCodes(const std::string& userId, const std::st
         qr.status = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
         qr.shortCode = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
         qr.vcardData = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 6));
-        qr.designData = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 7));
-        qr.scans = sqlite3_column_int(stmt, 8);
-        qr.createdAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 9));
-        qr.updatedAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 10));
-        
+        qr.businesspageData = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 7));
+        qr.designData = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 8));
+        qr.scans = sqlite3_column_int(stmt, 9);
+        qr.createdAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 10));
+        qr.updatedAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 11));
+
         qrCodes.push_back(qr);
     }
     
@@ -205,14 +207,14 @@ std::vector<QRCode> Storage::getQRCodes(const std::string& userId, const std::st
 
 std::optional<QRCode> Storage::getQRCode(const std::string& id) {
     sqlite3_stmt* stmt;
-    const char* sql = "SELECT id, user_id, name, type, status, short_code, vcard_data, design_data, scans, created_at, updated_at FROM qr_codes WHERE id = ?";
-    
+    const char* sql = "SELECT id, user_id, name, type, status, short_code, vcard_data, businesspage_data, design_data, scans, created_at, updated_at FROM qr_codes WHERE id = ?";
+
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
         return std::nullopt;
     }
-    
+
     sqlite3_bind_text(stmt, 1, id.c_str(), -1, SQLITE_STATIC);
-    
+
     if (sqlite3_step(stmt) == SQLITE_ROW) {
         QRCode qr;
         qr.id = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
@@ -222,29 +224,30 @@ std::optional<QRCode> Storage::getQRCode(const std::string& id) {
         qr.status = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
         qr.shortCode = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
         qr.vcardData = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 6));
-        qr.designData = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 7));
-        qr.scans = sqlite3_column_int(stmt, 8);
-        qr.createdAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 9));
-        qr.updatedAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 10));
-        
+        qr.businesspageData = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 7));
+        qr.designData = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 8));
+        qr.scans = sqlite3_column_int(stmt, 9);
+        qr.createdAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 10));
+        qr.updatedAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 11));
+
         sqlite3_finalize(stmt);
         return qr;
     }
-    
+
     sqlite3_finalize(stmt);
     return std::nullopt;
 }
 
 std::optional<QRCode> Storage::getQRCodeByShortCode(const std::string& shortCode) {
     sqlite3_stmt* stmt;
-    const char* sql = "SELECT id, user_id, name, type, status, short_code, vcard_data, design_data, scans, created_at, updated_at FROM qr_codes WHERE short_code = ?";
-    
+    const char* sql = "SELECT id, user_id, name, type, status, short_code, vcard_data, businesspage_data, design_data, scans, created_at, updated_at FROM qr_codes WHERE short_code = ?";
+
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
         return std::nullopt;
     }
-    
+
     sqlite3_bind_text(stmt, 1, shortCode.c_str(), -1, SQLITE_STATIC);
-    
+
     if (sqlite3_step(stmt) == SQLITE_ROW) {
         QRCode qr;
         qr.id = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
@@ -254,30 +257,31 @@ std::optional<QRCode> Storage::getQRCodeByShortCode(const std::string& shortCode
         qr.status = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
         qr.shortCode = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
         qr.vcardData = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 6));
-        qr.designData = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 7));
-        qr.scans = sqlite3_column_int(stmt, 8);
-        qr.createdAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 9));
-        qr.updatedAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 10));
-        
+        qr.businesspageData = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 7));
+        qr.designData = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 8));
+        qr.scans = sqlite3_column_int(stmt, 9);
+        qr.createdAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 10));
+        qr.updatedAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 11));
+
         // Increment scans count
         execute("UPDATE qr_codes SET scans = scans + 1 WHERE id = '" + qr.id + "'");
-        
+
         sqlite3_finalize(stmt);
         return qr;
     }
-    
+
     sqlite3_finalize(stmt);
     return std::nullopt;
 }
 
 bool Storage::createQRCode(const QRCode& qr) {
     sqlite3_stmt* stmt;
-    const char* sql = "INSERT INTO qr_codes (id, user_id, name, type, status, short_code, vcard_data, design_data, scans, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    
+    const char* sql = "INSERT INTO qr_codes (id, user_id, name, type, status, short_code, vcard_data, businesspage_data, design_data, scans, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
         return false;
     }
-    
+
     sqlite3_bind_text(stmt, 1, qr.id.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, 2, qr.userId.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, 3, qr.name.c_str(), -1, SQLITE_STATIC);
@@ -285,11 +289,12 @@ bool Storage::createQRCode(const QRCode& qr) {
     sqlite3_bind_text(stmt, 5, qr.status.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, 6, qr.shortCode.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, 7, qr.vcardData.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 8, qr.designData.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_int(stmt, 9, qr.scans);
-    sqlite3_bind_text(stmt, 10, qr.createdAt.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 11, qr.updatedAt.c_str(), -1, SQLITE_STATIC);
-    
+    sqlite3_bind_text(stmt, 8, qr.businesspageData.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 9, qr.designData.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 10, qr.scans);
+    sqlite3_bind_text(stmt, 11, qr.createdAt.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 12, qr.updatedAt.c_str(), -1, SQLITE_STATIC);
+
     bool success = sqlite3_step(stmt) == SQLITE_DONE;
     sqlite3_finalize(stmt);
     return success;
@@ -297,19 +302,20 @@ bool Storage::createQRCode(const QRCode& qr) {
 
 bool Storage::updateQRCode(const QRCode& qr) {
     sqlite3_stmt* stmt;
-    const char* sql = "UPDATE qr_codes SET name = ?, status = ?, vcard_data = ?, design_data = ?, updated_at = ? WHERE id = ?";
-    
+    const char* sql = "UPDATE qr_codes SET name = ?, status = ?, vcard_data = ?, businesspage_data = ?, design_data = ?, updated_at = ? WHERE id = ?";
+
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
         return false;
     }
-    
+
     sqlite3_bind_text(stmt, 1, qr.name.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, 2, qr.status.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, 3, qr.vcardData.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 4, qr.designData.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 5, qr.updatedAt.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 6, qr.id.c_str(), -1, SQLITE_STATIC);
-    
+    sqlite3_bind_text(stmt, 4, qr.businesspageData.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 5, qr.designData.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 6, qr.updatedAt.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 7, qr.id.c_str(), -1, SQLITE_STATIC);
+
     bool success = sqlite3_step(stmt) == SQLITE_DONE;
     sqlite3_finalize(stmt);
     return success;

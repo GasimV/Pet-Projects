@@ -12,6 +12,16 @@
 #include <chrono>
 #include <cstring>
 
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#pragma comment(lib, "ws2_32.lib")
+#else
+#include <ifaddrs.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#endif
+
 using json = nlohmann::json;
 namespace fs = std::filesystem;
 
@@ -19,6 +29,90 @@ namespace fs = std::filesystem;
 Storage storage;
 Auth auth;
 QRGenerator qrGen;
+std::string baseUrl = "http://localhost:8080";
+
+// Get local IP address (Wi-Fi)
+std::string getLocalIP() {
+#ifdef _WIN32
+    // Windows implementation
+    WSADATA wsaData;
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        return "localhost";
+    }
+
+    char hostname[256];
+    if (gethostname(hostname, sizeof(hostname)) == SOCKET_ERROR) {
+        WSACleanup();
+        return "localhost";
+    }
+
+    struct addrinfo hints, *result = nullptr;
+    ZeroMemory(&hints, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    if (getaddrinfo(hostname, nullptr, &hints, &result) != 0) {
+        WSACleanup();
+        return "localhost";
+    }
+
+    std::string fallbackIP;
+    for (struct addrinfo* ptr = result; ptr != nullptr; ptr = ptr->ai_next) {
+        struct sockaddr_in* sockaddr_ipv4 = (struct sockaddr_in*)ptr->ai_addr;
+        char ipStr[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &sockaddr_ipv4->sin_addr, ipStr, INET_ADDRSTRLEN);
+
+        std::string ip(ipStr);
+        // Skip loopback
+        if (ip.find("127.") != 0) {
+            // Prioritize 192.168.x.x (home Wi-Fi) over other private networks
+            if (ip.find("192.168.") == 0) {
+                freeaddrinfo(result);
+                WSACleanup();
+                return ip;
+            }
+            // Save as fallback if no 192.168.x.x found
+            if (fallbackIP.empty()) {
+                fallbackIP = ip;
+            }
+        }
+    }
+
+    freeaddrinfo(result);
+    WSACleanup();
+    return fallbackIP.empty() ? "localhost" : fallbackIP;
+#else
+    // Unix/Linux implementation
+    struct ifaddrs *ifaddr, *ifa;
+    char host[NI_MAXHOST];
+
+    if (getifaddrs(&ifaddr) == -1) {
+        return "localhost";
+    }
+
+    for (ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
+        if (ifa->ifa_addr == nullptr) continue;
+
+        int family = ifa->ifa_addr->sa_family;
+        if (family == AF_INET) {
+            int s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in),
+                               host, NI_MAXHOST, nullptr, 0, NI_NUMERICHOST);
+            if (s == 0) {
+                std::string ip(host);
+                // Skip loopback and look for typical local network IPs
+                if (ip.find("127.") != 0 && (ip.find("192.168.") == 0 || ip.find("10.") == 0 || ip.find("172.") == 0)) {
+                    freeifaddrs(ifaddr);
+                    return ip;
+                }
+            }
+        }
+    }
+
+    freeifaddrs(ifaddr);
+    return "localhost";
+#endif
+}
 
 // CORS middleware
 void addCorsHeaders(httplib::Response& res) {
@@ -50,7 +144,11 @@ int main(int argc, char* argv[]) {
             dataPath = argv[++i];
         }
     }
-    
+
+    // Get local IP and set base URL
+    std::string localIP = getLocalIP();
+    baseUrl = "http://" + localIP + ":" + std::to_string(port);
+
     // Initialize directories
     fs::create_directories(dataPath);
     fs::create_directories(dataPath + "/uploads");
@@ -198,7 +296,7 @@ int main(int argc, char* argv[]) {
         
         try {
             json body = json::parse(req.body);
-            
+
             // Validate required fields
             if (!body.contains("name") || body["name"].get<std::string>().empty()) {
                 res.status = 400;
@@ -206,34 +304,48 @@ int main(int argc, char* argv[]) {
                 res.set_content(error.dump(), "application/json");
                 return;
             }
-            
-            if (!body.contains("vcard") || !body["vcard"].contains("fullName") || 
-                body["vcard"]["fullName"].get<std::string>().empty()) {
-                res.status = 400;
-                json error = {{"error", "Full name is required"}};
-                res.set_content(error.dump(), "application/json");
-                return;
+
+            std::string type = body.value("type", "vcard");
+
+            // Type-specific validation
+            if (type == "vcard") {
+                if (!body.contains("vcard") || !body["vcard"].contains("fullName") ||
+                    body["vcard"]["fullName"].get<std::string>().empty()) {
+                    res.status = 400;
+                    json error = {{"error", "Full name is required for vCard"}};
+                    res.set_content(error.dump(), "application/json");
+                    return;
+                }
+            } else if (type == "businesspage") {
+                if (!body.contains("businesspage") || !body["businesspage"].contains("companyName") ||
+                    body["businesspage"]["companyName"].get<std::string>().empty()) {
+                    res.status = 400;
+                    json error = {{"error", "Company name is required for Business Page"}};
+                    res.set_content(error.dump(), "application/json");
+                    return;
+                }
             }
-            
+
             QRCode qr;
             qr.id = generateUUID();
             qr.userId = userId;
             qr.name = body["name"];
-            qr.type = "VCARD";
+            qr.type = type == "businesspage" ? "BUSINESSPAGE" : "VCARD";
             qr.status = "active";
             qr.shortCode = generateShortCode();
-            qr.vcardData = body["vcard"].dump();
+            qr.vcardData = body.contains("vcard") ? body["vcard"].dump() : "{}";
+            qr.businesspageData = body.contains("businesspage") ? body["businesspage"].dump() : "{}";
             qr.designData = body.contains("design") ? body["design"].dump() : "{}";
             qr.scans = 0;
             qr.createdAt = getCurrentTimestamp();
             qr.updatedAt = qr.createdAt;
-            
+
             if (storage.createQRCode(qr)) {
                 json response = {
                     {"id", qr.id},
                     {"name", qr.name},
                     {"shortCode", qr.shortCode},
-                    {"publicUrl", "http://localhost:8080/q/" + qr.shortCode}
+                    {"publicUrl", baseUrl + "/q/" + qr.shortCode}
                 };
                 res.status = 201;
                 res.set_content(response.dump(), "application/json");
@@ -264,20 +376,22 @@ int main(int argc, char* argv[]) {
         
         if (qr && qr->userId == userId) {
             json vcard = json::parse(qr->vcardData);
+            json businesspage = json::parse(qr->businesspageData);
             json design = json::parse(qr->designData);
-            
+
             json response = {
                 {"id", qr->id},
                 {"name", qr->name},
-                {"type", "vCard"},
+                {"type", qr->type == "BUSINESSPAGE" ? "Business Page" : "vCard"},
                 {"status", qr->status},
                 {"shortCode", qr->shortCode},
                 {"scans", qr->scans},
                 {"vcard", vcard},
+                {"businesspage", businesspage},
                 {"design", design},
                 {"createdAt", qr->createdAt},
                 {"updatedAt", qr->updatedAt},
-                {"publicUrl", "http://localhost:8080/q/" + qr->shortCode}
+                {"publicUrl", baseUrl + "/q/" + qr->shortCode}
             };
             res.set_content(response.dump(), "application/json");
         } else {
@@ -307,12 +421,13 @@ int main(int argc, char* argv[]) {
         
         try {
             json body = json::parse(req.body);
-            
+
             qr->name = body.value("name", qr->name);
             qr->vcardData = body.contains("vcard") ? body["vcard"].dump() : qr->vcardData;
+            qr->businesspageData = body.contains("businesspage") ? body["businesspage"].dump() : qr->businesspageData;
             qr->designData = body.contains("design") ? body["design"].dump() : qr->designData;
             qr->updatedAt = getCurrentTimestamp();
-            
+
             if (storage.updateQRCode(*qr)) {
                 json response = {{"success", true}};
                 res.set_content(response.dump(), "application/json");
@@ -481,8 +596,8 @@ int main(int argc, char* argv[]) {
         }
         
         json design = json::parse(qr->designData);
-        std::string publicUrl = "http://localhost:8080/q/" + qr->shortCode;
-        
+        std::string publicUrl = baseUrl + "/q/" + qr->shortCode;
+
         std::string svg = qrGen.generateSVG(publicUrl, design);
         res.set_content(svg, "image/svg+xml");
         res.set_header("Content-Disposition", "attachment; filename=\"" + qr->name + ".svg\"");
@@ -502,8 +617,8 @@ int main(int argc, char* argv[]) {
         
         int size = req.has_param("size") ? std::stoi(req.get_param_value("size")) : 512;
         json design = json::parse(qr->designData);
-        std::string publicUrl = "http://localhost:8080/q/" + qr->shortCode;
-        
+        std::string publicUrl = baseUrl + "/q/" + qr->shortCode;
+
         std::vector<unsigned char> png = qrGen.generatePNG(publicUrl, design, size);
         res.set_content(std::string(png.begin(), png.end()), "image/png");
         res.set_header("Content-Disposition", "attachment; filename=\"" + qr->name + ".png\"");
@@ -523,8 +638,8 @@ int main(int argc, char* argv[]) {
         
         int size = req.has_param("size") ? std::stoi(req.get_param_value("size")) : 512;
         json design = json::parse(qr->designData);
-        std::string publicUrl = "http://localhost:8080/q/" + qr->shortCode;
-        
+        std::string publicUrl = baseUrl + "/q/" + qr->shortCode;
+
         std::vector<unsigned char> jpg = qrGen.generateJPG(publicUrl, design, size);
         res.set_content(std::string(jpg.begin(), jpg.end()), "image/jpeg");
         res.set_header("Content-Disposition", "attachment; filename=\"" + qr->name + ".jpg\"");
@@ -560,23 +675,30 @@ int main(int argc, char* argv[]) {
     svr.Get(R"(/q/([^/]+))", [](const httplib::Request& req, httplib::Response& res) {
         std::string shortCode = req.matches[1];
         auto qr = storage.getQRCodeByShortCode(shortCode);
-        
+
         if (!qr || qr->status != "active") {
             res.status = 404;
             res.set_content("<h1>QR Code not found</h1>", "text/html");
             return;
         }
-        
+
         // Log scan
         std::string userAgent = req.get_header_value("User-Agent");
         std::string deviceType = detectDeviceType(userAgent);
         storage.logScan(qr->id, userAgent, deviceType);
-        
-        // Generate landing page
-        json vcard = json::parse(qr->vcardData);
+
+        // Generate landing page based on type
         json design = json::parse(qr->designData);
-        std::string html = generateVCardLandingPage(vcard, design, shortCode);
-        
+        std::string html;
+
+        if (qr->type == "BUSINESSPAGE") {
+            json businesspage = json::parse(qr->businesspageData);
+            html = generateBusinessPageLandingPage(businesspage, design, shortCode);
+        } else {
+            json vcard = json::parse(qr->vcardData);
+            html = generateVCardLandingPage(vcard, design, shortCode);
+        }
+
         res.set_content(html, "text/html");
     });
     
@@ -598,8 +720,10 @@ int main(int argc, char* argv[]) {
     });
     
     std::cout << "Server started on port " << port << std::endl;
+    std::cout << "Base URL: " << baseUrl << std::endl;
     std::cout << "Admin credentials: admin@vcard-business-qr-manager.local / Admin123!" << std::endl;
-    
+    std::cout << "Frontend accessible at: " << baseUrl << std::endl;
+
     svr.listen("0.0.0.0", port);
     
     return 0;
