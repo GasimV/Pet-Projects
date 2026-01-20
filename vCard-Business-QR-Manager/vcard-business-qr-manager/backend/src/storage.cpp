@@ -75,11 +75,11 @@ bool Storage::init(const std::string& dbPath) {
     )");
     
     // Seed admin user if not exists
-    auto adminUser = getUserByEmail("admin@proxima.local");
+    auto adminUser = getUserByEmail("admin@vcard-business-qr-manager.local");
     if (!adminUser) {
         User admin;
         admin.id = generateUUID();
-        admin.email = "admin@proxima.local";
+        admin.email = "admin@vcard-business-qr-manager.local";
         admin.passwordHash = hashPassword("Admin123!");
         admin.role = "ADMIN";
         createUser(admin);

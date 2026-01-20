@@ -58,7 +58,7 @@ inline std::string getCurrentTimestamp() {
 // Simple password hashing (using basic hash for MVP - use bcrypt in production)
 inline std::string hashPassword(const std::string& password) {
     std::hash<std::string> hasher;
-    size_t hash = hasher(password + "proxima_salt_2025");
+    size_t hash = hasher(password + "vcard-business-qr-manager_salt_2025");
     std::stringstream ss;
     ss << std::hex << hash;
     return ss.str();

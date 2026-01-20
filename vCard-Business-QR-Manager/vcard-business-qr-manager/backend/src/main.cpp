@@ -1,4 +1,4 @@
-// main.cpp - Proxima QR Backend Entry Point
+// main.cpp - vcard-business-qr-manager QR Backend Entry Point
 #include "httplib.h"
 #include "nlohmann/json.hpp"
 #include "auth.hpp"
@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
     fs::create_directories(dataPath + "/uploads");
     
     // Initialize storage
-    if (!storage.init(dataPath + "/proxima.db")) {
+    if (!storage.init(dataPath + "/vcard-business-qr-manager.db")) {
         std::cerr << "Failed to initialize storage" << std::endl;
         return 1;
     }
@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
     // Initialize auth with storage reference
     auth.init(&storage);
     
-    std::cout << "Proxima QR Backend starting..." << std::endl;
+    std::cout << "vcard-business-qr-manager QR Backend starting..." << std::endl;
     std::cout << "Port: " << port << std::endl;
     std::cout << "Data path: " << dataPath << std::endl;
     
@@ -598,7 +598,7 @@ int main(int argc, char* argv[]) {
     });
     
     std::cout << "Server started on port " << port << std::endl;
-    std::cout << "Admin credentials: admin@proxima.local / Admin123!" << std::endl;
+    std::cout << "Admin credentials: admin@vcard-business-qr-manager.local / Admin123!" << std::endl;
     
     svr.listen("0.0.0.0", port);
     

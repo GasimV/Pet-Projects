@@ -1,4 +1,4 @@
-# Proxima QR - vCard QR Code Generator
+# vCard-Business-QR-Manager - vCard & Business Page QR Code Generator
 
 A simple MVP web application for creating and managing vCard QR codes.
 
@@ -29,7 +29,7 @@ vcard-business-qr-manager/
 ├── frontend/
 │   └── index.html      (static single-page app)
 ├── data/               (runtime data directory)
-│   ├── proxima.db
+│   ├── vcard-business-qr-manager.db
 │   └── uploads/
 ├── .gitignore
 └── README.md
@@ -61,16 +61,16 @@ cmake --build . --config Release
 
 ```bash
 # From backend\build\Release> directory
-./proxima_qr --port 8080 --data ../../../data
+./vcard-business-qr-manager_qr --port 8080 --data ../../../data
 
 # Or on Windows
-.\proxima_qr.exe --port 8080 --data ..\..\..\data
+.\vcard-business-qr-manager_qr.exe --port 8080 --data ..\..\..\data
 ```
 
 The backend will:
 - Create necessary directories (`./data/uploads/`)
-- Initialize SQLite database (`./data/proxima.db`)
-- Seed admin user: `admin@proxima.local` / `Admin123!`
+- Initialize SQLite database (`./data/vcard-business-qr-manager.db`)
+- Seed admin user: `admin@vcard-business-qr-manager.local` / `Admin123!`
 - Start HTTP server on port 8080
 - Serve the frontend at `http://localhost:8080`
 
@@ -86,7 +86,7 @@ The backend serves the frontend automatically - no separate frontend build or se
 
 ## Default Credentials
 
-- **Email**: `admin@proxima.local`
+- **Email**: `admin@vcard-business-qr-manager.local`
 - **Password**: `Admin123!`
 
 ## API Endpoints
@@ -178,7 +178,7 @@ The backend serves the frontend automatically - no separate frontend build or se
 ## Data Storage
 
 All data is stored locally:
-- **Database**: `./data/proxima.db` (SQLite)
+- **Database**: `./data/vcard-business-qr-manager.db` (SQLite)
 - **Uploads**: `./data/uploads/` (images, logos)
 
 The database persists:
@@ -228,7 +228,7 @@ This is an MVP for internal use:
 2. **Run the server:**
    ```bash
    cd Release
-   .\proxima_qr.exe --port 8080 --data ..\..\..\data
+   .\vcard-business-qr-manager_qr.exe --port 8080 --data ..\..\..\data
    ```
 
 3. **Open in browser:**
@@ -237,12 +237,8 @@ This is an MVP for internal use:
    ```
 
 4. **Login with default credentials:**
-   - Email: `admin@proxima.local`
+   - Email: `admin@vcard-business-qr-manager.local`
    - Password: `Admin123!`
-
-## License
-
-MIT License - Internal MVP for Proxima
 
 ## Author
 

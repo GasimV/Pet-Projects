@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(proxima_qr)
+project(vcard-business-qr-manager_qr)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -25,18 +25,18 @@ set(SOURCES
 )
 
 # Create executable
-add_executable(proxima_qr ${SOURCES})
+add_executable(vcard-business-qr-manager_qr ${SOURCES})
 
 # Platform-specific settings
 if(WIN32)
-    target_link_libraries(proxima_qr ws2_32 wsock32)
+    target_link_libraries(vcard-business-qr-manager_qr ws2_32 wsock32)
 else()
-    target_link_libraries(proxima_qr pthread dl)
+    target_link_libraries(vcard-business-qr-manager_qr pthread dl)
 endif()
 
 # Compiler flags
 if(MSVC)
-    target_compile_options(proxima_qr PRIVATE /W4)
+    target_compile_options(vcard-business-qr-manager_qr PRIVATE /W4)
 else()
-    target_compile_options(proxima_qr PRIVATE -Wall -Wextra)
+    target_compile_options(vcard-business-qr-manager_qr PRIVATE -Wall -Wextra)
 endif()
