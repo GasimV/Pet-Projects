@@ -4,9 +4,9 @@
 # Basic usage (full run on all .wav files in SEGMENTS_DIR):
 #   python transcribe.py
 #   - Transcribes ALL .wav files in:
-#       C:\Proxima Tech Solutions\Proxima AI Voice Call Center\Bakcell-Data-Prep\Bakcell-Channels\segmented-channels
+#       C:\...\segmented-channels
 #   - Writes/updates transcriptions to:
-#       C:\Proxima Tech Solutions\Proxima AI Voice Call Center\Bakcell-Data-Prep\Bakcell-Channels\transcriptions.json
+#       C:\...\transcriptions.json
 #
 # Test mode (only first N files):
 #   - In the script, set:
@@ -25,12 +25,12 @@
 #
 # Changing model checkpoint:
 #   - Adjust these lines to point to the desired model:
-#       RUN_ROOT = r"...\Whisper-FT-V2"
-#       CKPT_DIR = os.path.join(RUN_ROOT, "checkpoint-3672")
+#       RUN_ROOT = r"..."
+#       CKPT_DIR = os.path.join(RUN_ROOT, "...")
 #
 # Changing input/output locations:
 #   - Adjust:
-#       SEGMENTS_DIR = r"...\Bakcell-Channels"
+#       SEGMENTS_DIR = r"..."
 #       OUTPUT_JSON  = os.path.join(SEGMENTS_DIR, "transcriptions.json")
 #     to match your desired folder structure.
 #
@@ -56,10 +56,10 @@ from transformers import (
 # -----------------------------
 # Paths (edit only if your layout changes)
 # -----------------------------
-RUN_ROOT = r"C:\Proxima Tech Solutions\Proxima AI Voice Call Center\Project-Code\Fine-Tuned-STT\Whisper-FT-V2"
-CKPT_DIR = os.path.join(RUN_ROOT, "checkpoint-3672")  # change if you want another checkpoint
+RUN_ROOT = r"..."
+CKPT_DIR = os.path.join(RUN_ROOT, "...")  # change if you want another checkpoint
 
-SEGMENTS_DIR = r"C:\Proxima Tech Solutions\Proxima AI Voice Call Center\Bakcell-Data-Prep\Bakcell-Channels\segmented-channels"
+SEGMENTS_DIR = r"..."
 OUTPUT_JSON = os.path.join(SEGMENTS_DIR, "transcriptions.json")
 
 # -----------------------------
@@ -109,7 +109,7 @@ def _to_float32(wav: np.ndarray) -> np.ndarray:
 
 def load_segment(path: str) -> np.ndarray:
     """
-    Read mono, 16 kHz, 16-bit PCM WAV (as specified), return float32 mono at 16 kHz.
+    Read mono, 16 kHz, 16-bit PCM WAV, return float32 mono at 16 kHz.
     """
     wav, sr = sf.read(path, always_2d=False)
     if wav.ndim == 2:

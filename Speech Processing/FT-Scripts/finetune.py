@@ -19,9 +19,9 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Union
 
 # Set HF cache directories
-os.environ["HF_DATASETS_CACHE"] = "/mnt/ebs_volume/hf_cache"
-os.environ["TRANSFORMERS_CACHE"] = "/mnt/ebs_volume/hf_models"
-os.environ["HF_HOME"] = "/mnt/ebs_volume/hf_home"
+os.environ["HF_DATASETS_CACHE"] = ".../hf_cache"
+os.environ["TRANSFORMERS_CACHE"] = ".../hf_models"
+os.environ["HF_HOME"] = ".../hf_home"
 
 @dataclass
 class DataCollatorSpeechSeq2SeqWithPadding:
@@ -46,10 +46,10 @@ def main():
     parser = argparse.ArgumentParser(
         description="Fine-tune Whisper model"
     )
-    parser.add_argument("--data-dir", type=str, default="/mnt/ebs_volume/cc_dataset_mapped", help="Mapped dataset directory")
-    parser.add_argument("--tokenizer-path", type=str, default="/mnt/ebs_volume/whisper-az-largev3-finetuned", help="Path to the fine-tuned tokenizer")
-    parser.add_argument("--model-path", type=str, default="/mnt/ebs_volume/whisper-az-largev3-finetuned/checkpoint-278145", help="Path to fine-tuned Whisper checkpoint to continue from")
-    parser.add_argument("--output-dir", type=str, default="/mnt/ebs_volume/whisper-az-largev3-finetuned-v2", help="Output directory for fine-tuned model")
+    parser.add_argument("--data-dir", type=str, default="...", help="Mapped dataset directory")
+    parser.add_argument("--tokenizer-path", type=str, default="...", help="Path to the fine-tuned tokenizer")
+    parser.add_argument("--model-path", type=str, default="...", help="Path to fine-tuned Whisper checkpoint to continue from")
+    parser.add_argument("--output-dir", type=str, default="...", help="Output directory for fine-tuned model")
     parser.add_argument("--smoke-test", action="store_true", help="Run quick smoke test (50 steps)")
     parser.add_argument("--per-device-train-batch-size", type=int, default=48, help="Training batch size per device")
     parser.add_argument("--per-device-eval-batch-size", type=int, default=74, help="Evaluation batch size per device")

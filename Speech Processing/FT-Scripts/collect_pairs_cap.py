@@ -3,9 +3,9 @@
 import os, shutil
 from pathlib import Path
 
-DEST = Path("/mnt/ebs_volume/500")
+DEST = Path("...")
 SOURCES = [
-    Path("/mnt/ebs_volume/ASAN-CALL-CENTER-DATASET/02/03/"),
+    Path("..."),
 ]
 
 LIMIT_PAIRS = 500  # <-- copy only the first 500 (wav, txt) pairs = 1000 files

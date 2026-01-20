@@ -7,8 +7,8 @@ import soundfile as sf
 import librosa
 
 # -------- Paths (edit if needed) --------
-INPUT_ROOT  = r"C:\Proxima Tech Solutions\Proxima AI Voice Call Center\Bakcell-Data-Prep\Bakcell-Channels\original-channels"
-OUTPUT_ROOT = r"C:\Proxima Tech Solutions\Proxima AI Voice Call Center\Bakcell-Data-Prep\Bakcell-Channels\segmented-channels"
+INPUT_ROOT  = r"...\original-channels"
+OUTPUT_ROOT = r"...\segmented-channels"
 
 # -------- Audio / segmentation params --------
 AUDIO_EXTS = (".mp3", ".wav", ".m4a", ".flac", ".ogg", ".webm")

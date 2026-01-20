@@ -9,9 +9,9 @@ from datasets import Dataset, Audio
 import soundfile as sf
 
 # Set HF cache directories
-os.environ["HF_DATASETS_CACHE"] = "/mnt/ebs_volume/hf_cache"
-os.environ["TRANSFORMERS_CACHE"] = "/mnt/ebs_volume/hf_models"
-os.environ["HF_HOME"] = "/mnt/ebs_volume/hf_home"
+os.environ["HF_DATASETS_CACHE"] = ".../hf_cache"
+os.environ["TRANSFORMERS_CACHE"] = ".../hf_models"
+os.environ["HF_HOME"] = ".../hf_home"
 
 def find_audio_text_pairs(folder: Path):
     """Find all .wav and .txt pairs in folder."""
@@ -46,10 +46,10 @@ def main():
         description="Convert audio-text pairs to HuggingFace Dataset format"
     )
     parser.add_argument("--data-dir", type=str, 
-                        default="/mnt/ebs_volume/CC-FT-Cleaned",
+                        default="...",
                         help="Directory containing .wav and .txt pairs")
     parser.add_argument("--output-dir", type=str,
-                        default="/mnt/ebs_volume/cc_dataset_16k",
+                        default="...",
                         help="Output directory for HF dataset")
     parser.add_argument("--sampling-rate", type=int, default=16000,
                         help="Audio sampling rate")

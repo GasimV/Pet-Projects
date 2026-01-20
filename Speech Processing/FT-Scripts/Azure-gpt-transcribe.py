@@ -11,20 +11,20 @@ import requests
 from tqdm import tqdm
 
 from dotenv import load_dotenv
-dotenv_path = r'C:\Proxima Tech Solutions\Proxima AI Voice Call Center\Project-Code\.env'
+dotenv_path = r'...\.env'
 load_dotenv(dotenv_path=dotenv_path)
 
 # -------------------------
 # CONFIG (EDIT THESE)
 # -------------------------
-INPUT_ROOT  = r"C:\Proxima Tech Solutions\ASAN-Çağrı\Test"
-OUTPUT_ROOT = r"C:\Proxima Tech Solutions\ASAN-Çağrı\Test\Test-Dataset"
+INPUT_ROOT  = r"..."
+OUTPUT_ROOT = r"..."
 
 # Azure OpenAI (Audio Transcriptions) — your deployment + endpoint
 DEPLOYMENT = "gpt-4o-transcribe"
 ENDPOINT   = (
-    "https://ertan-mg91093j-eastus2.cognitiveservices.azure.com/"
-    f"openai/deployments/{DEPLOYMENT}/audio/transcriptions?api-version=2024-10-21"
+    "..."
+    f"..."
 )
 API_KEY    = os.getenv("AZURE_API_KEY")  # set in your env or System Properties
 

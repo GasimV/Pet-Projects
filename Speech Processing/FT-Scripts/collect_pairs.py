@@ -1,11 +1,11 @@
 import os, shutil
 from pathlib import Path
 
-DEST = Path("/mnt/ebs_volume/CC-FT-Cleaned")
+DEST = Path("...")
 SOURCES = [
-    #Path("/mnt/ebs_volume/500"),
-    #Path("/mnt/ebs_volume/local-transcripts"),
-    Path("/mnt/ebs_volume/CC-FT-Dataset"),
+    #Path("..."),
+    #Path("..."),
+    Path("..."),
 ]
 
 DEST.mkdir(parents=True, exist_ok=True)

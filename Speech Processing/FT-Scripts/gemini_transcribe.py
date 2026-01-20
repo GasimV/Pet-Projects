@@ -1,23 +1,3 @@
-#!/usr/bin/env python3
-"""
-gemini_transcribe.py
-- Tek ya da birden fazla ses dosyasını Gemini 2.5 Pro ile transcribe eder.
-- Çıktıyı aynı klasöre, aynı dosya adıyla .txt olarak yazar.
-- Kullanım:
-    python gemini_transcribe.py /path/a.wav /path/b.mp3
-Önkoşul:
-    pip install google-genai
-Ortam:
-    export GEMINI_API_KEY="YOUR_API_KEY"
-
-Çalıştırma örnekleri:
-    python3 gemini_transcribe.py "/mnt/c/Users/ertan/OneDrive/Desktop/asanhizmet/1738558802.3056950__seg0000.wav"
-    python3 gemini_transcribe.py "file1.wav"
-    python3 gemini_transcribe.py dir/*.wav # " işareti yokda glob
-    okuduysan sağol
-
-"""
-
 import os
 import sys
 import argparse
@@ -31,7 +11,7 @@ from google import genai
 from google.genai import types
 
 from dotenv import load_dotenv
-dotenv_path = '/mnt/ebs_volume/.env'
+dotenv_path = '.../.env'
 load_dotenv(dotenv_path=dotenv_path)
 
 PROMPT_TRANSCRIBE = """Task: Transcribe EVERYTHING spoken exactly as-is (no omissions, no summaries).
@@ -39,7 +19,7 @@ PROMPT_TRANSCRIBE = """Task: Transcribe EVERYTHING spoken exactly as-is (no omis
 Rules:
 - Language: auto-detect;
 - Output: plain text only in one line.
-- Keep natural spelling/numbers; preserve abbreviations (e.g., "AQTA", "ASAN").
+- Keep natural spelling/numbers; preserve abbreviations (e.g., "...", "...").
 - Mark noise/unintelligible as "[noise]" (no guesses).
 - Preserve code-switching (mixed TR/AZ/EN/RU).
 - Conference/Phone: do not write turn-by-turn, plain append.
@@ -63,7 +43,6 @@ SUPPORTED_MIME = {
 
 def guess_mime(path: Path) -> str:
     mt, _ = mimetypes.guess_type(str(path))
-    # Bazı .wav/.mp3 ortamlarında None döner; güvenli varsayımlar:
     if mt is None:
         if path.suffix.lower() == ".wav":
             mt = "audio/wav"
@@ -76,7 +55,7 @@ def guess_mime(path: Path) -> str:
 def ensure_api_key() -> str:
     key = os.getenv("GEMINI_API_KEY")
     if not key:
-        sys.exit("Hata: GEMINI_API_KEY ortam değişkenini ayarla.")
+        sys.exit("Error: Set the GEMINI_API_KEY environment variable.")
     return key
 
 
@@ -109,12 +88,12 @@ def write_sibling_txt(audio_path: Path, text: str) -> Path:
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Gemini 2.5 Pro STT (tek/çoklu dosya)")
-    parser.add_argument("inputs", nargs="+", help="Ses dosyası yol(ları)")
+    parser = argparse.ArgumentParser(description="Gemini 2.5 Pro STT")
+    parser.add_argument("inputs", nargs="+", help="Audio file path(s)")
     parser.add_argument("--max-files", type=int, default=None,
-                        help="Günde işlenecek maksimum dosya sayısı (rate limit için).")
+                        help="Maximum number of files that can be processed per day (for rate limit).")
     parser.add_argument("--sleep", type=float, default=1.0,
-                        help="Her dosya arası bekleme süresi (saniye).")
+                        help="Waiting time between each file (seconds).")
     args = parser.parse_args(argv)
 
     ensure_api_key()
@@ -149,7 +128,7 @@ def main(argv=None):
         finally:
             time.sleep(args.sleep)
 
-    print(f"[DONE] {total}/{len(all_files)} yeni dosya işlendi.")
+    print(f"[DONE] {total}/{len(all_files)} new file processed.")
     return 0
 
 if __name__ == "__main__":

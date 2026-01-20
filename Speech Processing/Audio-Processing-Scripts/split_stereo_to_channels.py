@@ -3,20 +3,20 @@
 #
 #    This will:
 #      - Read stereo WAVs from:
-#          C:\Proxima Tech Solutions\Bakcell
+#          C:\...
 #      - Split each into two mono channel files:
 #          <name>_ch1.wav and <name>_ch2.wav
 #      - Convert each channel file to mono 16 kHz
 #      - Save outputs into:
-#          C:\Proxima Tech Solutions\Proxima AI Voice Call Center\Bakcell-Data-Prep\Bakcell-Channels\original-channels
+#          C:\...\original-channels
 #
 # 2. Process only the first N stereo files in the input directory:
 #       python split_stereo_to_channels.py --max-files 100
 #
 # 3. Process a single specific file by name:
-#       python split_stereo_to_channels.py --file-name 728002097383668
+#       python split_stereo_to_channels.py --file-name 1234
 #    or:
-#       python split_stereo_to_channels.py --file-name 728002097383668.wav
+#       python split_stereo_to_channels.py --file-name 1234.wav
 #
 # 4. Use a custom input / output directory:
 #       python split_stereo_to_channels.py ^
@@ -35,8 +35,8 @@ import os
 import argparse
 import subprocess
 
-INPUT_DIR = r"C:\Proxima Tech Solutions\Bakcell"
-OUTPUT_DIR = r"C:\Proxima Tech Solutions\Proxima AI Voice Call Center\Bakcell-Data-Prep\Bakcell-Channels\original-channels"
+INPUT_DIR = r"C:\path\to\my"
+OUTPUT_DIR = r"C:\path\to\my\original-channels"
 
 
 def split_and_convert_with_ffmpeg(input_path, output_dir, ffmpeg_path="ffmpeg"):
@@ -101,7 +101,7 @@ def split_and_convert_with_ffmpeg(input_path, output_dir, ffmpeg_path="ffmpeg"):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Split stereo WAV call center audios into two mono channel WAVs using ffmpeg and convert to 16 kHz."
+        description="Split stereo WAV audios into two mono channel WAVs using ffmpeg and convert to 16 kHz."
     )
     parser.add_argument(
         "--input-dir",

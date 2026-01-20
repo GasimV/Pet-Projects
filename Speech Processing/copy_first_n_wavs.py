@@ -5,7 +5,7 @@ without sorting or enumerating the entire directory. Skips files that
 already exist in DEST (by name). Non-recursive by default.
 
 Usage:
-  python copy_first_n_wavs.py "\\172.21.15.50\tb-data\TB\Bakcell" "C:\Proxima Tech Solutions\Bakcell" --n 5000
+  python copy_first_n_wavs.py "..." "C:\..." --n 5000
 """
 
 import argparse

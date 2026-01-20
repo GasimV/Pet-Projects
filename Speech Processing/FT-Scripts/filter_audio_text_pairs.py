@@ -88,7 +88,7 @@ def main():
     ap.add_argument("folder", type=Path, 
                     help="Folder containing .wav and .txt pairs")
     ap.add_argument("--model-path", type=str, 
-                    default="/mnt/ebs_volume/whisper-az-largev3-finetuned",
+                    default="...",
                     help="Path to your fine-tuned Whisper checkpoint")
     ap.add_argument("--max-length", type=int, default=448,
                     help="Maximum token length (Whisper default: 448)")

@@ -14,7 +14,7 @@ Azerbaijani text-to-speech using the notebook `Sesame_CSM_1B_TTS.ipynb`.
 
 The goal of this PoC is to see whether an English-only Sesame CSM-1B model can
 be adapted to **generate Azerbaijani speech** from a relatively small dataset.
-In these experiments, your fine-tuned model is able to produce Azerbaijani
+In these experiments, the fine-tuned model is able to produce Azerbaijani
 speech, showing that the approach is viable.
 
 ## Current limitations & improvement paths

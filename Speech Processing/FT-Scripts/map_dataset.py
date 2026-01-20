@@ -14,9 +14,9 @@ from transformers import (
 )
 
 # Set HF cache directories
-os.environ["HF_DATASETS_CACHE"] = "/mnt/ebs_volume/hf_cache"
-os.environ["TRANSFORMERS_CACHE"] = "/mnt/ebs_volume/hf_models"
-os.environ["HF_HOME"] = "/mnt/ebs_volume/hf_home"
+os.environ["HF_DATASETS_CACHE"] = ".../hf_cache"
+os.environ["TRANSFORMERS_CACHE"] = ".../hf_models"
+os.environ["HF_HOME"] = ".../hf_home"
 
 def prepare_batch(batch, feature_extractor, tokenizer):
     """Extract features and tokenize text."""
@@ -29,10 +29,10 @@ def main():
     parser = argparse.ArgumentParser(
         description="Map dataset: extract features and tokenize"
     )
-    parser.add_argument("--input-dir", type=str, default="/mnt/ebs_volume/cc_dataset_16k", help="Input HF dataset directory")
-    parser.add_argument("--output-dir", type=str, default="/mnt/ebs_volume/cc_dataset_mapped", help="Output directory for mapped dataset")
-    parser.add_argument("--tokenizer-path", type=str, default="/mnt/ebs_volume/whisper-az-largev3-finetuned", help="Path to the fine-tuned tokenizer")
-    parser.add_argument("--model-path", type=str, default="/mnt/ebs_volume/whisper-az-largev3-finetuned/checkpoint-278145", help="Path to fine-tuned Whisper checkpoint")
+    parser.add_argument("--input-dir", type=str, default="...", help="Input HF dataset directory")
+    parser.add_argument("--output-dir", type=str, default="...", help="Output directory for mapped dataset")
+    parser.add_argument("--tokenizer-path", type=str, default="...", help="Path to the fine-tuned tokenizer")
+    parser.add_argument("--model-path", type=str, default="...", help="Path to fine-tuned Whisper checkpoint")
     parser.add_argument("--max-length", type=int, default=448, help="Maximum token length")
     parser.add_argument("--test-size", type=float, default=0.005, help="Test split size (default: 0.005 = 0.5%)")
     parser.add_argument("--batch-size", type=int, default=64, help="Batch size for mapping")

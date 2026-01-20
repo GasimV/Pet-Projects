@@ -7,8 +7,8 @@ import soundfile as sf
 import librosa
 
 # -------- Paths (edit if needed) --------
-INPUT_ROOT  = "/mnt/ebs_volume/2025/"
-OUTPUT_ROOT = "/mnt/ebs_volume/ASAN-CALL-CENTER-DATASET/"
+INPUT_ROOT  = "..."
+OUTPUT_ROOT = "..."
 
 # -------- Audio / segmentation params --------
 AUDIO_EXTS = (".mp3", ".wav", ".m4a", ".flac", ".ogg", ".webm")

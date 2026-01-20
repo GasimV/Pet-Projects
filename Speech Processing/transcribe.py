@@ -14,10 +14,10 @@ from transformers import (
 # -----------------------------
 # Paths (edit only if your layout changes)
 # -----------------------------
-RUN_ROOT = r"C:\Proxima Tech Solutions\Proxima AI Voice Call Center\Project-Code\Fine-Tuned-STT\Whisper-FT-V2"
-CKPT_DIR = os.path.join(RUN_ROOT, "checkpoint-3672")  # change if you want another checkpoint
+RUN_ROOT = r"..."
+CKPT_DIR = os.path.join(RUN_ROOT, "checkpoint-...")  # change if you want another checkpoint
 
-SEGMENTS_DIR = r"C:\Proxima Tech Solutions\Proxima AI Voice Call Center\Bakcell-Data-Prep\Bakcell-Segments"
+SEGMENTS_DIR = r"..."
 OUTPUT_JSON = os.path.join(SEGMENTS_DIR, "transcriptions.json")
 
 # -----------------------------
