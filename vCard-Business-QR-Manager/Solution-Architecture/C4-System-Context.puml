@@ -2,13 +2,13 @@
 !pragma layout smetana
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 
-title Proxima QR Code System – System Context
+title vCard & Business QR Manager – System Context
 
 actor Admin
 actor "Internal User" as User
 actor "Public QR Scanner" as Scanner
 
-rectangle "Proxima QR Code System" {
+rectangle "vCard & Business QR Manager" {
   component "QR Management Platform" as System
 }
 

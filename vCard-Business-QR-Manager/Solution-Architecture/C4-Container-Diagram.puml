@@ -3,13 +3,13 @@
 
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
-title Proxima QR Code System – Container Diagram
+title vCard & Business QR Manager – Container Diagram
 
 actor Admin
 actor "Internal User" as User
 actor "Public QR Scanner" as Scanner
 
-package "Proxima QR Code System" {
+package "vCard & Business QR Manager" {
 
   rectangle "Web Frontend\n(React / Vue)\n\n• QR wizard\n• Dashboard\n• Admin UI\n• Public landing pages" as FE
 
