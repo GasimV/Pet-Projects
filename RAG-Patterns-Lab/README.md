@@ -112,7 +112,7 @@ RAG-Patterns-Lab/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/<your-username>/RAG-Patterns-Lab.git
+git clone https://github.com/GasimV/Pet-Projects/RAG-Patterns-Lab.git
 cd RAG-Patterns-Lab
 ```
 
@@ -280,4 +280,4 @@ Neo4j stores the same chunks as nodes with `NEXT`, `PREVIOUS`, and `SAME_DOCUMEN
 
 ## License
 
-MIT
+MIT — free for personal and commercial use.
