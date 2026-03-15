@@ -112,7 +112,7 @@ RAG-Patterns-Lab/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/GasimV/Pet-Projects/RAG-Patterns-Lab.git
+git clone https://github.com/GasimV/Pet-Projects.git
 cd RAG-Patterns-Lab
 ```
 
