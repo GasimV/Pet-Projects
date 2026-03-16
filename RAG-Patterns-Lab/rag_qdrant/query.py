@@ -16,33 +16,33 @@ from utils.config import QDRANT_HOST, QDRANT_PORT, QDRANT_COLLECTION
 from embeddings.embedder import embed_one
 
 
-# ── Configuration ──────────────────────────────────────────────────
 SAMPLE_QUERY = "How does GraphRAG improve retrieval compared to standard RAG?"
 TOP_K = 5
 
 
 def query_qdrant(query_text: str, top_k: int = TOP_K) -> list[dict]:
-    """Embed *query_text* and search Qdrant for the closest chunks.
-
-    Returns:
-        A list of dicts with keys: id, score, text, and all payload fields.
-    """
+    """Embed query_text and search Qdrant for the closest chunks."""
     query_vector = embed_one(query_text)
 
     client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
-    results = client.search(
+
+    response = client.query_points(
         collection_name=QDRANT_COLLECTION,
-        query_vector=query_vector,
+        query=query_vector,
         limit=top_k,
+        with_payload=True,
+        with_vectors=False,
     )
 
     hits: list[dict] = []
-    for hit in results:
-        hits.append({
-            "id": hit.id,
-            "score": hit.score,
-            **hit.payload,
-        })
+    for hit in response.points:
+        hits.append(
+            {
+                "id": hit.id,
+                "score": hit.score,
+                **(hit.payload or {}),
+            }
+        )
     return hits
 
 
@@ -62,7 +62,6 @@ def print_results(query_text: str, hits: list[dict]) -> None:
         print(f"  Chunk Index : {hit.get('chunk_index')}")
         print(f"  Source      : {hit.get('source')}")
         print(f"  Prev / Next : {hit.get('previous_chunk_id')} / {hit.get('next_chunk_id')}")
-        # Truncate long text for readability
         text = hit.get("text", "")
         display = text[:300] + " ..." if len(text) > 300 else text
         print(f"  Text        : {display}")
