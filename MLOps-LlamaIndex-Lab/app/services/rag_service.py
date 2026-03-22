@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 def run_ingestion() -> Dict:
     """Ingest all documents from the uploads folder. Returns a summary."""
     docs = load_all_documents()
-    index = ingest_documents(docs)
+    ingest_documents(docs)
     return {
         "status": "ok",
         "documents_ingested": len(docs),

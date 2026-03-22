@@ -2,8 +2,6 @@
 Tests for core configuration loading.
 """
 
-from pathlib import Path
-
 from app.core.config import Settings, PROJECT_ROOT
 
 
