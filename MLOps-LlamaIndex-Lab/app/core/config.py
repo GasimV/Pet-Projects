@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     llm_api_base: str = "http://localhost:11434"
 
     # --- Embedding Model -----------------------------------------------------
+    embedding_provider: str = "huggingface"
     embedding_model: str = "BAAI/bge-m3"
 
     # --- Qdrant Vector Store -------------------------------------------------

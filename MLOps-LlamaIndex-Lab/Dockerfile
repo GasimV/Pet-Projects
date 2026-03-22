@@ -19,8 +19,8 @@ RUN apt-get update && \
 
 # ── Dependencies stage ──────────────────────────────────────────────────────
 
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+COPY requirements-docker.txt .
+RUN pip install -r requirements-docker.txt
 
 # ── Application stage ───────────────────────────────────────────────────────
 
