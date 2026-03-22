@@ -315,7 +315,8 @@ Or simply keep refreshing `http://localhost:8929` until the login page appears.
 1. Click **"New project"** → **"Create blank project"**.
 2. Name it `MLOps-LlamaIndex-Lab`. Set visibility to **Private** or **Public**.
 3. Uncheck "Initialize repository with a README" (you already have one).
-4. Click **Create project**.
+4. Check "Enable Static Application Security Testing (SAST)" (optional).
+5. Click **Create project**.
 
 ### 5. Push this repo to local GitLab
 
