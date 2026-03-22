@@ -21,6 +21,12 @@ stages:
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip-cache"
+  PROJECT_DIR: "$CI_PROJECT_DIR/MLOps-LlamaIndex-Lab"
+
+# All jobs run from the MLOps-LlamaIndex-Lab subdirectory
+default:
+  before_script:
+    - cd "$PROJECT_DIR"
 
 # Cache pip downloads between pipeline runs
 cache:
