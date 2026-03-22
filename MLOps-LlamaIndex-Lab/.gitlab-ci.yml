@@ -3,6 +3,10 @@
 # =============================================================================
 # Stages: lint → test → build → terraform-validate
 # Works with both GitLab.com and a local GitLab CE instance.
+#
+# NOTE: This pipeline validates code quality, runs unit tests, builds the
+# Docker image, and checks Terraform config. It does NOT run the full RAG
+# pipeline — no Ollama, no Qdrant, no LLM inference happens in CI.
 # =============================================================================
 
 stages:
@@ -26,21 +30,26 @@ lint:
   stage: lint
   image: python:3.11-slim
   script:
-    - pip install ruff
+    - pip install ruff==0.9.4
     - ruff check app/ tests/
   allow_failure: false
 
 # ── Test ─────────────────────────────────────────────────────────────────────
+# Uses the lightweight Docker requirements (no torch / HuggingFace) plus
+# pytest and httpx. Tests do not require Ollama or Qdrant — they exercise
+# config loading, health endpoints, and document-service logic only.
 
 test:
   stage: test
   image: python:3.11-slim
   script:
-    - pip install -r requirements.txt
+    - pip install -r requirements-docker.txt pytest==8.3.4 httpx==0.28.1
     - python -m pytest tests/ -v --tb=short
   allow_failure: false
 
 # ── Build Docker Image ──────────────────────────────────────────────────────
+# Builds using the Dockerfile (which installs requirements-docker.txt).
+# No torch or HuggingFace packages are pulled into the image.
 
 build:
   stage: build

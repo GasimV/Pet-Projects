@@ -357,9 +357,11 @@ The pipeline runs four stages defined in `.gitlab-ci.yml`:
 | Stage | Job | What it does |
 |---|---|---|
 | `lint` | `lint` | Runs `ruff check` on `app/` and `tests/` |
-| `test` | `test` | Installs deps and runs `pytest` |
+| `test` | `test` | Installs lightweight deps (`requirements-docker.txt` + pytest) and runs `pytest` |
 | `build` | `build` | Builds the Docker image (master/main only) |
 | `infra` | `terraform-validate` | Validates Terraform config formatting |
+
+> **CI vs local runtime:** The pipeline validates code quality, runs unit tests, and builds the Docker image — it does **not** run the full RAG pipeline. There is no Ollama, no Qdrant, and no LLM inference in CI. The test stage uses the lightweight `requirements-docker.txt` (no torch / HuggingFace), so tests complete in seconds rather than minutes.
 
 ### 9. Stop GitLab when done
 
