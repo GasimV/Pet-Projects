@@ -1,0 +1,72 @@
+# =============================================================================
+# MLOps-LlamaIndex-Lab — GitLab CI/CD Pipeline
+# =============================================================================
+# Stages: lint → test → build → terraform-validate
+# Works with both GitLab.com and a local GitLab CE instance.
+# =============================================================================
+
+stages:
+  - lint
+  - test
+  - build
+  - infra
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip-cache"
+
+# Cache pip downloads between pipeline runs
+cache:
+  key: "${CI_COMMIT_REF_SLUG}"
+  paths:
+    - .pip-cache/
+
+# ── Lint ─────────────────────────────────────────────────────────────────────
+
+lint:
+  stage: lint
+  image: python:3.11-slim
+  script:
+    - pip install ruff
+    - ruff check app/ tests/
+  allow_failure: false
+
+# ── Test ─────────────────────────────────────────────────────────────────────
+
+test:
+  stage: test
+  image: python:3.11-slim
+  script:
+    - pip install -r requirements.txt
+    - python -m pytest tests/ -v --tb=short
+  allow_failure: false
+
+# ── Build Docker Image ──────────────────────────────────────────────────────
+
+build:
+  stage: build
+  image: docker:24.0
+  services:
+    - docker:24.0-dind
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+  script:
+    - docker build -t llamaindex-lab-app:${CI_COMMIT_SHORT_SHA} .
+    - docker tag llamaindex-lab-app:${CI_COMMIT_SHORT_SHA} llamaindex-lab-app:latest
+    - echo "Image built and tagged successfully"
+  only:
+    - main
+    - master
+
+# ── Terraform Validate ──────────────────────────────────────────────────────
+
+terraform-validate:
+  stage: infra
+  image:
+    name: hashicorp/terraform:1.7
+    entrypoint: [""]
+  script:
+    - cd infra/terraform
+    - terraform init -backend=false
+    - terraform fmt -check
+    - terraform validate
+  allow_failure: true

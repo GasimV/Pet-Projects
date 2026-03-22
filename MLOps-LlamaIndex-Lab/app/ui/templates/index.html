@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MLOps LlamaIndex Lab — RAG Chat</title>
+    <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>MLOps LlamaIndex Lab</h1>
+            <p>Upload documents, build a knowledge base, and chat with your data.</p>
+        </header>
+
+        <!-- Flash message -->
+        <div id="message"></div>
+
+        <!-- Upload -->
+        <div class="card">
+            <h2>Upload Documents</h2>
+            <p style="margin-bottom:0.5rem;color:var(--muted);font-size:0.85rem;">
+                Supported formats: .txt, .md, .pdf, .docx
+            </p>
+            <input type="file" id="file-input" multiple accept=".txt,.md,.pdf,.docx" />
+            <br />
+            <button class="btn" id="btn-upload" onclick="uploadFiles()">
+                Upload <span class="spinner" style="display:none"></span>
+            </button>
+        </div>
+
+        <!-- Document list -->
+        <div class="card">
+            <h2>Uploaded Documents</h2>
+            <ul class="doc-list" id="doc-list">
+                <li>Loading…</li>
+            </ul>
+        </div>
+
+        <!-- Ingest -->
+        <div class="card">
+            <h2>Ingest &amp; Index</h2>
+            <p style="margin-bottom:0.75rem;color:var(--muted);font-size:0.85rem;">
+                Parse, chunk, embed, and store all uploaded documents in the vector database.
+            </p>
+            <button class="btn" id="btn-ingest" onclick="runIngest()">
+                Run Ingestion <span class="spinner" style="display:none"></span>
+            </button>
+        </div>
+
+        <!-- Query -->
+        <div class="card">
+            <h2>Ask a Question</h2>
+            <textarea id="question-input" placeholder="Ask something about your documents…"></textarea>
+            <br /><br />
+            <button class="btn" id="btn-ask" onclick="askQuestion()">
+                Ask <span class="spinner" style="display:none"></span>
+            </button>
+
+            <h3 style="margin-top:1.25rem;font-size:1rem;">Answer</h3>
+            <div id="answer-box">—</div>
+
+            <h3 style="margin-top:1rem;font-size:1rem;">Sources</h3>
+            <div id="sources-box"><em>No query yet.</em></div>
+        </div>
+
+        <!-- Status -->
+        <div class="card">
+            <h2>System Status</h2>
+            <div id="status-info">Loading…</div>
+            <button class="btn btn-sm" onclick="loadStatus()" style="margin-top:0.5rem;">Refresh</button>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

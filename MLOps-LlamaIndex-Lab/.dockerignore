@@ -1,0 +1,34 @@
+# Virtual environment
+.venv/
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Test / lint caches
+.pytest_cache/
+.mypy_cache/
+
+# Git
+.git/
+.gitignore
+
+# Data volumes (mounted at runtime, not baked into image)
+data/qdrant/
+data/uploads/
+
+# Infrastructure (not needed in app image)
+infra/gitlab/
+infra/terraform/
+tests/
+
+# Environment / secrets
+.env
+.env.example
+
+# Docs
+README.md
+
+# IDE
+.vscode/
+.idea/

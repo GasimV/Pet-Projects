@@ -1,0 +1,54 @@
+# =============================================================================
+# Local GitLab CE + Runner — Docker Compose
+# =============================================================================
+# Start:   docker compose -f infra/gitlab/docker-compose.gitlab.yml up -d
+# Stop:    docker compose -f infra/gitlab/docker-compose.gitlab.yml down
+#
+# First boot takes 3-5 minutes. GitLab is ready when http://localhost:8929
+# shows the login page.
+# =============================================================================
+
+services:
+  # ── GitLab CE ─────────────────────────────────────────────────────────────
+  gitlab:
+    image: gitlab/gitlab-ce:17.4.0-ce.0
+    container_name: local-gitlab
+    hostname: local-gitlab
+    ports:
+      - "8929:80"      # Web UI
+      - "2224:22"      # SSH
+    volumes:
+      - ./config:/etc/gitlab
+      - ./logs:/var/log/gitlab
+      - ./data:/var/opt/gitlab
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://local-gitlab'
+        gitlab_rails['initial_root_password'] = 'P@ssw0rd1234!'
+        # Reduce memory usage for local dev
+        puma['worker_processes'] = 2
+        sidekiq['concurrency'] = 5
+        prometheus_monitoring['enable'] = false
+        grafana['enable'] = false
+    shm_size: "256m"
+    networks:
+      - gitlab-network
+    restart: unless-stopped
+
+  # ── GitLab Runner ─────────────────────────────────────────────────────────
+  gitlab-runner:
+    image: gitlab/gitlab-runner:v17.4.0
+    container_name: local-gitlab-runner
+    volumes:
+      - ./runner:/etc/gitlab-runner
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - gitlab
+    networks:
+      - gitlab-network
+    restart: unless-stopped
+
+networks:
+  gitlab-network:
+    name: gitlab-network
+    driver: bridge
