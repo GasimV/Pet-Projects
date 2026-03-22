@@ -54,7 +54,7 @@ A **local-first RAG (Retrieval-Augmented Generation) web application** that demo
 | `llamaindex-app` | Built from `./Dockerfile` | 8000 | FastAPI + LlamaIndex RAG app |
 | `llamaindex-qdrant` | `qdrant/qdrant:v1.13.2` | 6333 | Vector database |
 | `local-gitlab` | `gitlab/gitlab-ce:17.4.0-ce.0` | 8929 | Local GitLab CE (CI/CD) |
-| `local-gitlab-runner` | `gitlab/gitlab-runner:v17.4.0` | — | Executes CI/CD pipeline jobs |
+| `local-gitlab-runner` | `gitlab/gitlab-runner:v17.11.0` | — | Executes CI/CD pipeline jobs |
 
 ---
 
@@ -315,10 +315,18 @@ Or simply keep refreshing `http://localhost:8929` until the login page appears.
 1. Click **"New project"** → **"Create blank project"**.
 2. Name it `MLOps-LlamaIndex-Lab`. Set visibility to **Private** or **Public**.
 3. Uncheck "Initialize repository with a README" (you already have one).
-4. Check "Enable Static Application Security Testing (SAST)" (optional).
-5. Click **Create project**.
+4. Click **Create project**.
 
-### 5. Push this repo to local GitLab
+### 5. Configure the project for CI/CD
+
+This project lives inside a parent Git repository, so two settings must be adjusted after creating the project:
+
+1. **Disable Auto DevOps** — Go to **Admin Area** → **Settings** → **CI/CD** → **Auto DevOps** → uncheck **"Default to Auto DevOps pipeline"** → **Save changes**.
+2. **Set CI config path** — Go to the project → **Settings** → **CI/CD** → **General pipelines** → set **CI/CD configuration file** to `MLOps-LlamaIndex-Lab/.gitlab-ci.yml` → **Save changes**.
+
+> Without these settings, pipelines will fail with "Pipeline cannot be run. Review the workflow:rules configuration."
+
+### 6. Push this repo to local GitLab
 
 ```powershell
 # Add the local GitLab remote
@@ -328,7 +336,7 @@ git remote add gitlab http://localhost:8929/root/mlops-llamaindex-lab.git
 git push gitlab master
 ```
 
-### 6. Create a runner token
+### 7. Create a runner token
 
 1. In GitLab, go to **Admin Area** (wrench icon in the top bar) → **CI/CD** → **Runners**.
 2. Click **"New instance runner"**.
@@ -336,7 +344,7 @@ git push gitlab master
 4. Click **"Create runner"**.
 5. Copy the displayed **runner authentication token** (starts with `glrt-`).
 
-### 7. Register the runner
+### 8. Register the runner
 
 In **Git Bash**, **WSL**, or any bash-compatible shell on Windows:
 
@@ -349,7 +357,12 @@ For example:
 bash infra/gitlab/register-runner.sh glrt-xxxxxxxxxxxxxxxxxxxx
 ```
 
-### 8. Trigger the first pipeline
+The registration script configures the runner with:
+- **Docker executor** using `python:3.11-slim` as the default image
+- **`--clone-url http://local-gitlab`** so CI job containers clone via Docker network (not `localhost`)
+- **`--docker-network-mode gitlab-network`** so job containers can reach GitLab
+
+### 9. Trigger the first pipeline
 
 Push a commit (or go to the project → **Build** → **Pipelines** → **Run pipeline**).
 
@@ -359,12 +372,12 @@ The pipeline runs four stages defined in `.gitlab-ci.yml`:
 |---|---|---|
 | `lint` | `lint` | Runs `ruff check` on `app/` and `tests/` |
 | `test` | `test` | Installs lightweight deps (`requirements-docker.txt` + pytest) and runs `pytest` |
-| `build` | `build` | Builds the Docker image (master/main only) |
+| `build` | `build` | Builds the Docker image via Docker socket binding (master/main only) |
 | `infra` | `terraform-validate` | Validates Terraform config formatting |
 
 > **CI vs local runtime:** The pipeline validates code quality, runs unit tests, and builds the Docker image — it does **not** run the full RAG pipeline. There is no Ollama, no Qdrant, and no LLM inference in CI. The test stage uses the lightweight `requirements-docker.txt` (no torch / HuggingFace), so tests complete in seconds rather than minutes.
 
-### 9. Stop GitLab when done
+### 10. Stop GitLab when done
 
 ```powershell
 docker compose -f infra/gitlab/docker-compose.gitlab.yml down
@@ -375,14 +388,18 @@ To also remove GitLab data (full reset):
 docker compose -f infra/gitlab/docker-compose.gitlab.yml down -v
 ```
 
+> **Note:** After a full reset (`-v`), you must repeat steps 4–8 (create project, configure settings, push, register runner).
+
 ### Troubleshooting — Local GitLab
 
 | Issue | Fix |
 |---|---|
 | GitLab login page doesn't appear | Wait 3–5 min on first boot. Run `docker logs -f local-gitlab` to watch progress. |
+| "Pipeline cannot be run" | Disable Auto DevOps (Admin → Settings → CI/CD) and set the CI config path to `MLOps-LlamaIndex-Lab/.gitlab-ci.yml` (project → Settings → CI/CD → General pipelines). |
 | Port 8929 already in use | Change the port in `infra/gitlab/docker-compose.gitlab.yml` (e.g., `"8930:80"`). |
 | Runner can't reach GitLab | Both containers must be on `gitlab-network`. The runner connects via `http://local-gitlab` (Docker internal DNS). |
-| Pipeline jobs hang / fail | Ensure the Docker socket is accessible. In Docker Desktop → Settings → General, check **"Expose daemon on tcp://..."** is enabled if needed. |
+| CI jobs fail to clone repo | Ensure the runner was registered with `--clone-url http://local-gitlab`. Check `infra/gitlab/runner/config.toml` for `clone_url = "http://local-gitlab"`. |
+| Build stage fails (`docker` command errors) | The build uses Docker socket binding (not DinD). Verify `infra/gitlab/runner/config.toml` includes `"/var/run/docker.sock:/var/run/docker.sock"` in the `volumes` array. |
 | Out of memory / slow | GitLab CE is resource-heavy. Allocate at least **6 GB RAM** to Docker Desktop (Settings → Resources). |
 | `docker exec` errors on Windows CMD | Use **Git Bash** or **PowerShell** for the runner registration script. |
 

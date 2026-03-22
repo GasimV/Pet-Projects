@@ -17,6 +17,7 @@ cmake_install.cmake
 *.txt
 !CMakeLists.txt
 !requirements-docker.txt
+!requirements.txt
 *.svg
 *.json
 *.env
