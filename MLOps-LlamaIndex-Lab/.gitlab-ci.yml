@@ -63,7 +63,7 @@ test:
 
 build:
   stage: build
-  image: docker:24.0
+  image: docker:27.0
   variables:
     DOCKER_HOST: "unix:///var/run/docker.sock"
   script:
