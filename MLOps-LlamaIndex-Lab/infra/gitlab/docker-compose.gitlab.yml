@@ -37,7 +37,7 @@ services:
 
   # ── GitLab Runner ─────────────────────────────────────────────────────────
   gitlab-runner:
-    image: gitlab/gitlab-runner:v17.4.0
+    image: gitlab/gitlab-runner:v17.11.0
     container_name: local-gitlab-runner
     volumes:
       - ./runner:/etc/gitlab-runner
