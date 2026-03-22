@@ -23,6 +23,7 @@ docker exec -it local-gitlab-runner gitlab-runner register \
   --executor "docker" \
   --docker-image "python:3.11-slim" \
   --docker-network-mode "gitlab-network" \
+  --clone-url "http://local-gitlab" \
   --description "local-docker-runner"
 
 echo ""
