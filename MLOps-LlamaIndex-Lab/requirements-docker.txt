@@ -1,0 +1,37 @@
+# =============================================================================
+# MLOps-LlamaIndex-Lab — Lightweight Docker Dependencies
+# =============================================================================
+# Excludes torch / sentence-transformers / HuggingFace LLM packages.
+# Uses Ollama for both LLM and embeddings — no GPU libs needed in the image.
+#
+# For the full dependency set (local venv with HuggingFace support):
+#   pip install -r requirements.txt
+# =============================================================================
+
+# --- Web Framework ---
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+
+# --- LlamaIndex Core ---
+llama-index-core==0.12.17
+llama-index-embeddings-ollama==0.5.0
+llama-index-vector-stores-qdrant==0.4.3
+llama-index-readers-file==0.4.7
+
+# --- LLM Provider (Ollama only — lightweight) ---
+llama-index-llms-ollama==0.5.0
+
+# --- Vector Store Client ---
+qdrant-client==1.13.3
+
+# --- Document Parsing ---
+pypdf==5.1.0
+python-docx==1.1.2
+
+# --- Configuration ---
+pydantic-settings==2.7.1
+python-dotenv==1.0.1
+
+# --- Templating ---
+jinja2==3.1.5
