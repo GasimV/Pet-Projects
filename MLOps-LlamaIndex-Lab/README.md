@@ -205,25 +205,40 @@ Uploaded files persist in `data/uploads/` (mounted volume).
 
 ## Option C — Run with Terraform
 
-Terraform manages the same Docker containers declaratively (IaC).
+Terraform manages the same Docker containers declaratively using the
+[kreuzwerker/docker](https://registry.terraform.io/providers/kreuzwerker/docker/latest)
+provider. It creates the same resources as Docker Compose — an app container, a Qdrant
+container, and a bridge network — but through infrastructure-as-code.
+
+### How Terraform differs from Docker Compose here
+
+| Aspect | Docker Compose | Terraform |
+|---|---|---|
+| Defined in | `docker-compose.yml` | `infra/terraform/*.tf` |
+| State tracking | Docker engine only | `terraform.tfstate` file |
+| Config override | `.env` file | `-var` flags or `terraform.tfvars` |
+| Image build | Built-in (`build:`) | Via `docker_image` resource `build` block |
+| DNS between containers | Service name (`qdrant`) | Container name (`llamaindex-qdrant-tf`) |
+| Intended use | Day-to-day local dev | IaC demonstration for portfolio |
 
 ### Prerequisites
 
 - Docker Desktop **running**
 - Terraform >= 1.0 installed and on PATH
+- Ollama running on the host with `gemma3:1b` and `bge-m3` models
 
 ### Step-by-step
 
 ```powershell
 cd infra\terraform
 
-# Initialise the Docker provider
+# Initialise the Docker provider (downloads the plugin on first run)
 terraform init
 
 # Preview what will be created
 terraform plan
 
-# Create the containers
+# Create the network, pull/build images, and start containers
 terraform apply
 
 # Open in browser
@@ -240,7 +255,19 @@ terraform destroy
 cd ..\..
 ```
 
-> **Important**: Use either Docker Compose (Option B) **or** Terraform (Option C) — not both at the same time, since they manage overlapping containers and ports.
+### What to expect on first run
+
+1. `terraform init` downloads the `kreuzwerker/docker` provider plugin (~30 MB).
+2. `terraform apply` pulls the Qdrant image, builds the app image from the Dockerfile, creates a bridge network, and starts both containers. The first image build takes a few minutes (same as `docker compose up --build`).
+3. Subsequent `apply` runs are fast — Terraform detects nothing changed and skips.
+
+### Known limitations vs Compose
+
+- Terraform's Docker provider does not support `depends_on` health checks, so the app container may start before Qdrant is fully ready. The app retries on first connection, so this is rarely an issue.
+- The `docker_image` `build` block does not support all Dockerfile build options (e.g., build args, multi-stage target selection). For this project's simple Dockerfile it works fine.
+- Container names differ (`-tf` suffix) to avoid collisions if Compose containers still exist.
+
+> **Important**: Use either Docker Compose (Option B) **or** Terraform (Option C) — not both at the same time, since they manage overlapping ports.
 
 ---
 

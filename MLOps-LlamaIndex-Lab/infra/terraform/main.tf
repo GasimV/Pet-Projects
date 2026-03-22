@@ -97,7 +97,11 @@ resource "docker_container" "app" {
     "QDRANT_PORT=6333",
     "LLM_PROVIDER=${var.llm_provider}",
     "LLM_MODEL=${var.llm_model}",
+    "LLM_API_BASE=${var.llm_api_base}",
+    "EMBEDDING_PROVIDER=${var.embedding_provider}",
     "EMBEDDING_MODEL=${var.embedding_model}",
+    "CHUNK_SIZE=${var.chunk_size}",
+    "CHUNK_OVERLAP=${var.chunk_overlap}",
   ]
 
   networks_advanced {
