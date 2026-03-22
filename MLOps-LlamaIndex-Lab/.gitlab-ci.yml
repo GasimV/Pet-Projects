@@ -11,8 +11,7 @@
 
 workflow:
   rules:
-    - if: $CI_PIPELINE_SOURCE == "push"
-    - if: $CI_PIPELINE_SOURCE == "web"
+    - when: always
 
 stages:
   - lint
