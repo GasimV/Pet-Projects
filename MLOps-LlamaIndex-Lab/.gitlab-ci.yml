@@ -9,6 +9,11 @@
 # pipeline — no Ollama, no Qdrant, no LLM inference happens in CI.
 # =============================================================================
 
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+    - if: $CI_PIPELINE_SOURCE == "web"
+
 stages:
   - lint
   - test
