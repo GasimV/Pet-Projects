@@ -1,0 +1,19 @@
+# Temporal dev server (all-in-one for local development)
+# Alternative: use `temporal server start-dev` CLI if installed
+services:
+  temporal:
+    image: temporalio/auto-setup:1.25.2
+    ports:
+      - "7233:7233"   # gRPC frontend
+    environment:
+      - DB=sqlite
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+
+  temporal-ui:
+    image: temporalio/ui:2.34.0
+    ports:
+      - "8088:8080"
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+    depends_on:
+      - temporal

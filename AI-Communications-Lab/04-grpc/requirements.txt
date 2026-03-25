@@ -1,0 +1,4 @@
+grpcio==1.69.0
+grpcio-tools==1.69.0
+httpx==0.28.1
+qdrant-client==1.13.2

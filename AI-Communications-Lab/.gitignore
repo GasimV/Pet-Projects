@@ -1,0 +1,46 @@
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
+
+# Docker
+docker-compose.override.yml
+
+# gRPC generated
+*_pb2.py
+*_pb2_grpc.py
+*_pb2.pyi
+
+# Node (for frontend demos)
+node_modules/
+
+# Logs
+*.log
+
+# Distribution
+*.tar.gz
+*.whl
