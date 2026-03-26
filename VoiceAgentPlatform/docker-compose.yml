@@ -1,0 +1,171 @@
+x-backend-env: &backend-env
+  env_file:
+    - .env.example
+    - .env.generated
+  environment:
+    STT_GRPC_TARGET: stt-service:50052
+    LLM_GRPC_TARGET: llm-service:50053
+    TTS_GRPC_TARGET: tts-service:50054
+    TOOL_GRPC_TARGET: tool-service:50055
+    RAG_GRPC_TARGET: rag-service:50056
+    ORCHESTRATOR_GRPC_HOST: session-orchestrator
+    ORCHESTRATOR_GRPC_PORT: 50051
+
+x-backend-base: &backend-base
+  build:
+    context: .
+    dockerfile: deploy/docker/Dockerfile.backend
+  restart: unless-stopped
+  volumes:
+    - .:/workspace
+  <<: *backend-env
+
+services:
+  gateway:
+    <<: *backend-base
+    command: python -m uvicorn gateway_app.main:app --host 0.0.0.0 --port 8080 --app-dir apps/gateway
+    depends_on:
+      - session-orchestrator
+    ports:
+      - "8080:8080"
+
+  session-orchestrator:
+    <<: *backend-base
+    command: python apps/session-orchestrator/session_orchestrator_app/main.py
+    depends_on:
+      - redis
+      - temporal
+      - stt-service
+      - rag-service
+      - llm-service
+      - tts-service
+      - tool-service
+    ports:
+      - "8081:8081"
+      - "50051:50051"
+
+  stt-service:
+    <<: *backend-base
+    command: python apps/stt-service/stt_service_app/main.py
+    ports:
+      - "8092:8092"
+      - "50052:50052"
+
+  llm-service:
+    <<: *backend-base
+    command: python apps/llm-service/llm_service_app/main.py
+    depends_on:
+      - ollama
+    ports:
+      - "8093:8093"
+      - "50053:50053"
+
+  tts-service:
+    <<: *backend-base
+    command: python apps/tts-service/tts_service_app/main.py
+    ports:
+      - "8094:8094"
+      - "50054:50054"
+
+  tool-service:
+    <<: *backend-base
+    command: python apps/tool-service/tool_service_app/main.py
+    ports:
+      - "8095:8095"
+      - "50055:50055"
+
+  rag-service:
+    <<: *backend-base
+    command: python apps/rag-service/rag_service_app/main.py
+    depends_on:
+      - qdrant
+      - ollama
+    ports:
+      - "8096:8096"
+      - "50056:50056"
+
+  temporal-worker:
+    <<: *backend-base
+    command: python apps/temporal-worker/temporal_worker_app/main.py
+    depends_on:
+      - temporal
+
+  livekit-agent:
+    <<: *backend-base
+    command: python -m uvicorn livekit_agent_app.main:app --host 0.0.0.0 --port 8091 --app-dir apps/livekit-agent
+    ports:
+      - "8091:8091"
+
+  livekit:
+    image: livekit/livekit-server:v1.9
+    command: --config /etc/livekit.yaml
+    volumes:
+      - ./deploy/docker/livekit/livekit.yaml:/etc/livekit.yaml:ro
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+
+  redis:
+    image: redis:7.4-alpine
+    ports:
+      - "6379:6379"
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: voice
+      POSTGRES_PASSWORD: voice
+      POSTGRES_DB: voice_platform
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./deploy/docker/postgres-init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    ports:
+      - "5432:5432"
+
+  qdrant:
+    image: qdrant/qdrant:v1.15.4
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+
+  temporal:
+    image: temporalio/auto-setup:1.27.2
+    environment:
+      DB: postgresql
+      DB_PORT: 5432
+      POSTGRES_USER: voice
+      POSTGRES_PWD: voice
+      POSTGRES_SEEDS: postgres
+      DBNAME: temporal
+    depends_on:
+      - postgres
+    ports:
+      - "7233:7233"
+
+  ollama:
+    image: ollama/ollama:0.12.2
+    environment:
+      OLLAMA_KEEP_ALIVE: 5m
+    volumes:
+      - ollama:/root/.ollama
+    ports:
+      - "11434:11434"
+
+  ollama-bootstrap:
+    image: ollama/ollama:0.12.2
+    profiles: ["bootstrap"]
+    entrypoint: ["/bin/sh", "-lc"]
+    command: "ollama pull gemma3:270m && ollama pull bge-m3:latest"
+    depends_on:
+      - ollama
+
+  vllm:
+    image: vllm/vllm-openai:latest
+    profiles: ["vllm"]
+    command: --model TinyLlama/TinyLlama-1.1B-Chat-v1.0 --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+
+volumes:
+  pgdata:
+  ollama:

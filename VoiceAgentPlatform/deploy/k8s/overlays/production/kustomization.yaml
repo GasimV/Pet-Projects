@@ -1,0 +1,7 @@
+resources:
+  - ../../base
+images:
+  - name: voice-platform/backend
+    newName: ghcr.io/example/voice-platform-backend
+    newTag: latest
+

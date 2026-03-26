@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package voice_platform;
+
+import "voice_platform/common.proto";
+
+message ToolRequest {
+  RequestMeta meta = 1;
+  string name = 2;
+  string arguments_json = 3;
+}
+
+message ToolReply {
+  RequestMeta meta = 1;
+  string output_json = 2;
+  bool retriable = 3;
+}
+
+service ToolRuntime {
+  rpc Execute(ToolRequest) returns (ToolReply);
+  rpc Health(Empty) returns (HealthReply);
+}

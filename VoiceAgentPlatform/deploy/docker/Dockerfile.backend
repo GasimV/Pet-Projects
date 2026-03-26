@@ -1,0 +1,21 @@
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONPATH=/workspace/libs/shared-config:/workspace/libs/shared-events:/workspace/libs/shared-observability:/workspace/libs/proto/generated:/workspace/apps/gateway:/workspace/apps/livekit-agent:/workspace/apps/session-orchestrator:/workspace/apps/stt-service:/workspace/apps/rag-service:/workspace/apps/llm-service:/workspace/apps/tts-service:/workspace/apps/tool-service:/workspace/apps/temporal-worker
+
+WORKDIR /workspace
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    espeak-ng \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt requirements-dev.txt pyproject.toml ./
+RUN pip install --upgrade pip && pip install -r requirements.txt
+
+COPY . .
+RUN python scripts/generate_protos.py
+

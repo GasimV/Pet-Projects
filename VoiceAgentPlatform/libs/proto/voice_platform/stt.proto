@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package voice_platform;
+
+import "voice_platform/common.proto";
+
+message SttAudioChunk {
+  RequestMeta meta = 1;
+  bytes pcm = 2;
+  uint32 sample_rate = 3;
+  bool end_of_turn = 4;
+}
+
+message TranscriptChunk {
+  RequestMeta meta = 1;
+  string text = 2;
+  bool is_final = 3;
+  float confidence = 4;
+}
+
+service SpeechToText {
+  rpc StreamTranscribe(stream SttAudioChunk) returns (stream TranscriptChunk);
+  rpc Health(Empty) returns (HealthReply);
+}
+

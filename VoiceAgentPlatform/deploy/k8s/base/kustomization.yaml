@@ -1,0 +1,4 @@
+namespace: voice-platform
+resources:
+  - manifests/platform.yaml
+

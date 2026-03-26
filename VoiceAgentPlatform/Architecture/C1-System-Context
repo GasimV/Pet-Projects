@@ -1,0 +1,31 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_LEFT_RIGHT()
+
+title C1 - System Context Diagram
+title AI Voice Assistant Platform for Starship / Robotic Suit / Mobile Robotic Home / UGV
+
+Person(user, "User / Pilot / Operator", "Speaks with the assistant in English")
+Person(admin, "Developer / Maintainer", "Deploys, monitors, and improves the platform")
+Person(extop, "Remote Operator", "May supervise or intervene remotely")
+
+System(system, "AI Voice Assistant Platform", "Realtime voice AI platform with STT, RAG, LLM, TTS, orchestration, and domain knowledge")
+
+System_Ext(client, "Client Device / Cockpit UI / Browser App", "Captures microphone audio and plays assistant speech")
+System_Ext(kb, "Knowledge Sources", "Manuals, mission docs, procedures, FAQs, telemetry references")
+System_Ext(tooling, "External Tools / APIs", "Optional tool calls: navigation, sensors, status, maps, automation")
+System_Ext(obs, "Monitoring Stack", "Metrics, logs, traces, dashboards")
+System_Ext(ci, "Container / Delivery Platform", "Docker registry, CI/CD, Kubernetes cluster")
+
+Rel(user, client, "Talks to and listens through")
+Rel(client, system, "Streams audio and receives voice/text responses")
+Rel(extop, system, "Observes sessions / may assist or override")
+Rel(admin, system, "Configures, deploys, operates, debugs")
+Rel(system, kb, "Retrieves domain knowledge")
+Rel(system, tooling, "Invokes tools and receives results")
+Rel(system, obs, "Exports telemetry")
+Rel(admin, ci, "Builds and deploys")
+Rel(ci, system, "Hosts and runs")
+
+@enduml

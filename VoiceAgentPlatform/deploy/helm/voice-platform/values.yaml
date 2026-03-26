@@ -1,0 +1,32 @@
+image:
+  repository: voice-platform/backend
+  tag: latest
+
+services:
+  gateway:
+    command: ["python", "-m", "uvicorn", "gateway_app.main:app", "--host", "0.0.0.0", "--port", "8080", "--app-dir", "apps/gateway"]
+    port: 8080
+  session-orchestrator:
+    command: ["python", "apps/session-orchestrator/session_orchestrator_app/main.py"]
+    port: 8081
+  stt-service:
+    command: ["python", "apps/stt-service/stt_service_app/main.py"]
+    port: 8092
+  llm-service:
+    command: ["python", "apps/llm-service/llm_service_app/main.py"]
+    port: 8093
+  tts-service:
+    command: ["python", "apps/tts-service/tts_service_app/main.py"]
+    port: 8094
+  tool-service:
+    command: ["python", "apps/tool-service/tool_service_app/main.py"]
+    port: 8095
+  rag-service:
+    command: ["python", "apps/rag-service/rag_service_app/main.py"]
+    port: 8096
+
+env:
+  PROJECT_NAME: voice-agent-platform
+  ENVIRONMENT: production
+  LOG_LEVEL: INFO
+

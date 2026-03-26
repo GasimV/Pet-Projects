@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package voice_platform;
+
+import "voice_platform/common.proto";
+
+message AudioFrame {
+  RequestMeta meta = 1;
+  bytes pcm = 2;
+  uint32 sample_rate = 3;
+  uint32 channels = 4;
+  bool end_of_turn = 5;
+  uint64 sequence_id = 6;
+}
+
+message ClientControl {
+  RequestMeta meta = 1;
+  string command = 2;
+  string value = 3;
+}
+
+message UiEvent {
+  RequestMeta meta = 1;
+  string event_type = 2;
+  string text = 3;
+  bytes audio = 4;
+  bool is_final = 5;
+  uint64 sequence_id = 6;
+  string mime_type = 7;
+  string json_payload = 8;
+}
+
+message SessionMessage {
+  oneof kind {
+    AudioFrame audio = 1;
+    ClientControl control = 2;
+    UiEvent event = 3;
+  }
+}
+
+service RealtimeSessionOrchestrator {
+  rpc Connect(stream SessionMessage) returns (stream SessionMessage);
+  rpc Health(Empty) returns (HealthReply);
+}
+

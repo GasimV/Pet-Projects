@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voice Agent Platform</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <p class="eyebrow">Realtime Voice Platform</p>
+        <h1>Local-first assistant cockpit</h1>
+        <p class="subhead">
+          Switch themes, stream English voice turns, inspect timings, and test the event-driven
+          orchestration path from your laptop.
+        </p>
+      </section>
+      <section class="panel controls">
+        <label>
+          Theme
+          <select id="domain">
+            <option value="starship">Starship</option>
+            <option value="robotic-suit">Robotic Suit</option>
+            <option value="robotic-home">Robotic Home</option>
+            <option value="ugv">UGV</option>
+          </select>
+        </label>
+        <button id="connect">Connect</button>
+        <button id="record" disabled>Start Mic</button>
+        <button id="stop" disabled>Stop Turn</button>
+        <button id="interrupt" disabled>Interrupt</button>
+      </section>
+      <section class="grid">
+        <article class="panel">
+          <h2>Transcript</h2>
+          <pre id="transcript"></pre>
+        </article>
+        <article class="panel">
+          <h2>Assistant</h2>
+          <pre id="assistant"></pre>
+        </article>
+        <article class="panel">
+          <h2>Debug Timings</h2>
+          <pre id="debug"></pre>
+        </article>
+      </section>
+      <p class="footer-note">
+        LiveKit token issuance is exposed by the gateway, but the default local UI path uses raw
+        PCM over WebSocket for the verified MVP loop.
+      </p>
+    </main>
+    <script type="module" src="/static/app.js"></script>
+  </body>
+  </html>
+

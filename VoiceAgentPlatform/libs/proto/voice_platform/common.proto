@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package voice_platform;
+
+message RequestMeta {
+  string session_id = 1;
+  string turn_id = 2;
+  string request_id = 3;
+  string domain = 4;
+}
+
+message HealthReply {
+  string status = 1;
+}
+
+message Empty {}
+

@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package voice_platform;
+
+import "voice_platform/common.proto";
+
+message ChatMessage {
+  string role = 1;
+  string content = 2;
+}
+
+message GenerateRequest {
+  RequestMeta meta = 1;
+  repeated ChatMessage messages = 2;
+  string system_prompt = 3;
+  string context = 4;
+  bool enable_tools = 5;
+}
+
+message ToolIntent {
+  string name = 1;
+  string arguments_json = 2;
+}
+
+message GenerateChunk {
+  RequestMeta meta = 1;
+  string token = 2;
+  bool is_final = 3;
+  ToolIntent tool_intent = 4;
+}
+
+service LanguageModel {
+  rpc StreamGenerate(GenerateRequest) returns (stream GenerateChunk);
+  rpc Health(Empty) returns (HealthReply);
+}
+

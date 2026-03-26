@@ -1,0 +1,133 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_LEFT_RIGHT()
+
+title C2 - Container Diagram
+title AI Voice Assistant Platform for Starship / Robotic Suit / Mobile Robotic Home / UGV
+
+Person(user, "User / Pilot / Operator", "Speaks with the assistant in English")
+Person(admin, "Developer / Maintainer", "Deploys and operates the platform")
+
+System_Ext(client, "Client Device / Cockpit UI / Browser App", "Web app, local console, or edge device with mic/speaker")
+System_Ext(tooling, "External Tools / APIs", "Optional robotics, telemetry, navigation, automation, maps")
+System_Ext(obsExt, "Monitoring Stack", "Prometheus, Grafana, Loki, OTEL backend")
+
+System_Boundary(sys, "AI Voice Assistant Platform") {
+
+  Container(ingress, "API Gateway / Ingress", "NGINX / Envoy / Kubernetes Ingress", "Routes HTTPS, gRPC, WebSocket traffic")
+
+  Container(media, "Realtime Media Gateway", "LiveKit / WebRTC service", "Handles realtime audio sessions, media transport, and bidirectional streaming")
+
+  Container(orchestrator, "Realtime Session Orchestrator", "Python / Go / Node.js", "Owns per-session control flow, turn-taking, barge-in, cancellations, routing, and non-blocking handoff across services")
+
+  Container(eventbus, "Event Bus", "NATS JetStream / Kafka", "Async messaging backbone for transcripts, retrieval jobs, control events, and response chunks")
+
+  Container(sttSvc, "STT Service", "gRPC microservice", "Streaming speech-to-text service; may wrap faster-whisper or call Triton")
+
+  Container(ragSvc, "RAG Service", "Python FastAPI / gRPC", "Builds retrieval queries, fetches relevant context, ranks passages, and constructs augmented prompts")
+
+  Container(llmSvc, "LLM Service", "vLLM-backed service", "Streams generated tokens and structured responses")
+
+  Container(ttsSvc, "TTS Service", "gRPC microservice", "Generates streaming speech audio from assistant text")
+
+  Container(triton, "NVIDIA Triton Inference Server", "Triton", "Inference serving layer for STT/TTS/embeddings/reranking and other GPU-backed models")
+
+  Container(temporalApi, "Temporal Workers / Workflow Adapter", "Temporal SDK workers", "Starts and handles durable workflows, retries, long-running tasks, escalations, and post-session jobs")
+
+  ContainerDb(temporal, "Temporal Service", "Temporal", "Durable workflow engine and task queues")
+
+  Container(state, "Session State Store", "Redis", "Low-latency session state, turn IDs, interrupt flags, partial transcript state")
+
+  ContainerDb(vectorDb, "Vector Database", "pgvector / Milvus / Qdrant / Weaviate", "Semantic retrieval index for domain knowledge")
+
+  ContainerDb(docStore, "Document / Metadata Store", "PostgreSQL + Object Storage", "Documents, metadata, prompts, configs, artifacts")
+
+  Container(toolAdapter, "Tool / Robotics Adapter", "gRPC / REST integration service", "Bridges the assistant to optional external tools and robotics APIs")
+
+  Container(uiBackend, "UI Session Backend", "FastAPI / Node.js", "Exposes session metadata, transcript history, and admin APIs to UI clients")
+
+  Container(obs, "Observability Exporters", "OTel / Prometheus exporters", "Metrics, traces, and structured logs")
+}
+
+Rel(user, client, "Speaks and listens through")
+Rel(client, ingress, "HTTPS / WebSocket / gRPC-Web")
+Rel(ingress, media, "Routes realtime audio/session traffic")
+Rel(ingress, uiBackend, "Routes app/API traffic")
+
+Rel(media, orchestrator, "Streams audio events and playback control", "WebRTC / gRPC / WebSocket")
+Rel(orchestrator, state, "Reads/writes live session state")
+Rel(orchestrator, eventbus, "Publishes and consumes session events")
+Rel(orchestrator, temporalApi, "Starts workflows / sends durable tasks")
+Rel(orchestrator, toolAdapter, "Invokes tool actions when needed")
+Rel(orchestrator, uiBackend, "Publishes session updates")
+Rel(orchestrator, obs, "Emits logs, traces, metrics")
+
+Rel(eventbus, sttSvc, "Delivers audio segment jobs / transcript events")
+Rel(eventbus, ragSvc, "Delivers transcript/final utterance events")
+Rel(eventbus, llmSvc, "Delivers prompt/context jobs")
+Rel(eventbus, ttsSvc, "Delivers synthesis jobs")
+
+Rel(sttSvc, triton, "Inference requests for STT", "gRPC / HTTP")
+Rel(sttSvc, orchestrator, "Returns partial/final transcripts", "gRPC / event")
+Rel(sttSvc, obs, "Emits metrics")
+
+Rel(ragSvc, vectorDb, "Semantic search")
+Rel(ragSvc, docStore, "Reads source docs and metadata")
+Rel(ragSvc, triton, "Embedding/reranking inference", "gRPC / HTTP")
+Rel(ragSvc, llmSvc, "Sends augmented context/prompt", "gRPC / event")
+Rel(ragSvc, obs, "Emits metrics")
+
+Rel(llmSvc, orchestrator, "Streams tokens / response events", "gRPC / event")
+Rel(llmSvc, obs, "Emits metrics")
+
+Rel(ttsSvc, triton, "Inference requests for TTS", "gRPC / HTTP")
+Rel(ttsSvc, orchestrator, "Returns audio chunks", "gRPC / event")
+Rel(ttsSvc, obs, "Emits metrics")
+
+Rel(temporalApi, temporal, "Polls task queues / executes workflows")
+Rel(temporalApi, docStore, "Stores workflow artifacts if needed")
+Rel(temporalApi, obs, "Emits metrics")
+
+Rel(toolAdapter, tooling, "Calls external robotics/tool APIs", "gRPC / REST")
+Rel(toolAdapter, obs, "Emits metrics")
+
+Rel(uiBackend, docStore, "Reads metadata/history")
+Rel(uiBackend, state, "Reads session status")
+Rel(uiBackend, obs, "Emits metrics")
+
+Rel(obs, obsExt, "Exports telemetry")
+Rel(admin, ingress, "Accesses admin/API endpoints")
+Rel(admin, obsExt, "Views dashboards and traces")
+
+note right of orchestrator
+Realtime control plane:
+- turn management
+- interruption handling
+- cancellation
+- sequencing
+- session routing
+- concurrency control
+end note
+
+note right of triton
+Inference plane:
+- STT
+- TTS
+- embeddings
+- rerankers
+- optional other GPU models
+
+Not the main orchestrator.
+end note
+
+note bottom of temporal
+Durable orchestration for:
+- retries
+- escalations
+- long-running jobs
+- post-session tasks
+- resilient execution
+end note
+
+@enduml

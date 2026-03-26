@@ -1,0 +1,523 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: voice-platform
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: voice-platform-config
+data:
+  PROJECT_NAME: voice-agent-platform
+  ENVIRONMENT: production
+  LOG_LEVEL: INFO
+  RUNTIME_PROFILE: local-hybrid
+  REDIS_URL: redis://redis:6379/0
+  POSTGRES_DSN: postgresql+asyncpg://voice:voice@postgres:5432/voice_platform
+  QDRANT_URL: http://qdrant:6333
+  OLLAMA_BASE_URL: http://ollama:11434
+  OLLAMA_CHAT_MODEL: gemma3:270m
+  OLLAMA_EMBED_MODEL: bge-m3:latest
+  ENABLE_VLLM: "false"
+  STT_MODEL: tiny.en
+  STT_DEVICE: cpu
+  STT_COMPUTE_TYPE: int8
+  TTS_PROVIDER: espeak
+  TEMPORAL_TARGET: temporal:7233
+  TEMPORAL_NAMESPACE: default
+  TEMPORAL_TASK_QUEUE: voice-platform
+  KNOWLEDGE_DIR: /workspace/knowledge
+  DEFAULT_DOMAIN_PACK: starship
+  STT_GRPC_TARGET: stt-service:50052
+  LLM_GRPC_TARGET: llm-service:50053
+  TTS_GRPC_TARGET: tts-service:50054
+  TOOL_GRPC_TARGET: tool-service:50055
+  RAG_GRPC_TARGET: rag-service:50056
+  ORCHESTRATOR_GRPC_HOST: session-orchestrator
+  ORCHESTRATOR_GRPC_PORT: "50051"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: voice-platform-secrets
+type: Opaque
+stringData:
+  LIVEKIT_API_KEY: devkey
+  LIVEKIT_API_SECRET: secret
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: gateway }
+  template:
+    metadata:
+      labels: { app: gateway }
+    spec:
+      containers:
+        - name: gateway
+          image: voice-platform/backend:latest
+          command: ["python", "-m", "uvicorn", "gateway_app.main:app", "--host", "0.0.0.0", "--port", "8080", "--app-dir", "apps/gateway"]
+          envFrom:
+            - configMapRef: { name: voice-platform-config }
+            - secretRef: { name: voice-platform-secrets }
+          ports:
+            - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+spec:
+  selector: { app: gateway }
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: session-orchestrator
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: session-orchestrator }
+  template:
+    metadata:
+      labels: { app: session-orchestrator }
+    spec:
+      containers:
+        - name: session-orchestrator
+          image: voice-platform/backend:latest
+          command: ["python", "apps/session-orchestrator/session_orchestrator_app/main.py"]
+          envFrom:
+            - configMapRef: { name: voice-platform-config }
+            - secretRef: { name: voice-platform-secrets }
+          ports:
+            - containerPort: 8081
+            - containerPort: 50051
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: session-orchestrator
+spec:
+  selector: { app: session-orchestrator }
+  ports:
+    - name: http
+      port: 8081
+      targetPort: 8081
+    - name: grpc
+      port: 50051
+      targetPort: 50051
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stt-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: stt-service }
+  template:
+    metadata:
+      labels: { app: stt-service }
+    spec:
+      containers:
+        - name: stt-service
+          image: voice-platform/backend:latest
+          command: ["python", "apps/stt-service/stt_service_app/main.py"]
+          envFrom:
+            - configMapRef: { name: voice-platform-config }
+          ports:
+            - containerPort: 8092
+            - containerPort: 50052
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stt-service
+spec:
+  selector: { app: stt-service }
+  ports:
+    - name: http
+      port: 8092
+      targetPort: 8092
+    - name: grpc
+      port: 50052
+      targetPort: 50052
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llm-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: llm-service }
+  template:
+    metadata:
+      labels: { app: llm-service }
+    spec:
+      containers:
+        - name: llm-service
+          image: voice-platform/backend:latest
+          command: ["python", "apps/llm-service/llm_service_app/main.py"]
+          envFrom:
+            - configMapRef: { name: voice-platform-config }
+          ports:
+            - containerPort: 8093
+            - containerPort: 50053
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llm-service
+spec:
+  selector: { app: llm-service }
+  ports:
+    - name: http
+      port: 8093
+      targetPort: 8093
+    - name: grpc
+      port: 50053
+      targetPort: 50053
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tts-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: tts-service }
+  template:
+    metadata:
+      labels: { app: tts-service }
+    spec:
+      containers:
+        - name: tts-service
+          image: voice-platform/backend:latest
+          command: ["python", "apps/tts-service/tts_service_app/main.py"]
+          envFrom:
+            - configMapRef: { name: voice-platform-config }
+          ports:
+            - containerPort: 8094
+            - containerPort: 50054
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tts-service
+spec:
+  selector: { app: tts-service }
+  ports:
+    - name: http
+      port: 8094
+      targetPort: 8094
+    - name: grpc
+      port: 50054
+      targetPort: 50054
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tool-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: tool-service }
+  template:
+    metadata:
+      labels: { app: tool-service }
+    spec:
+      containers:
+        - name: tool-service
+          image: voice-platform/backend:latest
+          command: ["python", "apps/tool-service/tool_service_app/main.py"]
+          envFrom:
+            - configMapRef: { name: voice-platform-config }
+          ports:
+            - containerPort: 8095
+            - containerPort: 50055
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tool-service
+spec:
+  selector: { app: tool-service }
+  ports:
+    - name: http
+      port: 8095
+      targetPort: 8095
+    - name: grpc
+      port: 50055
+      targetPort: 50055
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: rag-service }
+  template:
+    metadata:
+      labels: { app: rag-service }
+    spec:
+      containers:
+        - name: rag-service
+          image: voice-platform/backend:latest
+          command: ["python", "apps/rag-service/rag_service_app/main.py"]
+          envFrom:
+            - configMapRef: { name: voice-platform-config }
+          ports:
+            - containerPort: 8096
+            - containerPort: 50056
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rag-service
+spec:
+  selector: { app: rag-service }
+  ports:
+    - name: http
+      port: 8096
+      targetPort: 8096
+    - name: grpc
+      port: 50056
+      targetPort: 50056
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temporal-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: temporal-worker }
+  template:
+    metadata:
+      labels: { app: temporal-worker }
+    spec:
+      containers:
+        - name: temporal-worker
+          image: voice-platform/backend:latest
+          command: ["python", "apps/temporal-worker/temporal_worker_app/main.py"]
+          envFrom:
+            - configMapRef: { name: voice-platform-config }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: livekit-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: livekit-agent }
+  template:
+    metadata:
+      labels: { app: livekit-agent }
+    spec:
+      containers:
+        - name: livekit-agent
+          image: voice-platform/backend:latest
+          command: ["python", "-m", "uvicorn", "livekit_agent_app.main:app", "--host", "0.0.0.0", "--port", "8091", "--app-dir", "apps/livekit-agent"]
+          envFrom:
+            - configMapRef: { name: voice-platform-config }
+            - secretRef: { name: voice-platform-secrets }
+          ports:
+            - containerPort: 8091
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: redis }
+  template:
+    metadata:
+      labels: { app: redis }
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.4-alpine
+          ports:
+            - containerPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+spec:
+  selector: { app: redis }
+  ports:
+    - port: 6379
+      targetPort: 6379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: postgres }
+  template:
+    metadata:
+      labels: { app: postgres }
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          env:
+            - { name: POSTGRES_USER, value: voice }
+            - { name: POSTGRES_PASSWORD, value: voice }
+            - { name: POSTGRES_DB, value: voice_platform }
+          ports:
+            - containerPort: 5432
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  selector: { app: postgres }
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qdrant
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: qdrant }
+  template:
+    metadata:
+      labels: { app: qdrant }
+    spec:
+      containers:
+        - name: qdrant
+          image: qdrant/qdrant:v1.15.4
+          ports:
+            - containerPort: 6333
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qdrant
+spec:
+  selector: { app: qdrant }
+  ports:
+    - port: 6333
+      targetPort: 6333
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temporal
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: temporal }
+  template:
+    metadata:
+      labels: { app: temporal }
+    spec:
+      containers:
+        - name: temporal
+          image: temporalio/auto-setup:1.27.2
+          env:
+            - { name: DB, value: postgresql }
+            - { name: DB_PORT, value: "5432" }
+            - { name: POSTGRES_USER, value: voice }
+            - { name: POSTGRES_PWD, value: voice }
+            - { name: POSTGRES_SEEDS, value: postgres }
+            - { name: DBNAME, value: temporal }
+          ports:
+            - containerPort: 7233
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporal
+spec:
+  selector: { app: temporal }
+  ports:
+    - port: 7233
+      targetPort: 7233
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: ollama }
+  template:
+    metadata:
+      labels: { app: ollama }
+    spec:
+      containers:
+        - name: ollama
+          image: ollama/ollama:0.12.2
+          ports:
+            - containerPort: 11434
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama
+spec:
+  selector: { app: ollama }
+  ports:
+    - port: 11434
+      targetPort: 11434
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: livekit
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: livekit }
+  template:
+    metadata:
+      labels: { app: livekit }
+    spec:
+      containers:
+        - name: livekit
+          image: livekit/livekit-server:v1.9
+          args: ["--config", "/etc/livekit/livekit.yaml"]
+          ports:
+            - containerPort: 7880
+            - containerPort: 7881
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: livekit
+spec:
+  selector: { app: livekit }
+  ports:
+    - name: http
+      port: 7880
+      targetPort: 7880
+    - name: rtc
+      port: 7881
+      targetPort: 7881
+
