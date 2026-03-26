@@ -103,6 +103,39 @@ docker compose up --build
 - Gateway health: `http://localhost:8080/health/ready`
 - Orchestrator health: `http://localhost:8081/health/ready`
 
+## Docker Lifecycle
+For normal day-to-day use, you do not need to remove containers every time.
+
+Pause the stack without deleting containers:
+
+```powershell
+docker compose stop
+```
+
+Start the existing stopped containers again:
+
+```powershell
+docker compose start
+```
+
+Rebuild and recreate services after code, dependency, Dockerfile, or Compose changes:
+
+```powershell
+docker compose up -d --build
+```
+
+Remove containers and the Compose network, while keeping named volumes:
+
+```powershell
+docker compose down
+```
+
+Remove containers and delete named volumes too. Use this only when you want a full local reset:
+
+```powershell
+docker compose down -v
+```
+
 ## Service Ports
 - gateway: `8080`
 - livekit-agent: `8091`
