@@ -43,8 +43,12 @@ class AppSettings(BaseSettings):
     stt_device: str = Field(default="cpu", alias="STT_DEVICE")
     stt_compute_type: str = Field(default="int8", alias="STT_COMPUTE_TYPE")
     stt_chunk_ms: int = Field(default=250, alias="STT_CHUNK_MS")
-    tts_provider: str = Field(default="espeak", alias="TTS_PROVIDER")
-    tts_voice: str = Field(default="en-us", alias="TTS_VOICE")
+    tts_provider: str = Field(default="kokoro", alias="TTS_PROVIDER")
+    tts_voice: str = Field(default="af_heart", alias="TTS_VOICE")
+    tts_device: str = Field(default="cpu", alias="TTS_DEVICE")
+    tts_speed: float = Field(default=1.0, alias="TTS_SPEED")
+    tts_lang_code: str = Field(default="a", alias="TTS_LANG_CODE")
+    tts_kokoro_repo: str = Field(default="hexgrad/Kokoro-82M", alias="TTS_KOKORO_REPO")
     temporal_target: str = Field(default="localhost:7233", alias="TEMPORAL_TARGET")
     temporal_namespace: str = Field(default="default", alias="TEMPORAL_NAMESPACE")
     temporal_task_queue: str = Field(default="voice-platform", alias="TEMPORAL_TASK_QUEUE")
@@ -58,4 +62,3 @@ class AppSettings(BaseSettings):
 @lru_cache(maxsize=1)
 def get_settings() -> AppSettings:
     return AppSettings()
-

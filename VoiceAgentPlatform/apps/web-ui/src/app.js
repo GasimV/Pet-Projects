@@ -15,6 +15,9 @@ let stream;
 let sessionId = `session-${crypto.randomUUID()}`;
 let turnId = "turn-0";
 let sequenceId = 0;
+let audioQueue = [];
+let activeAudio = null;
+let isPlayingAudio = false;
 
 function appendLine(element, text) {
   element.textContent = `${element.textContent}${text}\n`;
@@ -42,8 +45,48 @@ function playAudio(base64Audio, mimeType) {
   const binary = atob(base64Audio);
   const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
   const blob = new Blob([bytes], { type: mimeType || "audio/wav" });
-  const audio = new Audio(URL.createObjectURL(blob));
-  audio.play().catch(() => {});
+  audioQueue.push(URL.createObjectURL(blob));
+  void drainAudioQueue();
+}
+
+async function drainAudioQueue() {
+  if (isPlayingAudio || audioQueue.length === 0) {
+    return;
+  }
+  isPlayingAudio = true;
+  const url = audioQueue.shift();
+  const audio = new Audio(url);
+  activeAudio = audio;
+  try {
+    await audio.play();
+    await new Promise((resolve) => {
+      audio.onended = resolve;
+      audio.onerror = resolve;
+      audio.onpause = resolve;
+    });
+  } catch (_) {
+    // Ignore autoplay or decode failures in local dev.
+  } finally {
+    audio.pause();
+    URL.revokeObjectURL(url);
+    if (activeAudio === audio) {
+      activeAudio = null;
+    }
+    isPlayingAudio = false;
+    if (audioQueue.length > 0) {
+      void drainAudioQueue();
+    }
+  }
+}
+
+function stopPlayback() {
+  audioQueue = [];
+  if (activeAudio) {
+    activeAudio.pause();
+    activeAudio.currentTime = 0;
+    activeAudio = null;
+  }
+  isPlayingAudio = false;
 }
 
 function sendControl(command, value = "") {
@@ -81,6 +124,9 @@ connectBtn.addEventListener("click", async () => {
     if (payload.type === "tts.chunk" && payload.audio_b64) {
       playAudio(payload.audio_b64, payload.mime_type);
     }
+    if (payload.type === "tts.stopped") {
+      stopPlayback();
+    }
     if (payload.type === "timing") {
       appendLine(debugEl, `${payload.payload.stage}: ${payload.payload.duration_ms}ms`);
     }
@@ -94,6 +140,7 @@ recordBtn.addEventListener("click", async () => {
   if (!socket || socket.readyState !== WebSocket.OPEN) {
     return;
   }
+  stopPlayback();
   turnId = `turn-${crypto.randomUUID().slice(0, 8)}`;
   transcriptEl.textContent = "";
   assistantEl.textContent = "";
@@ -158,6 +205,6 @@ interruptBtn.addEventListener("click", () => {
   if (!socket || socket.readyState !== WebSocket.OPEN) {
     return;
   }
+  stopPlayback();
   sendControl("interrupt");
 });
-

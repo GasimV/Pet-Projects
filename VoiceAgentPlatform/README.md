@@ -21,7 +21,13 @@ Local-first monorepo for an English-only realtime AI voice assistant that can be
 
 ## Honest Deviations
 - The verified local MVP audio loop uses browser mic capture to raw PCM over WebSocket into the gateway, then gRPC into the orchestrator. LiveKit server/token plumbing and a `livekit-agent` service are included, but the full browser-to-LiveKit-to-agent audio bridge is left as the production insertion point.
-- Ollama is the default LLM/embedding runtime, but not the TTS runtime. Community Ollama-hosted TTS models exist, yet the standard Ollama API surface does not provide a clean audio-output contract for this stack, so the project falls back to `espeak-ng` for local TTS.
+- Ollama is the default LLM/embedding runtime, but not the TTS runtime. Community Ollama-hosted TTS models exist, yet the standard Ollama API surface does not provide a clean audio-output contract for this stack, so the project defaults to Kokoro 82M for local TTS and keeps `espeak-ng` only as the emergency fallback.
+
+## TTS Runtime
+- Default local TTS provider: Kokoro 82M (`hexgrad/Kokoro-82M`)
+- Default English voice: `af_heart`
+- Emergency fallback: `espeak-ng` if Kokoro initialization fails
+- First Kokoro use downloads model and voice assets from Hugging Face into the container cache, so the first spoken reply can be slower than later turns
 
 ## Repo Layout
 ```text
@@ -80,6 +86,13 @@ python -m venv .venv
 powershell -ExecutionPolicy Bypass -File scripts\bootstrap_models.ps1
 ```
 
+Or, if the stack is already running and you want to pull models directly inside the Ollama container:
+```powershell
+docker compose exec ollama ollama pull gemma3:270m
+docker compose exec ollama ollama pull bge-m3:latest
+docker compose exec ollama ollama list
+```
+
 3. Start the stack:
 ```powershell
 docker compose up --build
@@ -109,6 +122,19 @@ docker compose up --build
 ## Tests
 ```powershell
 .\.venv\Scripts\python -m pytest
+```
+
+## Troubleshooting
+Follow the main realtime-path service logs during a browser session with:
+
+```powershell
+docker compose logs -f gateway session-orchestrator stt-service llm-service rag-service tts-service
+```
+
+If you are tuning the new Kokoro voice path specifically, watch the TTS container by itself:
+
+```powershell
+docker compose logs -f tts-service
 ```
 
 ## Tooling

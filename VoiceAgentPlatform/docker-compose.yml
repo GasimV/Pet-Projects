@@ -47,6 +47,12 @@ services:
   stt-service:
     <<: *backend-base
     command: python apps/stt-service/stt_service_app/main.py
+    environment:
+      STT_DEVICE: cpu
+      STT_COMPUTE_TYPE: int8
+    volumes:
+      - .:/workspace
+      - hf-cache:/root/.cache/huggingface
     ports:
       - "8092:8092"
       - "50052:50052"
@@ -63,6 +69,13 @@ services:
   tts-service:
     <<: *backend-base
     command: python apps/tts-service/tts_service_app/main.py
+    environment:
+      TTS_PROVIDER: kokoro
+      TTS_DEVICE: cpu
+      TTS_VOICE: af_heart
+    volumes:
+      - .:/workspace
+      - hf-cache:/root/.cache/huggingface
     ports:
       - "8094:8094"
       - "50054:50054"
@@ -119,11 +132,18 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./deploy/docker/postgres-init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U voice -d voice_platform"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     ports:
       - "5432:5432"
 
   qdrant:
     image: qdrant/qdrant:v1.15.4
+    volumes:
+      - qdrant:/qdrant/storage
     ports:
       - "6333:6333"
       - "6334:6334"
@@ -131,14 +151,15 @@ services:
   temporal:
     image: temporalio/auto-setup:1.27.2
     environment:
-      DB: postgresql
+      DB: postgres12
       DB_PORT: 5432
       POSTGRES_USER: voice
       POSTGRES_PWD: voice
       POSTGRES_SEEDS: postgres
       DBNAME: temporal
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     ports:
       - "7233:7233"
 
@@ -169,3 +190,5 @@ services:
 volumes:
   pgdata:
   ollama:
+  qdrant:
+  hf-cache:

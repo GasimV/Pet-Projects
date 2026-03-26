@@ -2,18 +2,18 @@ from __future__ import annotations
 
 import grpc
 
-from tts_service_app.providers import EspeakProvider
+from tts_service_app.providers import TtsProvider
 from voice_platform import common_pb2, tts_pb2, tts_pb2_grpc
 
 
 class TextToSpeechService(tts_pb2_grpc.TextToSpeechServicer):
-    def __init__(self, provider: EspeakProvider) -> None:
+    def __init__(self, provider: TtsProvider) -> None:
         self._provider = provider
 
     async def Synthesize(
         self, request: tts_pb2.SynthesisRequest, context: grpc.aio.ServicerContext
     ):
-        packet = await self._provider.synthesize(request.text)
+        packet = await self._provider.synthesize(request.text, request.voice)
         yield tts_pb2.SynthesisChunk(
             meta=request.meta,
             audio=packet.audio,
@@ -23,4 +23,3 @@ class TextToSpeechService(tts_pb2_grpc.TextToSpeechServicer):
 
     async def Health(self, request: common_pb2.Empty, context: grpc.aio.ServicerContext):
         return common_pb2.HealthReply(status="ok")
-

@@ -27,10 +27,32 @@ class FasterWhisperTranscriber:
         self._device = device
         self._compute_type = compute_type
         self._model = None
+        self._fallback_attempted = False
 
     def _ensure_model(self):
         if self._model is None and WhisperModel is not None:
-            self._model = WhisperModel(self._model_name, device=self._device, compute_type=self._compute_type)
+            try:
+                self._model = WhisperModel(
+                    self._model_name,
+                    device=self._device,
+                    compute_type=self._compute_type,
+                )
+            except RuntimeError as exc:
+                if self._device != "cpu" and not self._fallback_attempted:
+                    logger.warning(
+                        "GPU STT initialization failed; falling back to CPU",
+                        extra={"device": self._device, "compute_type": self._compute_type, "error": str(exc)},
+                    )
+                    self._fallback_attempted = True
+                    self._device = "cpu"
+                    self._compute_type = "int8"
+                    self._model = WhisperModel(
+                        self._model_name,
+                        device=self._device,
+                        compute_type=self._compute_type,
+                    )
+                else:
+                    raise
         return self._model
 
     @staticmethod
@@ -61,4 +83,3 @@ class FasterWhisperTranscriber:
         text = " ".join(segment.text.strip() for segment in segments).strip()
         confidence = 1.0 - float(getattr(info, "language_probability", 0.5))
         return TranscriptResult(text=text, confidence=max(0.1, confidence))
-

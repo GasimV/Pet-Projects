@@ -27,7 +27,7 @@
 - `apps/stt-service`: faster-whisper transcription
 - `apps/rag-service`: domain ingestion and retrieval with LlamaIndex/Qdrant
 - `apps/llm-service`: Ollama-first provider abstraction with optional vLLM mode
-- `apps/tts-service`: `espeak-ng` fallback TTS with Ollama TTS probe logic
+- `apps/tts-service`: Kokoro 82M local TTS with Ollama TTS probe logic and `espeak-ng` emergency fallback
 - `apps/tool-service`: LangChain/MCP-compatible tool surface
 - `apps/temporal-worker`: durable workflows and activities
 - `apps/livekit-agent`: production insertion point for full LiveKit participant bridging

@@ -56,18 +56,21 @@ class RagEngine:
     def retrieve(self, query: str, top_k: int = 3) -> tuple[str, list[dict[str, object]]]:
         index = self.ensure_index()
         if index is not None:
-            retriever = index.as_retriever(similarity_top_k=top_k)
-            nodes = retriever.retrieve(query)
-            citations = [
-                {
-                    "source": str(node.metadata.get("source", "unknown")),
-                    "excerpt": node.text[:280],
-                    "score": float(getattr(node, "score", 0.0) or 0.0),
-                }
-                for node in nodes
-            ]
-            context = "\n\n".join(item["excerpt"] for item in citations)
-            return context, citations
+            try:
+                retriever = index.as_retriever(similarity_top_k=top_k)
+                nodes = retriever.retrieve(query or "system overview")
+                citations = [
+                    {
+                        "source": str(node.metadata.get("source", "unknown")),
+                        "excerpt": node.text[:280],
+                        "score": float(getattr(node, "score", 0.0) or 0.0),
+                    }
+                    for node in nodes
+                ]
+                context = "\n\n".join(item["excerpt"] for item in citations)
+                return context, citations
+            except Exception:
+                logger.exception("Vector retrieval failed; falling back to local text retrieval")
 
         lowered = query.lower()
         citations: list[dict[str, object]] = []
@@ -80,4 +83,3 @@ class RagEngine:
             citations.append({"source": source, "excerpt": text[:280], "score": 0.1})
         context = "\n\n".join(item["excerpt"] for item in citations[:top_k])
         return context, citations[:top_k]
-

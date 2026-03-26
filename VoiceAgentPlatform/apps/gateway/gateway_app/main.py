@@ -22,6 +22,7 @@ for rel in (
 import grpc
 import redis.asyncio as redis
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from starlette.websockets import WebSocketState
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -167,19 +168,47 @@ async def websocket_session(websocket: WebSocket) -> None:
             if not message.HasField("event"):
                 continue
             event = message.event
-            await websocket.send_json(
-                {
-                    "type": event.event_type,
-                    "text": event.text,
-                    "is_final": event.is_final,
-                    "sequence_id": event.sequence_id,
-                    "mime_type": event.mime_type,
-                    "audio_b64": base64.b64encode(event.audio).decode("utf-8") if event.audio else None,
-                    "payload": json.loads(event.json_payload or "{}"),
-                    "session_id": event.meta.session_id,
-                    "turn_id": event.meta.turn_id,
-                }
-            )
+            if websocket.client_state != WebSocketState.CONNECTED:
+                break
+            try:
+                await websocket.send_json(
+                    {
+                        "type": event.event_type,
+                        "text": event.text,
+                        "is_final": event.is_final,
+                        "sequence_id": event.sequence_id,
+                        "mime_type": event.mime_type,
+                        "audio_b64": base64.b64encode(event.audio).decode("utf-8") if event.audio else None,
+                        "payload": json.loads(event.json_payload or "{}"),
+                        "session_id": event.meta.session_id,
+                        "turn_id": event.meta.turn_id,
+                    }
+                )
+            except (RuntimeError, WebSocketDisconnect):
+                break
+    except grpc.aio.AioRpcError as exc:
+        if websocket.client_state == WebSocketState.CONNECTED:
+            try:
+                await websocket.send_json(
+                    {
+                        "type": "error",
+                        "text": "",
+                        "payload": {"stage": "gateway", "error": exc.details() or str(exc)},
+                        "is_final": True,
+                        "sequence_id": 0,
+                        "mime_type": "",
+                        "audio_b64": None,
+                        "session_id": "",
+                        "turn_id": "",
+                    }
+                )
+            except (RuntimeError, WebSocketDisconnect):
+                pass
     finally:
+        await outgoing.put(None)
         receiver.cancel()
+        try:
+            await receiver
+        except asyncio.CancelledError:
+            pass
         await channel.close()

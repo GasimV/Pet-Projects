@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import pathlib
 import sys
 
@@ -30,12 +31,28 @@ from temporal_worker_app.workflows import (
 from temporalio.client import Client
 from temporalio.worker import Worker
 
+logger = logging.getLogger(__name__)
+
+
+async def connect_with_retry(target: str, namespace: str) -> Client:
+    delay = 2
+    while True:
+        try:
+            return await Client.connect(target, namespace=namespace)
+        except Exception as exc:  # pragma: no cover - exercised in containers
+            logger.warning(
+                "Temporal not ready yet; retrying",
+                extra={"target": target, "namespace": namespace, "error": str(exc)},
+            )
+            await asyncio.sleep(delay)
+            delay = min(delay * 2, 15)
+
 
 async def main() -> None:
     settings = get_settings()
     configure_logging(settings.log_level)
     configure_tracing("temporal-worker", settings.otel_exporter_otlp_endpoint)
-    client = await Client.connect(settings.temporal_target, namespace=settings.temporal_namespace)
+    client = await connect_with_retry(settings.temporal_target, settings.temporal_namespace)
     worker = Worker(
         client,
         task_queue=settings.temporal_task_queue,

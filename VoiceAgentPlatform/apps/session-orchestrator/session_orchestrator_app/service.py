@@ -37,6 +37,15 @@ class LiveSession:
         self._active_response_task: asyncio.Task | None = None
         self._partial_task: asyncio.Task | None = None
 
+    async def close(self) -> None:
+        for task in (self._partial_task, self._active_response_task):
+            if task is not None and not task.done():
+                task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
+
     async def _emit(self, event_type: str, text: str = "", *, audio: bytes = b"", is_final: bool = False, payload: dict | None = None) -> None:
         self._sequence += 1
         meta = common_pb2.RequestMeta(
@@ -91,7 +100,12 @@ class LiveSession:
             request_id=str(uuid.uuid4()),
             domain=self._domain,
         )
-        text, _ = await self._clients.transcribe(meta, bytes(self._audio_buffer), self._sample_rate, False)
+        try:
+            text, _ = await self._clients.transcribe(
+                meta, bytes(self._audio_buffer), self._sample_rate, False
+            )
+        except Exception:
+            return
         if text:
             await self._emit(EventType.TRANSCRIPT_PARTIAL.value, text=text, payload={"confidence": 0.5})
 
@@ -105,97 +119,107 @@ class LiveSession:
                 await self._emit(EventType.TTS_CHUNK.value, text=chunk, audio=audio, payload={"text": chunk})
 
     async def _run_turn(self, transcript: str) -> None:
-        meta = common_pb2.RequestMeta(
-            session_id=self._session_id,
-            turn_id=self._turn_id,
-            request_id=str(uuid.uuid4()),
-            domain=self._domain,
-        )
-        rag_started = time.time()
-        rag_reply = await self._clients.retrieve(meta, transcript, top_k=3)
-        await self._emit_timing("rag", rag_started)
-        await self._emit(
-            EventType.RAG_CONTEXT.value,
-            payload={
-                "context": rag_reply.assembled_context,
-                "citations": [
-                    {"source": item.source, "excerpt": item.excerpt, "score": item.score}
-                    for item in rag_reply.citations
-                ],
-            },
-        )
-
-        messages = [{"role": "user", "content": transcript}]
-        system_prompt = (
-            f"You are an English-only assistant themed for the '{self._domain}' domain. "
-            "Be concise, grounded, and operationally clear."
-        )
-
-        llm_started = time.time()
-        first_pass = [
-            chunk
-            async for chunk in self._clients.stream_generate(
-                meta, messages, system_prompt, rag_reply.assembled_context, True
+        try:
+            meta = common_pb2.RequestMeta(
+                session_id=self._session_id,
+                turn_id=self._turn_id,
+                request_id=str(uuid.uuid4()),
+                domain=self._domain,
             )
-        ]
-        if first_pass and first_pass[0].tool_intent.name:
-            intent = first_pass[0].tool_intent
+            rag_started = time.time()
+            rag_reply = await self._clients.retrieve(meta, transcript, top_k=3)
+            await self._emit_timing("rag", rag_started)
             await self._emit(
-                EventType.TOOL_CALL.value,
-                payload={"name": intent.name, "arguments_json": intent.arguments_json},
+                EventType.RAG_CONTEXT.value,
+                payload={
+                    "context": rag_reply.assembled_context,
+                    "citations": [
+                        {"source": item.source, "excerpt": item.excerpt, "score": item.score}
+                        for item in rag_reply.citations
+                    ],
+                },
             )
-            try:
-                tool_result = await self._clients.execute_tool(meta, intent.name, intent.arguments_json)
-            except Exception:
-                await self._workflow_launcher.start_tool_retry(
-                    {
-                        "session_id": self._session_id,
-                        "turn_id": self._turn_id,
-                        "tool_name": intent.name,
-                        "arguments_json": intent.arguments_json,
-                    }
+
+            messages = [{"role": "user", "content": transcript}]
+            system_prompt = (
+                f"You are an English-only assistant themed for the '{self._domain}' domain. "
+                "Be concise, grounded, and operationally clear."
+            )
+
+            llm_started = time.time()
+            first_pass = [
+                chunk
+                async for chunk in self._clients.stream_generate(
+                    meta, messages, system_prompt, rag_reply.assembled_context, True
                 )
-                raise
-            await self._emit(EventType.TOOL_RESULT.value, payload=tool_result)
-            messages.append({"role": "tool", "content": json.dumps(tool_result)})
-            stream = self._clients.stream_generate(
-                meta, messages, system_prompt, rag_reply.assembled_context, False
-            )
-        else:
-            async def replay():
-                for chunk in first_pass:
-                    yield chunk
-            stream = replay()
+            ]
+            if first_pass and first_pass[0].tool_intent.name:
+                intent = first_pass[0].tool_intent
+                await self._emit(
+                    EventType.TOOL_CALL.value,
+                    payload={"name": intent.name, "arguments_json": intent.arguments_json},
+                )
+                try:
+                    tool_result = await self._clients.execute_tool(meta, intent.name, intent.arguments_json)
+                except Exception:
+                    await self._workflow_launcher.start_tool_retry(
+                        {
+                            "session_id": self._session_id,
+                            "turn_id": self._turn_id,
+                            "tool_name": intent.name,
+                            "arguments_json": intent.arguments_json,
+                        }
+                    )
+                    raise
+                await self._emit(EventType.TOOL_RESULT.value, payload=tool_result)
+                messages.append({"role": "tool", "content": json.dumps(tool_result)})
+                stream = self._clients.stream_generate(
+                    meta, messages, system_prompt, rag_reply.assembled_context, False
+                )
+            else:
 
-        tts_queue: asyncio.Queue[str | None] = asyncio.Queue()
-        tts_task = asyncio.create_task(self._tts_worker(meta, tts_queue))
-        accumulated = ""
-        sentence_buffer = ""
-        async for chunk in stream:
-            if chunk.is_final:
-                break
-            accumulated += chunk.token
-            sentence_buffer += chunk.token
-            await self._emit(EventType.LLM_TOKEN.value, text=chunk.token)
-            if any(sentence_buffer.rstrip().endswith(marker) for marker in (".", "!", "?")):
+                async def replay():
+                    for chunk in first_pass:
+                        yield chunk
+
+                stream = replay()
+
+            tts_queue: asyncio.Queue[str | None] = asyncio.Queue()
+            tts_task = asyncio.create_task(self._tts_worker(meta, tts_queue))
+            accumulated = ""
+            sentence_buffer = ""
+            async for chunk in stream:
+                if chunk.is_final:
+                    break
+                accumulated += chunk.token
+                sentence_buffer += chunk.token
+                await self._emit(EventType.LLM_TOKEN.value, text=chunk.token)
+                if any(sentence_buffer.rstrip().endswith(marker) for marker in (".", "!", "?")):
+                    await tts_queue.put(sentence_buffer.strip())
+                    sentence_buffer = ""
+
+            if sentence_buffer.strip():
                 await tts_queue.put(sentence_buffer.strip())
-                sentence_buffer = ""
-
-        if sentence_buffer.strip():
-            await tts_queue.put(sentence_buffer.strip())
-        await tts_queue.put(None)
-        await tts_task
-        await self._emit_timing("llm_total", llm_started)
-        await self._emit(EventType.LLM_FINAL.value, text=accumulated, is_final=True)
-        await self._workflow_launcher.start_post_session(
-            {
-                "session_id": self._session_id,
-                "turn_id": self._turn_id,
-                "transcript": transcript,
-                "assistant_response": accumulated,
-                "domain": self._domain,
-            }
-        )
+            await tts_queue.put(None)
+            await tts_task
+            await self._emit_timing("llm_total", llm_started)
+            await self._emit(EventType.LLM_FINAL.value, text=accumulated, is_final=True)
+            await self._workflow_launcher.start_post_session(
+                {
+                    "session_id": self._session_id,
+                    "turn_id": self._turn_id,
+                    "transcript": transcript,
+                    "assistant_response": accumulated,
+                    "domain": self._domain,
+                }
+            )
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            await self._emit(
+                EventType.ERROR.value,
+                payload={"stage": "turn", "error": str(exc)},
+            )
 
     async def handle_message(self, message: session_pb2.SessionMessage) -> None:
         if message.HasField("control"):
@@ -230,9 +254,17 @@ class LiveSession:
                 request_id=str(uuid.uuid4()),
                 domain=self._domain,
             )
-            transcript, confidence = await self._clients.transcribe(
-                meta, bytes(self._audio_buffer), self._sample_rate, True
-            )
+            try:
+                transcript, confidence = await self._clients.transcribe(
+                    meta, bytes(self._audio_buffer), self._sample_rate, True
+                )
+            except Exception as exc:
+                self._audio_buffer.clear()
+                await self._emit(
+                    EventType.ERROR.value,
+                    payload={"stage": "stt", "error": str(exc)},
+                )
+                return
             self._audio_buffer.clear()
             await self._emit_timing("stt_final", stt_started)
             await self._emit(
@@ -246,9 +278,11 @@ class LiveSession:
             self._active_response_task = asyncio.create_task(self._run_turn(transcript))
 
     async def consume(self, request_iterator) -> None:
-        async for message in request_iterator:
-            await self.handle_message(message)
-        await self._outgoing.put(None)
+        try:
+            async for message in request_iterator:
+                await self.handle_message(message)
+        finally:
+            await self._outgoing.put(None)
 
     async def events(self) -> AsyncIterator[session_pb2.SessionMessage]:
         while True:
@@ -284,6 +318,11 @@ class RealtimeSessionService(session_pb2_grpc.RealtimeSessionOrchestratorService
                 yield event
         finally:
             consumer.cancel()
+            try:
+                await consumer
+            except asyncio.CancelledError:
+                pass
+            await session.close()
 
     async def Health(self, request: common_pb2.Empty, context: grpc.aio.ServicerContext):
         return common_pb2.HealthReply(status="ok")

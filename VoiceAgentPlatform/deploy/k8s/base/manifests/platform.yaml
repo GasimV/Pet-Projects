@@ -22,7 +22,12 @@ data:
   STT_MODEL: tiny.en
   STT_DEVICE: cpu
   STT_COMPUTE_TYPE: int8
-  TTS_PROVIDER: espeak
+  TTS_PROVIDER: kokoro
+  TTS_VOICE: af_heart
+  TTS_DEVICE: cpu
+  TTS_SPEED: "1.0"
+  TTS_LANG_CODE: a
+  TTS_KOKORO_REPO: hexgrad/Kokoro-82M
   TEMPORAL_TARGET: temporal:7233
   TEMPORAL_NAMESPACE: default
   TEMPORAL_TASK_QUEUE: voice-platform
@@ -43,7 +48,7 @@ metadata:
 type: Opaque
 stringData:
   LIVEKIT_API_KEY: devkey
-  LIVEKIT_API_SECRET: secret
+  LIVEKIT_API_SECRET: 0123456789abcdef0123456789abcdef
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -440,7 +445,7 @@ spec:
         - name: temporal
           image: temporalio/auto-setup:1.27.2
           env:
-            - { name: DB, value: postgresql }
+            - { name: DB, value: postgres12 }
             - { name: DB_PORT, value: "5432" }
             - { name: POSTGRES_USER, value: voice }
             - { name: POSTGRES_PWD, value: voice }
@@ -520,4 +525,3 @@ spec:
     - name: rtc
       port: 7881
       targetPort: 7881
-
