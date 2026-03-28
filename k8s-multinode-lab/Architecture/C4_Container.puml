@@ -1,23 +1,27 @@
 @startuml C4_Container
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
-System_Boundary(cluster, "Kubernetes Cluster") {
+LAYOUT_LEFT_RIGHT()
 
-Container(control, "Control Plane", "Kubernetes", "Manages cluster state")
+Person(dev, "Developer", "Builds images and deploys manifests")
+Person(user, "End User", "Uses the frontend from a browser")
+System_Ext(cluster, "Kubernetes Lab Cluster", "kubeadm, containerd, Flannel, two-node lab")
 
-Container(worker1, "Worker Node", "Kubernetes Node", "Runs workloads")
+System_Boundary(app, "k8s-multinode-lab Sample Application") {
 
-Container(frontend, "Frontend Pod", "nginx", "Serves UI")
-Container(backend, "Backend Pod", "Flask API", "Handles logic")
-Container(redis, "Redis Pod", "Redis", "Cache storage")
-
-Container(sidecar, "Logging Sidecar", "BusyBox/Fluentd", "Collects logs")
+Container(frontend, "Frontend", "nginx + static HTML/JavaScript", "Serves the UI and proxies /api requests through frontend-service NodePort 30080")
+Container(backend, "Backend API", "FastAPI (Python)", "Exposes /health and /visits and writes logs to a shared volume")
+Container(sidecar, "Logging Sidecar", "BusyBox", "Tails /var/log/app/app.log from a shared emptyDir volume")
+Container(redis, "Redis Cache", "Redis 7", "Stores the visit counter")
 
 }
 
-Rel(frontend, backend, "HTTP calls")
-Rel(backend, redis, "Reads/Writes")
-Rel(frontend, sidecar, "Logs")
-Rel(backend, sidecar, "Logs")
+Rel(dev, frontend, "Builds and deploys image")
+Rel(dev, backend, "Builds and deploys image")
+Rel(dev, redis, "Deploys manifest")
+Rel(user, frontend, "Uses in browser via NodePort")
+Rel(frontend, backend, "Proxies /api/* over HTTP")
+Rel(backend, redis, "Reads and writes counter over TCP 6379")
+Rel(backend, sidecar, "Writes logs to shared volume")
 
 @enduml

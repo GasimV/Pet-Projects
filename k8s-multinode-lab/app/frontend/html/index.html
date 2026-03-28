@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kubernetes Multi-Node Lab Demo</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow">k8s-multinode-lab</p>
+      <h1>Frontend, backend, Redis, and a logging sidecar</h1>
+      <p class="summary">
+        This page is served by nginx. API calls are proxied to the backend service,
+        and the backend stores the visit counter in Redis.
+      </p>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>Cluster Check</h2>
+        <p>Run a deep health check that confirms the backend can also reach Redis.</p>
+        <button id="health-button" type="button">Check API Health</button>
+        <pre id="health-output">Waiting for request...</pre>
+      </article>
+
+      <article class="card">
+        <h2>Visit Counter</h2>
+        <p>Increment the counter stored in Redis and show which backend pod served the request.</p>
+        <button id="visits-button" type="button">Count Visit</button>
+        <pre id="visits-output">Waiting for request...</pre>
+      </article>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>

@@ -1,13 +1,17 @@
 @startuml C4_Context
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 
-Person(dev, "Developer", "Uses kubectl to interact with cluster")
+LAYOUT_LEFT_RIGHT()
 
-System(cluster, "Kubernetes Cluster", "Multi-node cluster built with kubeadm")
+Person(dev, "Developer", "Builds images, imports them into containerd, and deploys manifests with kubectl")
+Person(user, "End User", "Uses the sample application in a browser")
 
-System_Ext(user, "End User", "Accesses frontend")
+System(app, "k8s-multinode-lab Sample Application", "Educational microservices app with frontend, backend, Redis, and a logging sidecar")
+System_Ext(cluster, "Kubernetes Lab Cluster", "Two-node kubeadm cluster on VirtualBox with containerd and Flannel")
 
-Rel(dev, cluster, "Deploys apps via kubectl")
-Rel(user, cluster, "Accesses application")
+Rel(dev, app, "Builds images and deploys updates")
+Rel(dev, cluster, "Operates the cluster with kubectl")
+Rel(user, app, "Accesses frontend via NodePort")
+Rel(app, cluster, "Runs inside")
 
 @enduml

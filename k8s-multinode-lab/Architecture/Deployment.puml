@@ -6,10 +6,10 @@ LAYOUT_TOP_DOWN()
 Person(dev, "Developer", "Uses kubectl from the control-plane VM or via SSH")
 Person(user, "End User", "Accesses the frontend in a browser")
 
-Deployment_Node(host, "Windows 10 Laptop", "Host Machine") {
+Deployment_Node(host, "Windows Laptop", "Host Machine") {
   Deployment_Node(vbox, "Oracle VirtualBox", "Type-2 Hypervisor") {
 
-    Deployment_Node(cp_vm, "VM: k8s-control-plane", "Ubuntu Server 22.04") {
+    Deployment_Node(cp_vm, "VM: ubuntu-k8s-lab", "Ubuntu Server 24.04 LTS") {
       Deployment_Node(cp_os, "Control Plane Node", "kubeadm / kubelet / containerd") {
         Container(kube_apiserver, "kube-apiserver", "Kubernetes Control Plane", "Cluster API")
         Container(etcd, "etcd", "Key-value store", "Cluster state")
@@ -19,24 +19,30 @@ Deployment_Node(host, "Windows 10 Laptop", "Host Machine") {
       }
     }
 
-    Deployment_Node(worker1_vm, "VM: k8s-worker-1", "Ubuntu Server 22.04") {
+    Deployment_Node(worker1_vm, "VM: k8s-worker-1", "Ubuntu Server 24.04 LTS") {
       Deployment_Node(worker1_os, "Worker Node", "kubelet / kube-proxy / containerd") {
+        Container(frontend_service, "Service: frontend-service", "NodePort 30080", "Exposes the frontend outside the cluster")
+        Container(backend_service, "Service: backend-service", "ClusterIP 8000", "Internal API access for the frontend")
+        Container(redis_service, "Service: redis-service", "ClusterIP 6379", "Internal Redis access for the backend")
+
         Deployment_Node(frontend_pod, "Pod: frontend", "Kubernetes Pod") {
           Container(frontend_nginx, "nginx", "Web server", "Serves frontend")
-          Container(frontend_sidecar, "log-sidecar", "BusyBox/Fluent Bit", "Collects and forwards logs")
         }
 
-        Deployment_Node(backend_pod, "Pod: backend", "Kubernetes Pod") {
-          Container(backend_api, "Flask API", "Python", "Business logic and Redis access")
+        Deployment_Node(backend_pod, "Pod(s): backend (Deployment, 2 replicas)", "Kubernetes Pod") {
+          Container(backend_api, "FastAPI API", "Python", "Business logic, /health, /visits, and Redis access")
+          Container(backend_sidecar, "log-sidecar", "BusyBox", "Tails /var/log/app/app.log from shared emptyDir storage")
+        }
+
+        Deployment_Node(redis_pod, "Pod: redis", "Kubernetes Pod") {
+          Container(redis, "Redis", "In-memory datastore", "Visit counter storage")
         }
       }
     }
 
-    Deployment_Node(worker2_vm, "VM: k8s-worker-2 (optional)", "Ubuntu Server 22.04") {
+    Deployment_Node(worker2_vm, "VM: k8s-worker-2 (optional future)", "Ubuntu Server 24.04 LTS") {
       Deployment_Node(worker2_os, "Worker Node", "kubelet / kube-proxy / containerd") {
-        Deployment_Node(redis_pod, "Pod: redis", "Kubernetes Pod") {
-          Container(redis, "Redis", "In-memory datastore", "Cache")
-        }
+        Container(future_capacity, "Future placement option", "Additional worker capacity", "Redis or extra backend replicas can be scheduled here later")
       }
     }
 
@@ -45,14 +51,17 @@ Deployment_Node(host, "Windows 10 Laptop", "Host Machine") {
 
 Rel(dev, kubectl, "Runs commands")
 Rel(kubectl, kube_apiserver, "Uses")
-Rel(user, frontend_nginx, "HTTP via NodePort")
+Rel(user, frontend_service, "HTTP via 192.168.56.101:30080")
 
 Rel(kube_apiserver, etcd, "Reads/Writes state")
 Rel(kube_apiserver, kube_scheduler, "Coordinates")
 Rel(kube_apiserver, kube_controller, "Coordinates")
 
-Rel(frontend_nginx, backend_api, "HTTP")
-Rel(backend_api, redis, "TCP 6379")
-Rel(frontend_nginx, frontend_sidecar, "Writes logs to shared volume/stdout")
+Rel(frontend_service, frontend_nginx, "Routes traffic")
+Rel(frontend_nginx, backend_service, "Proxies /api/*")
+Rel(backend_service, backend_api, "Load balances HTTP requests")
+Rel(backend_api, redis_service, "Uses TCP 6379")
+Rel(redis_service, redis, "Routes traffic")
+Rel(backend_api, backend_sidecar, "Writes logs to shared /var/log/app volume")
 
 @enduml
