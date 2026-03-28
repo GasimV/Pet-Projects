@@ -329,6 +329,8 @@ Welcome to nginx!
 kubectl delete pod -n kube-system -l k8s-app=kube-proxy
 ```
 
+> Note: In my case, I did not need to manually delete the kube-proxy pod. I just run ```kubectl get pods -n kube-system -o wide | grep kube-proxy``` and it showed ```kube-proxy-6tpkh → Running on worker```. The issue resolved itself automatically once the cluster networking (Flannel CNI) fully initialized. This demonstrated Kubernetes' self-healing behavior—pods managed by a DaemonSet may temporarily fail during node join or network setup but recover on their own once dependencies are ready.
+
 ---
 
 # 🟢 Final Cluster State
