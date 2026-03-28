@@ -1,0 +1,13 @@
+@startuml C4_Context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+Person(dev, "Developer", "Uses kubectl to interact with cluster")
+
+System(cluster, "Kubernetes Cluster", "Multi-node cluster built with kubeadm")
+
+System_Ext(user, "End User", "Accesses frontend")
+
+Rel(dev, cluster, "Deploys apps via kubectl")
+Rel(user, cluster, "Accesses application")
+
+@enduml

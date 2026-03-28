@@ -1,0 +1,58 @@
+@startuml Deployment
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Deployment.puml
+
+LAYOUT_TOP_DOWN()
+
+Person(dev, "Developer", "Uses kubectl from the control-plane VM or via SSH")
+Person(user, "End User", "Accesses the frontend in a browser")
+
+Deployment_Node(host, "Windows 10 Laptop", "Host Machine") {
+  Deployment_Node(vbox, "Oracle VirtualBox", "Type-2 Hypervisor") {
+
+    Deployment_Node(cp_vm, "VM: k8s-control-plane", "Ubuntu Server 22.04") {
+      Deployment_Node(cp_os, "Control Plane Node", "kubeadm / kubelet / containerd") {
+        Container(kube_apiserver, "kube-apiserver", "Kubernetes Control Plane", "Cluster API")
+        Container(etcd, "etcd", "Key-value store", "Cluster state")
+        Container(kube_scheduler, "kube-scheduler", "Kubernetes Control Plane", "Pod scheduling")
+        Container(kube_controller, "kube-controller-manager", "Kubernetes Control Plane", "Controllers")
+        Container(kubectl, "kubectl", "CLI", "Cluster administration")
+      }
+    }
+
+    Deployment_Node(worker1_vm, "VM: k8s-worker-1", "Ubuntu Server 22.04") {
+      Deployment_Node(worker1_os, "Worker Node", "kubelet / kube-proxy / containerd") {
+        Deployment_Node(frontend_pod, "Pod: frontend", "Kubernetes Pod") {
+          Container(frontend_nginx, "nginx", "Web server", "Serves frontend")
+          Container(frontend_sidecar, "log-sidecar", "BusyBox/Fluent Bit", "Collects and forwards logs")
+        }
+
+        Deployment_Node(backend_pod, "Pod: backend", "Kubernetes Pod") {
+          Container(backend_api, "Flask API", "Python", "Business logic and Redis access")
+        }
+      }
+    }
+
+    Deployment_Node(worker2_vm, "VM: k8s-worker-2 (optional)", "Ubuntu Server 22.04") {
+      Deployment_Node(worker2_os, "Worker Node", "kubelet / kube-proxy / containerd") {
+        Deployment_Node(redis_pod, "Pod: redis", "Kubernetes Pod") {
+          Container(redis, "Redis", "In-memory datastore", "Cache")
+        }
+      }
+    }
+
+  }
+}
+
+Rel(dev, kubectl, "Runs commands")
+Rel(kubectl, kube_apiserver, "Uses")
+Rel(user, frontend_nginx, "HTTP via NodePort")
+
+Rel(kube_apiserver, etcd, "Reads/Writes state")
+Rel(kube_apiserver, kube_scheduler, "Coordinates")
+Rel(kube_apiserver, kube_controller, "Coordinates")
+
+Rel(frontend_nginx, backend_api, "HTTP")
+Rel(backend_api, redis, "TCP 6379")
+Rel(frontend_nginx, frontend_sidecar, "Writes logs to shared volume/stdout")
+
+@enduml

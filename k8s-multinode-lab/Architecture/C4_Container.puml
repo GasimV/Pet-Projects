@@ -1,0 +1,23 @@
+@startuml C4_Container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+System_Boundary(cluster, "Kubernetes Cluster") {
+
+Container(control, "Control Plane", "Kubernetes", "Manages cluster state")
+
+Container(worker1, "Worker Node", "Kubernetes Node", "Runs workloads")
+
+Container(frontend, "Frontend Pod", "nginx", "Serves UI")
+Container(backend, "Backend Pod", "Flask API", "Handles logic")
+Container(redis, "Redis Pod", "Redis", "Cache storage")
+
+Container(sidecar, "Logging Sidecar", "BusyBox/Fluentd", "Collects logs")
+
+}
+
+Rel(frontend, backend, "HTTP calls")
+Rel(backend, redis, "Reads/Writes")
+Rel(frontend, sidecar, "Logs")
+Rel(backend, sidecar, "Logs")
+
+@enduml
