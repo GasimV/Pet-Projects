@@ -30,5 +30,3 @@ plantuml Architecture/C4_Context.puml
 plantuml Architecture/C4_Container.puml
 plantuml Architecture/Deployment.puml
 ```
-
-If you prefer Docker-based rendering, regenerate the images later in your Ubuntu environment and commit the updated `.png` files together with the `.puml` source changes.
