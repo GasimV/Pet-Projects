@@ -1,0 +1,129 @@
+# Default values for local-aiops-copilot
+# Designed for Kubernetes deployment via Kubespray + Ansible
+
+global:
+  environment: dev
+  llmBackend: mock
+  imageRegistry: ""
+  imagePullPolicy: IfNotPresent
+
+# ── API Gateway ──
+apiGateway:
+  replicas: 2
+  image:
+    repository: local-aiops-copilot/api-gateway
+    tag: "0.1.0"
+  port: 8080
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# ── Frontend ──
+frontend:
+  replicas: 1
+  image:
+    repository: local-aiops-copilot/frontend
+    tag: "0.1.0"
+  port: 8501
+
+# ── Agent Service ──
+agentService:
+  replicas: 2
+  image:
+    repository: local-aiops-copilot/agent-service
+    tag: "0.1.0"
+  port: 50051
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+# ── RAG Service ──
+ragService:
+  replicas: 1
+  image:
+    repository: local-aiops-copilot/rag-service
+    tag: "0.1.0"
+  port: 50052
+
+# ── MCP Tool Server ──
+mcpToolServer:
+  replicas: 1
+  image:
+    repository: local-aiops-copilot/mcp-tool-server
+    tag: "0.1.0"
+  port: 50053
+
+# ── Eval Service ──
+evalService:
+  replicas: 1
+  image:
+    repository: local-aiops-copilot/eval-service
+    tag: "0.1.0"
+  port: 50054
+
+# ── Release Controller ──
+releaseController:
+  replicas: 1
+  image:
+    repository: local-aiops-copilot/release-controller
+    tag: "0.1.0"
+  port: 50055
+
+# ── vLLM (GPU nodes only) ──
+vllm:
+  enabled: false
+  replicas: 1
+  image:
+    repository: vllm/vllm-openai
+    tag: latest
+  model: "meta-llama/Llama-3.1-8B-Instruct"
+  gpuCount: 1
+  resources:
+    limits:
+      nvidia.com/gpu: 1
+
+# ── Triton (GPU nodes only) ──
+triton:
+  enabled: false
+  replicas: 1
+  image:
+    repository: nvcr.io/nvidia/tritonserver
+    tag: "24.03-vllm-python-py3"
+  gpuCount: 1
+
+# ── Infrastructure ──
+redis:
+  enabled: true
+  architecture: standalone
+
+postgresql:
+  enabled: true
+  auth:
+    username: copilot
+    password: copilot
+    database: copilot
+
+qdrant:
+  enabled: true
+  image:
+    repository: qdrant/qdrant
+    tag: latest
+
+# ── Observability ──
+prometheus:
+  enabled: true
+
+grafana:
+  enabled: true
+  adminPassword: admin
+
+alertmanager:
+  enabled: true

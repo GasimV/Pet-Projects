@@ -1,0 +1,60 @@
+@startuml C3_Deployment
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Deployment.puml
+
+title Deployment Diagram — Two-Machine Setup
+
+Deployment_Node(dev_machine, "Dev Machine", "Windows 10, i7-7700HQ, 64GB RAM, Quadro M1200") {
+    Deployment_Node(dev_docker, "Docker Desktop (CPU-only)") {
+        Deployment_Node(dev_compose, "docker-compose.dev.yml") {
+            Container(dev_frontend, "Frontend", "Streamlit :8501")
+            Container(dev_api_gw, "API Gateway", "FastAPI :8080")
+            Container(dev_agent, "Agent Service", "gRPC :50051")
+            Container(dev_rag, "RAG Service", "gRPC :50052")
+            Container(dev_mcp, "MCP Tool Server", ":50053")
+            Container(dev_eval, "Eval Service", ":50054")
+            Container(dev_release, "Release Controller", ":50055")
+            Container(dev_airflow, "Airflow", ":8082")
+
+            ContainerDb(dev_redis, "Redis", ":6379")
+            ContainerDb(dev_postgres, "PostgreSQL", ":5432")
+            ContainerDb(dev_qdrant, "Qdrant", ":6333")
+            ContainerDb(dev_mlflow, "MLflow", ":5000")
+
+            Container(dev_prom, "Prometheus", ":9090")
+            Container(dev_grafana, "Grafana", ":3000")
+            Container(dev_alert, "Alertmanager", ":9093")
+            Container(dev_logstash, "Logstash", ":5044")
+        }
+    }
+    note right of dev_compose : LLM_BACKEND=mock (or ollama)\nNo GPU dependency\nCPU-only inference
+}
+
+Deployment_Node(gpu_machine, "GPU Machine", "Windows 11 Pro, i9-275HX, RTX 5080 16GB") {
+    Deployment_Node(gpu_docker, "Docker Desktop + WSL2 + NVIDIA Container Toolkit") {
+        Deployment_Node(gpu_compose, "docker-compose.gpu.yml") {
+            Container(gpu_frontend, "Frontend", "Streamlit :8501")
+            Container(gpu_api_gw, "API Gateway", "FastAPI :8080")
+            Container(gpu_agent, "Agent Service", "gRPC :50051")
+            Container(gpu_rag, "RAG Service", "gRPC :50052")
+            Container(gpu_mcp, "MCP Tool Server", ":50053")
+            Container(gpu_eval, "Eval Service", ":50054")
+            Container(gpu_release, "Release Controller", ":50055")
+
+            Container(gpu_vllm, "vLLM", "GPU :8000\n--gpus all")
+            Container(gpu_triton, "Triton", "GPU :8001/:8002\n--gpus all")
+
+            ContainerDb(gpu_redis, "Redis", ":6379")
+            ContainerDb(gpu_postgres, "PostgreSQL", ":5432")
+            ContainerDb(gpu_qdrant, "Qdrant", ":6333")
+
+            Container(gpu_prom, "Prometheus", ":9090")
+            Container(gpu_grafana, "Grafana", ":3000")
+        }
+    }
+    note right of gpu_compose : LLM_BACKEND=vllm (or triton)\nGPU-accelerated inference\nSide-by-side comparison mode
+}
+
+Rel(gpu_agent, gpu_vllm, "OpenAI-compatible API", "HTTP")
+Rel(gpu_agent, gpu_triton, "KServe v2 API", "HTTP/gRPC")
+
+@enduml

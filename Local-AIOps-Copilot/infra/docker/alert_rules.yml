@@ -1,0 +1,37 @@
+groups:
+  - name: aiops_copilot_alerts
+    rules:
+      - alert: HighErrorRate
+        expr: rate(api_gateway_errors_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate on API Gateway"
+          description: "Error rate is {{ $value }} errors/sec over the last 5 minutes."
+
+      - alert: HighLatency
+        expr: histogram_quantile(0.99, rate(api_gateway_request_duration_seconds_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High p99 latency on API Gateway"
+          description: "p99 latency is {{ $value }}s"
+
+      - alert: LLMBackendDown
+        expr: up{job="api-gateway"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API Gateway is down"
+
+      - alert: DriftDetected
+        expr: eval_service_drift_score > 0.25
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Model drift detected"
+          description: "Drift score is {{ $value }}"

@@ -1,0 +1,23 @@
+@startuml C1_SystemContext
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title System Context Diagram — Local-AIOps-Copilot
+
+Person(user, "Platform Engineer / DevOps", "Manages infrastructure, monitors deployments, queries operational data")
+
+System(copilot, "Local-AIOps-Copilot", "Local-first AIOps assistant with MLOps experimentation and Blue-Green release decisioning")
+
+System_Ext(ollama, "Ollama", "Local CPU-friendly LLM inference (dev mode)")
+System_Ext(vllm, "vLLM Server", "GPU-accelerated LLM inference via OpenAI-compatible API")
+System_Ext(triton, "Triton Inference Server", "NVIDIA GPU inference server (alternative backend)")
+System_Ext(docker, "Docker / Docker Desktop", "Container runtime for all services")
+System_Ext(prometheus_ext, "Infrastructure Metrics", "Existing Prometheus endpoints, logs, metrics from monitored systems")
+
+Rel(user, copilot, "Chats, queries, manages releases", "HTTPS / WebSocket")
+Rel(copilot, ollama, "LLM inference (dev mode)", "HTTP")
+Rel(copilot, vllm, "LLM inference (GPU mode, primary)", "HTTP / OpenAI API")
+Rel(copilot, triton, "LLM inference (GPU mode, alternative)", "HTTP / gRPC")
+Rel(copilot, docker, "Runs inside containers", "Docker API")
+Rel(copilot, prometheus_ext, "Queries metrics", "PromQL / HTTP")
+
+@enduml

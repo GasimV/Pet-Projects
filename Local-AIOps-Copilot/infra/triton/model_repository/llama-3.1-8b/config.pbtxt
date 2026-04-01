@@ -1,0 +1,69 @@
+name: "llama-3.1-8b"
+backend: "vllm"
+max_batch_size: 0
+
+model_transaction_policy {
+  decoupled: true
+}
+
+input [
+  {
+    name: "text_input"
+    data_type: TYPE_STRING
+    dims: [1]
+  },
+  {
+    name: "max_tokens"
+    data_type: TYPE_INT32
+    dims: [1]
+    optional: true
+  },
+  {
+    name: "temperature"
+    data_type: TYPE_FP32
+    dims: [1]
+    optional: true
+  },
+  {
+    name: "stream"
+    data_type: TYPE_BOOL
+    dims: [1]
+    optional: true
+  }
+]
+
+output [
+  {
+    name: "text_output"
+    data_type: TYPE_STRING
+    dims: [-1]
+  }
+]
+
+parameters {
+  key: "model"
+  value: {
+    string_value: "meta-llama/Llama-3.1-8B-Instruct"
+  }
+}
+
+parameters {
+  key: "gpu_memory_utilization"
+  value: {
+    string_value: "0.85"
+  }
+}
+
+parameters {
+  key: "max_model_len"
+  value: {
+    string_value: "4096"
+  }
+}
+
+instance_group [
+  {
+    count: 1
+    kind: KIND_MODEL
+  }
+]

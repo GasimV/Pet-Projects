@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package aiops;
+
+service AgentService {
+  // Synchronous chat — returns full response
+  rpc Chat (ChatRequest) returns (ChatResponse);
+
+  // Streaming chat — streams tokens back
+  rpc StreamChat (ChatRequest) returns (stream ChatToken);
+
+  // Health check
+  rpc HealthCheck (HealthRequest) returns (HealthResponse);
+}
+
+message ChatRequest {
+  string session_id = 1;
+  string user_message = 2;
+  repeated ChatMessage history = 3;
+  bool use_tools = 4;
+  bool use_rag = 5;
+}
+
+message ChatMessage {
+  string role = 1;
+  string content = 2;
+}
+
+message ChatResponse {
+  string session_id = 1;
+  string content = 2;
+  repeated ToolCall tool_calls = 3;
+  repeated string sources = 4;
+  UsageInfo usage = 5;
+}
+
+message ChatToken {
+  string token = 1;
+  bool is_final = 2;
+  UsageInfo usage = 3;
+}
+
+message ToolCall {
+  string tool_name = 1;
+  string arguments = 2;
+  string result = 3;
+}
+
+message UsageInfo {
+  int32 prompt_tokens = 1;
+  int32 completion_tokens = 2;
+  int32 total_tokens = 3;
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  bool healthy = 1;
+  string backend = 2;
+  string model = 3;
+}

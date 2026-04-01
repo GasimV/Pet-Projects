@@ -1,0 +1,237 @@
+@startuml C6_KubernetesDeployment
+title Kubernetes Deployment Diagram - Reference Cluster Topology
+
+skinparam shadowing false
+skinparam defaultFontName Consolas
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+left to right direction
+
+legend left
+Reference deployment assumptions
+- Derived from infra/helm/values.yaml and infra/terraform/main.tf
+- Namespace: aiops-copilot
+- Cluster provisioned by Kubespray + Ansible
+- Calico shown as the reference CNI for Pod networking and NetworkPolicy
+- Ingress can be exposed through MetalLB or a cloud LoadBalancer
+- Replica counts reflect current Helm values; actual placement can scale horizontally
+endlegend
+
+actor "Platform Engineer" as user
+cloud "External Network" as ext_net
+node "DNS + External Load Balancer\n(MetalLB or cloud LB)" as ext_lb
+
+node "Kubernetes Cluster" as cluster {
+
+  frame "Control Plane Nodes (x1..3)" as control_plane {
+    node "cp-1..N" as cp_nodes {
+      component "kube-apiserver"
+      component "kube-scheduler"
+      component "kube-controller-manager"
+      database "etcd"
+    }
+  }
+
+  frame "kube-system namespace" as kube_system {
+    component "CoreDNS\nService discovery for ClusterIP Services" as coredns
+    component "ingress-nginx controller\nIngress -> Service routing" as ingress
+    component "metrics-server\nNode and pod resource metrics" as metrics_server
+    component "Calico controllers\nNetworkPolicy control plane" as calico_ctrl
+    component "CSI provisioner\nDynamic PVC provisioning" as csi
+  }
+
+  frame "Node network plane" as net_plane {
+    component "Calico CNI overlay\nPod-to-Pod networking\nVXLAN/BGP, NetworkPolicy" as calico
+    component "kube-proxy\nService VIPs and load-balancing" as kube_proxy
+  }
+
+  frame "aiops-copilot namespace" as app_ns {
+
+    frame "North-south traffic" as north_south {
+      component "Ingress\nchat.local-aiops.example\n/api/*, /, /ws, /stream" as app_ingress
+      component "frontend Service\nClusterIP :8501" as svc_frontend
+      component "api-gateway Service\nClusterIP :8080" as svc_api
+    }
+
+    frame "CPU Worker Node A\nlabels: nodepool=cpu" as cpu_node_a {
+      component "DaemonSets on node\ncalico-node, kube-proxy,\nnode-exporter, log collector" as ds_cpu_a
+
+      node "frontend Pod\nDeployment replicas: 1" as pod_frontend {
+        artifact "frontend container\nStreamlit :8501" as ctr_frontend
+      }
+
+      node "api-gateway Pod A\nDeployment replicas: 2 total" as pod_api_a {
+        artifact "api-gateway container\nFastAPI :8080\nREST/SSE/WebSocket" as ctr_api_a
+      }
+
+      node "agent-service Pod A\nDeployment replicas: 2 total" as pod_agent_a {
+        artifact "agent-service container\ngRPC :50051\nLangGraph orchestration" as ctr_agent_a
+      }
+
+      node "rag-service Pod\nDeployment replicas: 1" as pod_rag {
+        artifact "rag-service container\ngRPC :50052\nRetrieval + ingestion" as ctr_rag
+      }
+
+      node "mcp-tool-server Pod\nDeployment replicas: 1" as pod_mcp {
+        artifact "mcp-tool-server container\nHTTP :50053\nOperational tools" as ctr_mcp
+      }
+
+      node "Redis Pod\nStatefulSet replicas: 1" as pod_redis {
+        artifact "redis container\n:6379" as ctr_redis
+      }
+
+      node "Qdrant Pod\nStatefulSet replicas: 1" as pod_qdrant {
+        artifact "qdrant container\nHTTP :6333" as ctr_qdrant
+      }
+    }
+
+    frame "CPU Worker Node B\nlabels: nodepool=cpu" as cpu_node_b {
+      component "DaemonSets on node\ncalico-node, kube-proxy,\nnode-exporter, log collector" as ds_cpu_b
+
+      node "api-gateway Pod B\nDeployment replicas: 2 total" as pod_api_b {
+        artifact "api-gateway container\nFastAPI :8080" as ctr_api_b
+      }
+
+      node "agent-service Pod B\nDeployment replicas: 2 total" as pod_agent_b {
+        artifact "agent-service container\ngRPC :50051" as ctr_agent_b
+      }
+
+      node "eval-service Pod\nDeployment replicas: 1" as pod_eval {
+        artifact "eval-service container\nHTTP :50054\nMLflow evaluation + drift" as ctr_eval
+      }
+
+      node "release-controller Pod\nDeployment replicas: 1" as pod_release {
+        artifact "release-controller container\nHTTP :50055\nBlue/green decision engine" as ctr_release
+      }
+
+      node "Airflow Pod\nDeployment/Celery worker split as needed" as pod_airflow {
+        artifact "airflow container\nWeb UI + DAG orchestration" as ctr_airflow
+      }
+
+      node "PostgreSQL Pod\nStatefulSet replicas: 1" as pod_pg {
+        artifact "postgres container\n:5432" as ctr_pg
+      }
+
+      node "MLflow Pod\nDeployment replicas: 1" as pod_mlflow {
+        artifact "mlflow container\nHTTP :5000" as ctr_mlflow
+      }
+
+      node "Prometheus Pod\nDeployment replicas: 1" as pod_prom {
+        artifact "prometheus container\nHTTP :9090" as ctr_prom
+      }
+
+      node "Grafana Pod\nDeployment replicas: 1" as pod_grafana {
+        artifact "grafana container\nHTTP :3000" as ctr_grafana
+      }
+
+      node "Alertmanager Pod\nDeployment replicas: 1" as pod_alert {
+        artifact "alertmanager container\nHTTP :9093" as ctr_alert
+      }
+    }
+
+    frame "GPU Worker Node\nlabels: nodepool=gpu, accelerator=nvidia\ntaints: nvidia.com/gpu=present:NoSchedule" as gpu_node {
+      component "DaemonSets on node\ncalico-node, kube-proxy,\nnode-exporter, NVIDIA device plugin,\nDCGM exporter, log collector" as ds_gpu
+
+      node "vLLM Pod\nDeployment replicas: 0..1\nnodeSelector: accelerator=nvidia\ntolerations: gpu taint" as pod_vllm {
+        artifact "vllm container\nOpenAI-compatible HTTP :8000\nlimits: nvidia.com/gpu=1" as ctr_vllm
+      }
+
+      node "Triton Pod\nDeployment replicas: 0..1\nnodeSelector: accelerator=nvidia\ntolerations: gpu taint" as pod_triton {
+        artifact "tritonserver container\nHTTP/gRPC :8001/:8002\nlimits: nvidia.com/gpu=1" as ctr_triton
+      }
+    }
+
+    frame "Service and policy layer" as service_plane {
+      component "ClusterIP Services\nfrontend, api-gateway, agent-service,\nrag-service, mcp-tool-server,\neval-service, release-controller,\nredis, postgres, qdrant, mlflow,\nprometheus, grafana, alertmanager" as clusterip
+      component "NetworkPolicies\nallow ingress -> frontend/api\nallow app -> data stores\nallow Prometheus scrapes\nrestrict cross-namespace traffic" as netpol
+    }
+
+    frame "Persistent storage" as storage_plane {
+      database "PVCs via StorageClass\npostgres-data\nredis-data\nqdrant-data\nmlflow-artifacts\nprometheus-data\ngrafana-data" as pvcs
+    }
+  }
+}
+
+user --> ext_net
+ext_net --> ext_lb
+ext_lb --> ingress
+ingress --> app_ingress
+app_ingress --> svc_frontend
+app_ingress --> svc_api
+
+svc_frontend --> ctr_frontend : HTTP
+svc_api --> ctr_api_a : HTTP
+svc_api --> ctr_api_b : HTTP
+
+ctr_frontend --> svc_api : REST/SSE/WebSocket
+ctr_api_a --> ctr_agent_a : gRPC
+ctr_api_b --> ctr_agent_b : gRPC
+ctr_agent_a --> ctr_rag : gRPC
+ctr_agent_b --> ctr_rag : gRPC
+ctr_agent_a --> ctr_mcp : HTTP
+ctr_agent_b --> ctr_mcp : HTTP
+ctr_agent_a --> ctr_redis : TCP 6379
+ctr_agent_b --> ctr_redis : TCP 6379
+ctr_rag --> ctr_qdrant : HTTP 6333
+ctr_eval --> ctr_mlflow : HTTP 5000
+ctr_release --> ctr_pg : SQL 5432
+ctr_airflow --> ctr_eval : HTTP 50054
+ctr_airflow --> ctr_release : HTTP 50055
+ctr_airflow --> ctr_rag : ingest jobs
+ctr_airflow --> ctr_pg : metadata
+ctr_agent_a --> ctr_vllm : HTTP 8000
+ctr_agent_b --> ctr_vllm : HTTP 8000
+ctr_agent_a --> ctr_triton : HTTP/gRPC 8001/8002
+ctr_agent_b --> ctr_triton : HTTP/gRPC 8001/8002
+
+ctr_prom --> ctr_api_a : scrape /metrics
+ctr_prom --> ctr_api_b : scrape /metrics
+ctr_prom --> ctr_agent_a : scrape /metrics
+ctr_prom --> ctr_agent_b : scrape /metrics
+ctr_prom --> ctr_eval : scrape /metrics
+ctr_prom --> ctr_release : scrape /metrics
+ctr_prom --> ds_cpu_a : node metrics
+ctr_prom --> ds_cpu_b : node metrics
+ctr_prom --> ds_gpu : node + GPU metrics
+ctr_grafana --> ctr_prom : PromQL
+ctr_alert --> ctr_prom : alert routing
+
+ctr_pg --> pvcs
+ctr_redis --> pvcs
+ctr_qdrant --> pvcs
+ctr_mlflow --> pvcs
+ctr_prom --> pvcs
+ctr_grafana --> pvcs
+
+ingress --> coredns
+svc_api --> coredns
+svc_frontend --> coredns
+clusterip --> kube_proxy
+ctr_api_a --> calico
+ctr_api_b --> calico
+ctr_agent_a --> calico
+ctr_agent_b --> calico
+ctr_rag --> calico
+ctr_mcp --> calico
+ctr_eval --> calico
+ctr_release --> calico
+ctr_airflow --> calico
+ctr_vllm --> calico
+ctr_triton --> calico
+netpol --> calico_ctrl
+pvcs --> csi
+
+note right of gpu_node
+Optional GPU workloads.
+Terraform toggles these with:
+enable_gpu = true
+end note
+
+note bottom of service_plane
+Typical Service types:
+- ingress-nginx: LoadBalancer or NodePort
+- user-facing app traffic: Ingress -> ClusterIP
+- east-west service traffic: ClusterIP only
+end note
+
+@enduml

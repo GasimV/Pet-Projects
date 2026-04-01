@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package aiops;
+
+service RAGService {
+  // Ingest a document into the vector store
+  rpc Ingest (IngestRequest) returns (IngestResponse);
+
+  // Retrieve relevant chunks for a query
+  rpc Retrieve (RetrieveRequest) returns (RetrieveResponse);
+
+  // Health check
+  rpc HealthCheck (HealthRequest) returns (HealthResponse);
+}
+
+message IngestRequest {
+  string document_id = 1;
+  string content = 2;
+  map<string, string> metadata = 3;
+  string collection = 4;
+}
+
+message IngestResponse {
+  string document_id = 1;
+  int32 chunks_created = 2;
+  bool success = 3;
+}
+
+message RetrieveRequest {
+  string query = 1;
+  int32 top_k = 2;
+  string collection = 3;
+  float score_threshold = 4;
+}
+
+message RetrieveResponse {
+  repeated RetrievedChunk chunks = 1;
+}
+
+message RetrievedChunk {
+  string document_id = 1;
+  string content = 2;
+  float score = 3;
+  map<string, string> metadata = 4;
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  bool healthy = 1;
+  string status = 2;
+}

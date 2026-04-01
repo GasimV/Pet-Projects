@@ -1,0 +1,52 @@
+@startuml C2_Container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Container Diagram — Local-AIOps-Copilot
+
+Person(user, "Platform Engineer")
+
+System_Boundary(copilot, "Local-AIOps-Copilot") {
+
+    Container(frontend, "Frontend", "Streamlit", "Chat UI with streaming, tool visualization, and release dashboard")
+    Container(api_gw, "API Gateway", "FastAPI", "REST, SSE streaming, WebSocket endpoints. Routes to agent-service via gRPC")
+    Container(agent, "Agent Service", "LangGraph + gRPC", "Orchestrates LLM calls, RAG retrieval, tool execution. Pluggable LLM backend")
+    Container(rag, "RAG Service", "gRPC + Qdrant", "Document ingestion, chunking, embedding, and semantic retrieval")
+    Container(mcp, "MCP Tool Server", "FastAPI", "Operational tools: system info, Prometheus queries, Docker status, health checks")
+    Container(eval, "Eval Service", "FastAPI + MLflow", "Evaluation, replay comparison, drift detection. Logs to MLflow")
+    Container(release, "Release Controller", "FastAPI + PostgreSQL", "Blue-Green release registry, decision engine, lifecycle management")
+    Container(airflow_svc, "Airflow", "Apache Airflow", "DAGs: ingestion, evaluation, replay, drift, release decision")
+
+    ContainerDb(redis, "Redis", "In-memory store", "Conversation history, session state")
+    ContainerDb(postgres, "PostgreSQL", "Relational DB", "Release registry, Airflow metadata")
+    ContainerDb(qdrant, "Qdrant", "Vector DB", "Document embeddings for RAG")
+    ContainerDb(mlflow_db, "MLflow", "Experiment tracker", "Evaluation metrics, comparison results, artifacts")
+
+    Container(prometheus, "Prometheus", "Monitoring", "Scrapes metrics from all services")
+    Container(grafana, "Grafana", "Dashboards", "Visualizes Prometheus metrics")
+    Container(alertmanager, "Alertmanager", "Alerting", "Routes alerts based on rules")
+    Container(logstash, "Logstash", "Log aggregation", "Collects structured JSON logs from all services")
+}
+
+System_Ext(llm_backend, "LLM Backend", "Mock / Ollama / vLLM / Triton — selected by config")
+
+Rel(user, frontend, "Uses", "HTTPS")
+Rel(frontend, api_gw, "REST / SSE / WebSocket", "HTTP")
+Rel(api_gw, agent, "gRPC", "Protobuf")
+Rel(agent, rag, "gRPC", "Retrieve context")
+Rel(agent, mcp, "HTTP", "Tool calls")
+Rel(agent, llm_backend, "HTTP", "Chat / Stream / Embeddings")
+Rel(agent, redis, "Read/Write", "Conversation memory")
+Rel(rag, qdrant, "Vector search", "HTTP")
+Rel(rag, llm_backend, "HTTP", "Embeddings")
+Rel(eval, mlflow_db, "Log experiments", "HTTP")
+Rel(release, postgres, "CRUD", "SQL")
+Rel(airflow_svc, eval, "Trigger evaluations", "HTTP")
+Rel(airflow_svc, release, "Trigger decisions", "HTTP")
+Rel(airflow_svc, postgres, "Metadata", "SQL")
+Rel(prometheus, api_gw, "Scrape", "/metrics")
+Rel(prometheus, eval, "Scrape", "/metrics")
+Rel(prometheus, release, "Scrape", "/metrics")
+Rel(grafana, prometheus, "Query", "PromQL")
+Rel(alertmanager, prometheus, "Receive alerts", "HTTP")
+
+@enduml

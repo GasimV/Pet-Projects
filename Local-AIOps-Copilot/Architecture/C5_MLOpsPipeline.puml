@@ -1,0 +1,105 @@
+@startuml C5_MLOpsPipeline
+title MLOps Pipeline — Blue-Green Release Decision Flow
+
+actor "Platform Engineer" as User
+participant "Release Controller\n(FastAPI)" as RC
+participant "Airflow" as AF
+participant "Eval Service\n(FastAPI)" as Eval
+participant "MLflow" as MLflow
+database "PostgreSQL" as PG
+participant "Prometheus" as Prom
+
+== 1. Candidate Registration ==
+
+User -> RC : POST /api/v1/releases\n{model, version, slot: "green"}
+RC -> PG : INSERT release record\nstatus=registered
+PG --> RC : release_id
+RC --> User : {release_id, status: "registered"}
+
+== 2. Automated Pipeline (Airflow) ==
+
+User -> AF : Trigger release_decision_pipeline DAG
+activate AF
+
+== 2a. Evaluation ==
+AF -> Eval : POST /api/v1/eval\n{release_id: blue}
+Eval -> MLflow : Log params + metrics
+MLflow --> Eval : run_id
+Eval --> AF : blue_eval_metrics
+
+AF -> Eval : POST /api/v1/eval\n{release_id: green}
+Eval -> MLflow : Log params + metrics
+Eval --> AF : green_eval_metrics
+
+== 2b. Replay Comparison (parallel) ==
+AF -> Eval : POST /api/v1/replay\n{blue_id, green_id}
+Eval -> MLflow : Log comparison metrics
+Eval --> AF : {blue_metrics, green_metrics, recommendation}
+
+== 2c. Drift Detection (parallel) ==
+AF -> Eval : POST /api/v1/drift\n{release_id: blue}
+Eval -> Prom : Query production metrics
+Prom --> Eval : Metric timeseries
+Eval -> MLflow : Log drift scores
+Eval --> AF : {drift_detected, drift_score}
+
+== 3. Release Decision ==
+AF -> RC : POST /api/v1/releases/decide\n{blue_id, green_id, auto_apply: false}
+activate RC
+
+RC -> PG : Fetch blue + green records
+PG --> RC : Release records with eval_metrics
+
+RC -> RC : Decision Engine evaluates:\n- Error rate gates\n- Quality score gates\n- Latency gates\n- Drift threshold\n- Improvement threshold
+
+RC -> PG : Store decision + rationale
+RC --> AF : {decision, rationale, applied: false}
+deactivate RC
+
+deactivate AF
+
+== 4. Manual Review & Apply ==
+
+User -> RC : GET /api/v1/releases\n(review decision)
+RC --> User : decision: "switch_to_green"\nrationale: "Green passes all gates..."
+
+note right of RC
+  Decision outcomes:
+  - stay_on_blue
+  - switch_to_green
+  - rollback_to_blue
+  - hold_for_review
+
+  Default: recommendation only
+  (manual approval required)
+end note
+
+User -> RC : POST /api/v1/releases/decide\n{auto_apply: true}
+RC -> PG : Update: green=active, blue=archived
+RC --> User : {decision: "switch_to_green", applied: true}
+
+== Storage Map ==
+
+note over PG
+  Stores:
+  - Release registry (status, slot)
+  - Decision rationale
+  - Eval metrics snapshot
+end note
+
+note over MLflow
+  Stores:
+  - Evaluation experiments
+  - Replay comparisons
+  - Drift detection runs
+  - Metrics artifacts
+end note
+
+note over Prom
+  Stores:
+  - Live production metrics
+  - Latency, error rates
+  - Resource utilization
+end note
+
+@enduml

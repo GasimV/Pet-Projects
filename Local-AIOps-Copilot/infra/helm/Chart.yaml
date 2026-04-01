@@ -1,0 +1,16 @@
+apiVersion: v2
+name: local-aiops-copilot
+description: Helm chart for Local-AIOps-Copilot platform
+version: 0.1.0
+appVersion: "0.1.0"
+type: application
+
+dependencies:
+  - name: redis
+    version: "18.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled
+  - name: postgresql
+    version: "14.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled

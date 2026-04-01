@@ -1,0 +1,26 @@
+[project]
+name = "local-aiops-copilot"
+version = "0.1.0"
+description = "Local-first AIOps assistant, MLOps experimentation platform, and Blue-Green release decision system"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "unit: unit tests",
+    "integration: integration tests requiring running services",
+    "smoke: smoke tests for end-to-end validation",
+    "gpu: tests that require GPU backend",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["shared"]

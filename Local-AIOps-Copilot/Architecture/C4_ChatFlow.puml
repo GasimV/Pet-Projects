@@ -1,0 +1,77 @@
+@startuml C4_ChatFlow
+title Chat Request Flow — SSE Streaming and WebSocket
+
+actor User
+participant "Frontend\n(Streamlit)" as FE
+participant "API Gateway\n(FastAPI)" as GW
+participant "Agent Service\n(LangGraph)" as Agent
+participant "RAG Service\n(Qdrant)" as RAG
+participant "MCP Tool Server" as MCP
+participant "LLM Backend\n(Mock/Ollama/vLLM/Triton)" as LLM
+database "Redis" as Redis
+
+== SSE Streaming Flow ==
+
+User -> FE : Type message
+FE -> GW : POST /api/v1/chat/stream\n(SSE)
+activate GW
+
+GW -> Agent : gRPC StreamChat()
+activate Agent
+
+Agent -> Redis : Get conversation history
+Redis --> Agent : History messages
+
+Agent -> Agent : Route: RAG / Tools / Direct
+
+alt RAG enabled
+    Agent -> RAG : gRPC Retrieve(query)
+    RAG -> LLM : Generate embeddings
+    LLM --> RAG : Embeddings
+    RAG --> Agent : Relevant chunks
+end
+
+alt Tool calling
+    Agent -> LLM : Chat with tool definitions
+    LLM --> Agent : Tool call request
+    Agent -> MCP : POST /tools/call
+    MCP --> Agent : Tool result
+end
+
+Agent -> LLM : Chat/Stream with context
+activate LLM
+
+loop Token streaming
+    LLM --> Agent : Token
+    Agent --> GW : gRPC ChatToken
+    GW --> FE : SSE event: token
+    FE --> User : Render token
+end
+
+deactivate LLM
+
+Agent -> Redis : Save user + assistant messages
+deactivate Agent
+
+GW --> FE : SSE event: done
+deactivate GW
+
+== WebSocket Live Event Flow ==
+
+User -> FE : Open WebSocket
+FE -> GW : WS /ws/chat/{session_id}
+activate GW
+
+loop Bidirectional
+    User -> FE : Send message
+    FE -> GW : WS JSON message
+    GW -> Agent : gRPC StreamChat()
+    Agent --> GW : Stream tokens
+    GW --> FE : WS JSON tokens
+    FE --> User : Render streaming
+    GW --> FE : WS event: done
+end
+
+deactivate GW
+
+@enduml
