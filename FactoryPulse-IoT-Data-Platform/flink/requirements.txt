@@ -1,0 +1,3 @@
+# FactoryPulse — PyFlink streaming dependencies
+# Used by the Flink Kappa-architecture alternative to Spark.
+apache-flink==1.18.1

@@ -1,0 +1,60 @@
+# FactoryPulse — Prometheus Configuration
+# =========================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # ----- Prometheus self-monitoring -----
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # ----- FastAPI (prometheus-fastapi-instrumentator) -----
+  - job_name: "fastapi"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["api:8000"]
+
+  # ----- Kafka JMX Exporter -----
+  - job_name: "kafka"
+    scrape_interval: 30s
+    static_configs:
+      - targets: ["kafka:9101"]
+    # Requires JMX Exporter agent on the Kafka broker.
+    # If the exporter is not running, Prometheus will log scrape errors
+    # but continue operating normally.
+
+  # ----- Spark Master UI -----
+  - job_name: "spark"
+    metrics_path: /metrics/prometheus
+    static_configs:
+      - targets: ["spark-master:8080"]
+
+  # ----- ClickHouse built-in Prometheus endpoint -----
+  - job_name: "clickhouse"
+    static_configs:
+      - targets: ["clickhouse:9363"]
+
+  # ----- Airflow (requires statsd-exporter sidecar) -----
+  - job_name: "airflow"
+    scrape_interval: 30s
+    static_configs:
+      - targets: ["airflow-webserver:8080"]
+    # Only produces metrics when statsd-exporter is configured in
+    # airflow.cfg (statsd_on = True, statsd_host = statsd-exporter).
+    # Without it Prometheus will see scrape failures — harmless.
+
+  # ----- MLflow -----
+  - job_name: "mlflow"
+    static_configs:
+      - targets: ["mlflow:5000"]
+
+  # ----- Flink Job Manager (optional overlay) -----
+  - job_name: "flink"
+    scrape_interval: 30s
+    static_configs:
+      - targets: ["flink-jobmanager:9249"]
+    # Active only when the Flink overlay (docker-compose.flink.yml) is
+    # running.  Prometheus will silently retry on connection refused.

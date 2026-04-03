@@ -1,0 +1,40 @@
+version: 2
+
+sources:
+  - name: factory_pulse
+    database: factory_pulse
+    schema: factory_pulse
+    tables:
+      - name: raw_telemetry
+        description: Raw IoT telemetry readings from factory devices.
+        columns:
+          - name: event_id
+            description: Unique identifier for each telemetry event.
+          - name: device_id
+            description: Identifier of the device that produced the reading.
+          - name: timestamp
+            description: Timestamp of the telemetry reading (DateTime64).
+
+      - name: raw_devices
+        description: Device reference and metadata table.
+        columns:
+          - name: device_id
+            description: Unique device identifier.
+          - name: device_type
+            description: Category of the device (sensor, actuator, etc.).
+
+      - name: raw_alerts
+        description: Alerts triggered by threshold breaches or anomaly detection.
+        columns:
+          - name: alert_id
+            description: Unique alert identifier.
+          - name: device_id
+            description: Device that triggered the alert.
+
+      - name: raw_incidents
+        description: Incident reports linked to devices, used for text and semantic search.
+        columns:
+          - name: incident_id
+            description: Unique incident identifier.
+          - name: device_id
+            description: Device associated with the incident.

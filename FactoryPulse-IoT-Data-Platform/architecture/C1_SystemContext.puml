@@ -1,0 +1,44 @@
+@startuml C1_SystemContext
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_WITH_LEGEND()
+LAYOUT_LEFT_RIGHT()
+
+title System Context Diagram — FactoryPulse IoT Data Platform
+
+' ───────────────────────────────────────────────────────
+'  Actors (People)
+' ───────────────────────────────────────────────────────
+Person(operator, "Factory Operator", "Monitors real-time equipment health,\nviews dashboards, and investigates\nalerts and incidents.")
+Person(data_eng, "Data Engineer", "Builds and maintains data pipelines,\nmanages data quality rules,\ntracks lineage, and orchestrates jobs.")
+Person(ml_eng, "ML Engineer", "Trains anomaly-detection models,\nmanages features, tracks experiments,\nand deploys models to production.")
+
+' ───────────────────────────────────────────────────────
+'  Core System
+' ───────────────────────────────────────────────────────
+System(factory_pulse, "FactoryPulse IoT Data Platform", "Ingests, processes, stores, and serves\nIoT sensor telemetry from factory\nequipment using a Lambda/Kappa\narchitecture. Provides real-time\ndashboards, analytics APIs, ML\nfeature serving, and semantic search.")
+
+' ───────────────────────────────────────────────────────
+'  External Systems
+' ───────────────────────────────────────────────────────
+System_Ext(iot_devices, "Factory IoT Devices", "Physical sensors (temperature,\nvibration, pressure, RPM, etc.)\nattached to factory equipment.\nEmit telemetry readings\nand status events.")
+
+System_Ext(browser, "Web Browser", "Grafana dashboards, Airflow UI,\nMarquez lineage UI, MLflow UI,\nMinIO console, Spark UI.")
+
+' ───────────────────────────────────────────────────────
+'  Relationships
+' ───────────────────────────────────────────────────────
+Rel(iot_devices, factory_pulse, "Sends telemetry\nreadings & events", "Kafka / S3 (MinIO)")
+
+Rel(operator, factory_pulse, "Views dashboards,\nqueries analytics API", "HTTPS")
+Rel(operator, browser, "Accesses via")
+
+Rel(data_eng, factory_pulse, "Manages pipelines,\ndata quality & lineage", "HTTPS / CLI")
+Rel(data_eng, browser, "Accesses via")
+
+Rel(ml_eng, factory_pulse, "Trains models,\nmanages features & experiments", "HTTPS / CLI / SDK")
+Rel(ml_eng, browser, "Accesses via")
+
+Rel(factory_pulse, browser, "Serves UIs:\nGrafana :3000, Airflow :8082,\nMarquez :3001, MLflow :5050,\nSpark :8080, MinIO :9001", "HTTPS")
+
+@enduml

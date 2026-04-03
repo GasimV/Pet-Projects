@@ -1,0 +1,18 @@
+# FactoryPulse — Airflow extra dependencies
+# ===========================================
+# Providers
+apache-airflow-providers-apache-spark==4.7.1
+apache-airflow-providers-docker==3.10.0
+openlineage-airflow==1.9.1
+
+# Data quality
+great-expectations==0.18.12
+
+# Cloud / storage
+boto3==1.34.69
+
+# Warehouse
+clickhouse-connect==0.7.7
+
+# HTTP
+requests==2.31.0

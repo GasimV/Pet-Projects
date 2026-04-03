@@ -1,0 +1,91 @@
+version: 2
+
+models:
+  - name: stg_telemetry
+    description: >
+      Staged telemetry readings with cast types and a computed reading_hour
+      column (start of hour truncation of the event timestamp).
+    columns:
+      - name: event_id
+        description: Unique identifier for each telemetry event.
+        tests:
+          - unique
+          - not_null
+      - name: device_id
+        description: Identifier of the device that produced the reading.
+        tests:
+          - not_null
+      - name: event_timestamp
+        description: Timestamp of the telemetry reading.
+        tests:
+          - not_null
+      - name: temperature
+        description: Temperature reading in degrees Celsius.
+      - name: vibration
+        description: Vibration reading in mm/s.
+      - name: pressure
+        description: Pressure reading in bar.
+      - name: humidity
+        description: Relative humidity percentage.
+      - name: power_usage
+        description: Power consumption in kW.
+      - name: rpm
+        description: Revolutions per minute.
+      - name: reading_hour
+        description: Start of the hour for the event timestamp, used for hourly aggregation.
+
+  - name: stg_devices
+    description: >
+      Staged device reference data with a computed days_since_maintenance
+      column indicating how many days have passed since the last maintenance.
+    columns:
+      - name: device_id
+        description: Unique device identifier.
+        tests:
+          - unique
+          - not_null
+      - name: device_type
+        description: Category of the device.
+      - name: manufacturer
+        description: Device manufacturer name.
+      - name: model
+        description: Device model identifier.
+      - name: install_date
+        description: Date the device was installed.
+      - name: maintenance_interval_days
+        description: Required number of days between maintenance cycles.
+      - name: last_maintenance_date
+        description: Date of the most recent maintenance.
+      - name: days_since_maintenance
+        description: Number of days elapsed since last maintenance.
+      - name: status
+        description: Current operational status of the device (active, inactive, etc.).
+
+  - name: stg_alerts
+    description: >
+      Staged alerts with cast types. Each row represents an alert triggered
+      by a threshold breach or anomaly detection on a device.
+    columns:
+      - name: alert_id
+        description: Unique alert identifier.
+        tests:
+          - unique
+          - not_null
+      - name: device_id
+        description: Device that triggered the alert.
+        tests:
+          - not_null
+      - name: alert_type
+        description: Type or category of the alert.
+      - name: severity
+        description: Alert severity level (critical, warning, info).
+      - name: metric_name
+        description: Name of the metric that breached the threshold.
+      - name: metric_value
+        description: Actual value of the metric at alert time.
+      - name: threshold
+        description: Threshold value that was breached.
+      - name: alert_timestamp
+        description: Timestamp when the alert was triggered.
+      - name: resolved
+        description: Whether the alert has been resolved (1 = resolved, 0 = open).

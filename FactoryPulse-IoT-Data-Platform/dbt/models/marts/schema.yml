@@ -1,0 +1,144 @@
+version: 2
+
+models:
+  - name: dim_devices
+    description: >
+      Device dimension table enriched with maintenance status. Contains one row
+      per device with a maintenance_due flag indicating whether the device has
+      exceeded its scheduled maintenance interval.
+    columns:
+      - name: device_id
+        description: Unique device identifier.
+        tests:
+          - unique
+          - not_null
+      - name: device_type
+        description: Category of the device.
+      - name: manufacturer
+        description: Device manufacturer name.
+      - name: model
+        description: Device model identifier.
+      - name: install_date
+        description: Date the device was installed.
+      - name: location
+        description: Physical location of the device.
+      - name: zone
+        description: Factory zone where the device operates.
+      - name: maintenance_interval_days
+        description: Required number of days between maintenance cycles.
+      - name: last_maintenance_date
+        description: Date of the most recent maintenance.
+      - name: days_since_maintenance
+        description: Number of days elapsed since last maintenance.
+      - name: status
+        description: Current operational status (active, inactive, etc.).
+      - name: maintenance_due
+        description: >
+          Flag (1/0) indicating whether maintenance is overdue
+          (days_since_maintenance exceeds maintenance_interval_days).
+
+  - name: fct_device_health
+    description: >
+      Daily device health fact table. Joins daily telemetry statistics with
+      device metadata and computes a health_score (0-100) by applying penalty
+      points for high temperature, vibration, pressure anomalies, excessive
+      power usage, overdue maintenance, and critical alerts.
+    columns:
+      - name: device_id
+        description: Device identifier.
+        tests:
+          - not_null
+      - name: reading_date
+        description: The calendar date for the aggregated readings.
+        tests:
+          - not_null
+      - name: health_score
+        description: >
+          Computed score between 0 and 100. Higher values indicate healthier
+          operation. Penalties are applied for abnormal sensor readings,
+          overdue maintenance, and active critical alerts.
+      - name: avg_temperature
+        description: Average temperature for the device on the given date.
+      - name: max_temperature
+        description: Maximum temperature for the device on the given date.
+      - name: avg_vibration
+        description: Average vibration for the device on the given date.
+      - name: max_vibration
+        description: Maximum vibration for the device on the given date.
+      - name: avg_pressure
+        description: Average pressure for the device on the given date.
+      - name: avg_power_usage
+        description: Average power consumption for the device on the given date.
+      - name: reading_count
+        description: Total number of telemetry readings for the device on the given date.
+      - name: latest_alert_severity
+        description: Severity of the most recent alert for this device (critical, warning, info, or null).
+      - name: maintenance_due
+        description: Whether the device has overdue maintenance (1/0).
+
+  - name: fct_alerts
+    description: >
+      Alert fact table enriched with device dimension attributes. Each row
+      represents a single alert event joined with the originating device
+      metadata for easier reporting and analysis.
+    columns:
+      - name: alert_id
+        description: Unique alert identifier.
+        tests:
+          - unique
+          - not_null
+      - name: device_id
+        description: Device that triggered the alert.
+        tests:
+          - not_null
+      - name: alert_type
+        description: Type or category of the alert.
+      - name: severity
+        description: Alert severity level (critical, warning, info).
+      - name: metric_name
+        description: Name of the metric that breached the threshold.
+      - name: metric_value
+        description: Actual metric value at alert time.
+      - name: threshold
+        description: Threshold value that was breached.
+      - name: alert_timestamp
+        description: Timestamp when the alert was triggered.
+      - name: resolved
+        description: Whether the alert has been resolved (1 = yes, 0 = no).
+      - name: device_type
+        description: Category of the device (from dimension).
+      - name: location
+        description: Physical location of the device.
+      - name: device_status
+        description: Current operational status of the device.
+      - name: maintenance_due
+        description: Whether the device has overdue maintenance (1/0).
+
+  - name: fct_maintenance_recommendations
+    description: >
+      Devices that require attention because maintenance is overdue or the
+      health score has dropped below 50. Each row includes a human-readable
+      recommended_action based on the combination of maintenance status and
+      health score severity.
+    columns:
+      - name: device_id
+        description: Device identifier.
+        tests:
+          - unique
+          - not_null
+      - name: device_type
+        description: Category of the device.
+      - name: location
+        description: Physical location of the device.
+      - name: zone
+        description: Factory zone where the device operates.
+      - name: maintenance_due
+        description: Whether the device has overdue maintenance (1/0).
+      - name: latest_health_score
+        description: Most recent health score for the device.
+      - name: last_reading_date
+        description: Date of the most recent telemetry reading.
+      - name: recommended_action
+        description: >
+          Human-readable maintenance recommendation based on maintenance status
+          and health score. Ranges from urgent to routine guidance.

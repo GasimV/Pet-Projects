@@ -1,0 +1,158 @@
+@startuml C3_Component_DataFlow
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Component Diagram — Data Flow: Lambda Architecture + Kappa Alternative
+
+' ═══════════════════════════════════════════════════════
+'  DATA SOURCES
+' ═══════════════════════════════════════════════════════
+Boundary(sources, "Data Sources") {
+  Component(sim_stream, "Streaming Simulator", "Python / kafka-python", "Generates real-time sensor\nreadings: temperature, vibration,\npressure, RPM at configurable\nintervals (default 2s).\nProduces to Kafka topics.")
+
+  Component(sim_batch, "Batch Simulator", "Python / boto3", "Generates periodic CSV/Parquet\nreference files: device metadata,\nmaintenance logs, shift schedules.\nUploads to MinIO raw bucket.")
+
+  Component(sim_incidents, "Incident Simulator", "Python / kafka-python", "Generates anomaly and incident\nevents at configurable rate\n(default 5%). Publishes to\nfactory.incidents topic.")
+}
+
+' ═══════════════════════════════════════════════════════
+'  MESSAGE BROKER
+' ═══════════════════════════════════════════════════════
+Boundary(broker, "Message Broker") {
+  Component(topic_telemetry, "factory.telemetry.raw", "Kafka Topic", "Raw sensor telemetry stream.\nPartitioned by device_id.\nRetention: 24 hours.")
+
+  Component(topic_incidents, "factory.incidents", "Kafka Topic", "Incident and anomaly events.\nUsed for alerting and\nhistorical analysis.")
+
+  Component(topic_alerts, "factory.alerts", "Kafka Topic", "Derived alerts produced by\nthe speed layer when\nthresholds are exceeded.")
+}
+
+' ═══════════════════════════════════════════════════════
+'  SPEED LAYER (Lambda)
+' ═══════════════════════════════════════════════════════
+Boundary(speed, "Speed Layer (Real-Time)") {
+  Component(spark_consumer, "Kafka Source", "Spark Structured Streaming", "Subscribes to Kafka topics.\nReads telemetry as a\ncontinuous micro-batch stream.")
+
+  Component(spark_window, "Windowed Aggregations", "Spark Structured Streaming", "Tumbling/sliding windows:\n- 1-min avg per device\n- 5-min anomaly counts\n- Moving averages")
+
+  Component(spark_threshold, "Threshold Detection", "Spark Structured Streaming", "Real-time threshold checks.\nGenerates alerts when\nvalues exceed limits.\nPublishes to factory.alerts.")
+
+  Component(spark_ice_writer, "Iceberg Sink", "Spark Structured Streaming", "Writes speed-layer results\nto Iceberg tables in MinIO.\nAppend-only, micro-batch\ncommits with watermarking.")
+}
+
+' ═══════════════════════════════════════════════════════
+'  KAPPA ALTERNATIVE
+' ═══════════════════════════════════════════════════════
+Boundary(kappa, "Kappa Alternative (Flink)") {
+  Component(flink_source, "Kafka Source", "Flink DataStream API", "Event-at-a-time consumption.\nTrue streaming (not micro-batch).\n4 task slots, parallelism 2.")
+
+  Component(flink_cep, "CEP / Windowing", "Flink CEP + SQL", "Complex event processing:\npattern matching, event-time\nwindows, watermarks.\nReplaces Spark speed layer entirely.")
+
+  Component(flink_sink, "Iceberg Sink", "Flink Iceberg Connector", "Writes processed events\nto same Iceberg tables.\nDrop-in replacement for\nSpark streaming output.")
+}
+
+' ═══════════════════════════════════════════════════════
+'  BATCH LAYER (Lambda)
+' ═══════════════════════════════════════════════════════
+Boundary(batch, "Batch Layer (Historical)") {
+  Component(raw_reader, "Raw File Reader", "Spark Batch", "Reads CSV/Parquet files\nfrom MinIO factory-raw bucket.\nSchema inference and validation.")
+
+  Component(batch_transform, "Batch Transformations", "Spark Batch / PySpark", "Deduplication, enrichment\nwith reference data, schema\nnormalization, partitioning\nby date and device_id.")
+
+  Component(batch_agg, "Historical Aggregations", "Spark Batch / PySpark", "Daily/hourly rollups,\ndevice health scores,\nmaintenance predictions\ninput features.")
+
+  Component(batch_ice_writer, "Iceberg Writer", "Spark Batch", "Writes curated data to\nIceberg tables. Supports\nschema evolution and\npartition transforms.")
+
+  Component(ch_loader, "ClickHouse Loader", "Spark / JDBC", "Loads aggregated batch\nresults into ClickHouse\nfact and dimension tables.")
+}
+
+' ═══════════════════════════════════════════════════════
+'  SERVING LAYER (Merge Point)
+' ═══════════════════════════════════════════════════════
+Boundary(serving_store, "Serving Layer — Storage") {
+  Component(iceberg_tables, "Iceberg Tables", "Apache Iceberg on MinIO", "Unified table format.\nBatch layer writes full\nhistorical views.\nSpeed layer appends\nreal-time increments.\n[Merge point for Lambda]")
+
+  Component(ch_tables, "ClickHouse Tables", "ClickHouse MergeTree", "Materialized serving tables:\n- telemetry_hourly\n- device_health_daily\n- incident_summary\n- feature tables")
+
+  Component(dbt_models, "dbt Models", "dbt-core + dbt-clickhouse", "ELT layer inside ClickHouse:\nstaging -> intermediate ->\nmart models. Incremental\nmaterializations.")
+}
+
+Boundary(serving_app, "Serving Layer — Application") {
+  Component(api_analytics, "Analytics Endpoint", "FastAPI", "GET /analytics/*\nQueries ClickHouse for\nKPIs, trends, device stats.")
+
+  Component(api_features, "Feature Endpoint", "FastAPI + Feast", "GET /features/*\nRetrieves online features\nfrom Redis via Feast.\nOffline from ClickHouse.")
+
+  Component(api_search, "Semantic Search", "FastAPI + Qdrant", "GET /search/*\nEmbeds query with\nsentence-transformers,\nsearches Qdrant for\nsimilar incidents/manuals.")
+
+  Component(api_quality, "Quality Endpoint", "FastAPI + Great Expectations", "GET /quality/*\nRuns data quality checks,\nreturns validation results.")
+}
+
+' ═══════════════════════════════════════════════════════
+'  FEATURE & VECTOR STORES
+' ═══════════════════════════════════════════════════════
+Boundary(ml_stores, "Feature & Vector Stores") {
+  Component(feast_offline, "Feast Offline Store", "ClickHouse / File", "Historical feature values\nfor model training.\nPoint-in-time joins.")
+
+  Component(feast_online, "Feast Online Store", "Redis", "Low-latency feature values\nfor real-time inference.\nMaterialized on schedule.")
+
+  Component(embeddings, "Embedding Pipeline", "sentence-transformers", "Encodes incident reports\nand equipment manuals into\n384-dim vectors (MiniLM-L6).")
+
+  Component(qdrant_collection, "Qdrant Collection", "Qdrant Vector DB", "Stores and indexes\nembedding vectors.\nHNSW index for fast ANN\nsimilarity search.")
+}
+
+' ═══════════════════════════════════════════════════════
+'  RELATIONSHIPS — Source to Broker
+' ═══════════════════════════════════════════════════════
+Rel_D(sim_stream, topic_telemetry, "Produces", "Kafka")
+Rel_D(sim_incidents, topic_incidents, "Produces", "Kafka")
+Rel_D(sim_batch, raw_reader, "Uploads files to\nMinIO factory-raw", "S3 API")
+
+' ═══════════════════════════════════════════════════════
+'  RELATIONSHIPS — Speed Layer
+' ═══════════════════════════════════════════════════════
+Rel_D(topic_telemetry, spark_consumer, "Subscribes", "Kafka")
+Rel_R(spark_consumer, spark_window, "Feeds")
+Rel_R(spark_window, spark_threshold, "Feeds")
+Rel_D(spark_threshold, topic_alerts, "Publishes alerts", "Kafka")
+Rel_D(spark_window, spark_ice_writer, "Aggregated\nresults")
+Rel_D(spark_ice_writer, iceberg_tables, "Appends speed-layer\nresults", "Iceberg API")
+
+' ═══════════════════════════════════════════════════════
+'  RELATIONSHIPS — Kappa Alternative
+' ═══════════════════════════════════════════════════════
+Rel_D(topic_telemetry, flink_source, "Subscribes\n(Kappa mode)", "Kafka")
+Rel_R(flink_source, flink_cep, "Feeds")
+Rel_D(flink_cep, flink_sink, "Processed\nevents")
+Rel_D(flink_sink, iceberg_tables, "Writes to same\nIceberg tables", "Iceberg API")
+
+' ═══════════════════════════════════════════════════════
+'  RELATIONSHIPS — Batch Layer
+' ═══════════════════════════════════════════════════════
+Rel_R(raw_reader, batch_transform, "Raw data")
+Rel_R(batch_transform, batch_agg, "Cleaned data")
+Rel_D(batch_agg, batch_ice_writer, "Aggregated data")
+Rel_D(batch_ice_writer, iceberg_tables, "Writes batch-layer\nresults", "Iceberg API")
+Rel_D(batch_agg, ch_loader, "Aggregated data")
+Rel_D(ch_loader, ch_tables, "Loads via JDBC", "HTTP :8123")
+
+' ═══════════════════════════════════════════════════════
+'  RELATIONSHIPS — Serving Layer
+' ═══════════════════════════════════════════════════════
+Rel_D(iceberg_tables, ch_tables, "Batch sync /\nexternal tables")
+Rel_D(ch_tables, dbt_models, "Source tables", "ELT")
+Rel_D(dbt_models, ch_tables, "Creates mart\ntables", "HTTP :8123")
+
+Rel_D(ch_tables, api_analytics, "Queries", "HTTP :8123")
+Rel_D(feast_online, api_features, "Online features", "Redis")
+Rel_D(qdrant_collection, api_search, "ANN search\nresults", "gRPC :6334")
+Rel_D(ch_tables, api_quality, "Validates", "HTTP :8123")
+
+' ═══════════════════════════════════════════════════════
+'  RELATIONSHIPS — Feature & Vector Stores
+' ═══════════════════════════════════════════════════════
+Rel(ch_tables, feast_offline, "Offline features", "SQL")
+Rel(feast_offline, feast_online, "Materialize", "Feast SDK")
+Rel(embeddings, qdrant_collection, "Upserts vectors", "gRPC :6334")
+Rel(topic_incidents, embeddings, "Incident text", "Consumer")
+
+@enduml

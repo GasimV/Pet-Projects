@@ -1,0 +1,146 @@
+@startuml C2_Container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Container Diagram — FactoryPulse IoT Data Platform
+
+' ───────────────────────────────────────────────────────
+'  Actors
+' ───────────────────────────────────────────────────────
+Person(operator, "Factory Operator", "Views dashboards and analytics")
+Person(data_eng, "Data Engineer", "Manages pipelines, quality, lineage")
+Person(ml_eng, "ML Engineer", "Trains models, manages features")
+
+' ───────────────────────────────────────────────────────
+'  External
+' ───────────────────────────────────────────────────────
+System_Ext(iot_devices, "Factory IoT Devices", "Physical sensors on equipment")
+
+' ═══════════════════════════════════════════════════════
+'  SYSTEM BOUNDARY
+' ═══════════════════════════════════════════════════════
+System_Boundary(fp, "FactoryPulse IoT Data Platform") {
+
+  ' ─── INGEST LAYER ───────────────────────────────────
+  Boundary(ingest, "Ingest Layer") {
+    Container(simulator, "IoT Simulator", "Python", "Generates synthetic sensor\ntelemetry and batch CSV/Parquet\nreference files.")
+    Container(kafka, "Kafka", "Confluent 7.6\n(+ Zookeeper)", "Message broker for streaming\ntelemetry and alert topics.\nTopics: factory.telemetry.raw,\nfactory.incidents")
+  }
+
+  ' ─── PROCESS LAYER ─────────────────────────────────
+  Boundary(process, "Process Layer") {
+    Container(spark_stream, "Spark Structured Streaming", "Apache Spark 3.x", "Speed layer: consumes Kafka\ntelemetry in micro-batches,\nwrites to Iceberg tables.")
+    Container(spark_batch, "Spark Batch Jobs", "Apache Spark 3.x", "Batch layer: reads raw files\nfrom MinIO, transforms and\nloads into Iceberg/ClickHouse.")
+    Container(flink, "Flink (optional)", "Apache Flink 1.x", "Kappa alternative: replaces\nSpark Streaming with true\nevent-at-a-time processing.\nJobManager + TaskManager.")
+  }
+
+  ' ─── STORE LAYER ───────────────────────────────────
+  Boundary(store, "Store Layer") {
+    ContainerDb(minio, "MinIO", "S3-compatible\nObject Storage", "Data lake: raw CSVs, curated\nParquet, Iceberg data files,\nMLflow artifacts.\nBuckets: factory-raw,\nfactory-curated, mlflow-artifacts")
+    ContainerDb(iceberg, "Iceberg REST Catalog", "Tabulario REST 1.5", "Table format catalog providing\nACID transactions, schema\nevolution, and time travel\non top of MinIO.")
+    ContainerDb(clickhouse, "ClickHouse", "ClickHouse 24.2\nOLAP Warehouse", "Columnar analytics warehouse.\nServing layer for aggregated\ntelemetry, KPIs, and\nfeature store offline source.")
+    ContainerDb(redis, "Redis", "Redis 7 Alpine", "Online feature store backend.\nLow-latency key-value cache\nfor real-time feature serving.")
+    ContainerDb(qdrant, "Qdrant", "Qdrant v1.8\nVector DB", "Stores sentence-transformer\nembeddings for semantic search\nover incidents and manuals.")
+  }
+
+  ' ─── TRANSFORM LAYER ───────────────────────────────
+  Boundary(transform, "Transform Layer") {
+    Container(dbt, "dbt-core", "dbt + dbt-clickhouse", "ELT transformations inside\nClickHouse: staging models,\nfact/dimension tables, KPI\naggregations.")
+  }
+
+  ' ─── SERVE LAYER ───────────────────────────────────
+  Boundary(serve, "Serve Layer") {
+    Container(api, "FastAPI", "Python / Uvicorn\nREST API :8000", "Unified serving layer:\nanalytics queries, feature\nretrieval, semantic search,\ndata quality validation.")
+    Container(feast, "Feast", "Python\nFeature Store", "Manages feature definitions.\nOffline store: ClickHouse/files.\nOnline store: Redis.\nMaterializes features on schedule.")
+  }
+
+  ' ─── GOVERN LAYER ──────────────────────────────────
+  Boundary(govern, "Govern Layer") {
+    Container(ge, "Great Expectations", "Python\n(runs in API container)", "Data quality validation:\nschema checks, null checks,\nstatistical expectations,\ncustom business rules.")
+    Container(marquez, "Marquez", "Marquez 0.47\n+ Web UI", "OpenLineage backend:\ntracks data lineage across\nall pipeline stages.\nAPI :5001 / UI :3001")
+  }
+
+  ' ─── OBSERVE LAYER ─────────────────────────────────
+  Boundary(observe, "Observe Layer") {
+    Container(prometheus, "Prometheus", "Prometheus v2.50", "Metrics collection:\nscrapes all services,\nstores time-series data.\nRetention: 7 days.")
+    Container(grafana, "Grafana", "Grafana 10.3", "Dashboards and alerting.\nData sources: Prometheus,\nClickHouse.\nUI :3000")
+  }
+
+  ' ─── ML LAYER ──────────────────────────────────────
+  Boundary(ml, "ML Layer") {
+    Container(mlflow, "MLflow", "MLflow Tracking\nServer :5050", "Experiment tracking, model\nregistry, artifact storage\n(via MinIO S3).")
+  }
+
+  ' ─── ORCHESTRATION ─────────────────────────────────
+  Boundary(orch, "Orchestration") {
+    Container(airflow, "Airflow", "Airflow 2.x\nLocalExecutor", "DAG-based pipeline\norchestration: batch ingestion,\nSpark jobs, dbt runs, Feast\nmaterialization, GE validation.\nUI :8082")
+    ContainerDb(airflow_pg, "Airflow Postgres", "PostgreSQL 15", "Airflow metadata database.")
+  }
+}
+
+' ═══════════════════════════════════════════════════════
+'  RELATIONSHIPS — Ingest
+' ═══════════════════════════════════════════════════════
+Rel(iot_devices, simulator, "Simulated by")
+Rel(simulator, kafka, "Publishes telemetry\n& incidents", "Kafka Producer")
+Rel(simulator, minio, "Uploads batch\nCSV/Parquet files", "S3 API")
+
+' ═══════════════════════════════════════════════════════
+'  RELATIONSHIPS — Process
+' ═══════════════════════════════════════════════════════
+Rel(kafka, spark_stream, "Consumes stream", "Kafka Consumer")
+Rel(kafka, flink, "Consumes stream\n(Kappa mode)", "Kafka Consumer")
+Rel(spark_stream, iceberg, "Writes speed-layer\nresults", "Iceberg API")
+Rel(flink, iceberg, "Writes processed\nevents (Kappa)", "Iceberg API")
+Rel(minio, spark_batch, "Reads raw batch files", "S3 API")
+Rel(spark_batch, iceberg, "Writes batch-layer\nresults", "Iceberg API")
+Rel(spark_batch, clickhouse, "Loads aggregated\ndata", "JDBC / HTTP")
+Rel(iceberg, minio, "Stores data files\n& metadata", "S3 API")
+
+' ═══════════════════════════════════════════════════════
+'  RELATIONSHIPS — Transform
+' ═══════════════════════════════════════════════════════
+Rel(dbt, clickhouse, "Runs ELT\ntransformations", "HTTP :8123")
+
+' ═══════════════════════════════════════════════════════
+'  RELATIONSHIPS — Serve
+' ═══════════════════════════════════════════════════════
+Rel(api, clickhouse, "Queries analytics", "HTTP :8123")
+Rel(api, redis, "Reads online features", "Redis protocol :6379")
+Rel(api, qdrant, "Semantic search\nqueries", "gRPC :6334 / HTTP :6333")
+Rel(api, mlflow, "Loads models &\nexperiment data", "HTTP :5000")
+Rel(feast, clickhouse, "Offline feature\nsource", "HTTP :8123")
+Rel(feast, redis, "Materializes online\nfeatures", "Redis protocol")
+Rel(api, feast, "Feature retrieval", "Python SDK")
+Rel(ge, clickhouse, "Validates data\nquality", "HTTP :8123")
+
+' ═══════════════════════════════════════════════════════
+'  RELATIONSHIPS — Observe / ML / Orchestrate
+' ═══════════════════════════════════════════════════════
+Rel(prometheus, kafka, "Scrapes JMX metrics")
+Rel(prometheus, spark_stream, "Scrapes metrics")
+Rel(prometheus, clickhouse, "Scrapes metrics")
+Rel(prometheus, api, "Scrapes /metrics")
+Rel(prometheus, minio, "Scrapes metrics")
+Rel(grafana, prometheus, "Queries metrics", "PromQL")
+Rel(grafana, clickhouse, "Queries analytics", "ClickHouse plugin")
+Rel(mlflow, minio, "Stores artifacts", "S3 API")
+
+Rel(airflow, spark_batch, "Triggers batch jobs")
+Rel(airflow, dbt, "Triggers dbt runs")
+Rel(airflow, feast, "Triggers materialization")
+Rel(airflow, marquez, "Sends lineage events", "OpenLineage HTTP")
+Rel(airflow, airflow_pg, "Stores metadata", "PostgreSQL")
+
+' ═══════════════════════════════════════════════════════
+'  RELATIONSHIPS — Users
+' ═══════════════════════════════════════════════════════
+Rel(operator, grafana, "Views dashboards", "HTTPS :3000")
+Rel(operator, api, "Queries analytics API", "HTTPS :8000")
+Rel(data_eng, airflow, "Manages DAGs", "HTTPS :8082")
+Rel(data_eng, marquez, "Views lineage", "HTTPS :3001")
+Rel(ml_eng, mlflow, "Tracks experiments", "HTTPS :5050")
+Rel(ml_eng, feast, "Manages features", "CLI / SDK")
+
+@enduml
