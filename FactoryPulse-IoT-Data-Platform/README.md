@@ -337,10 +337,17 @@ FactoryPulse-IoT-Data-Platform/
 ## Makefile Commands
 
 ```bash
+make env                 # Create .env from .env.example if needed
 make help                # Show all commands
 make up                  # Start core stack
-make down                # Stop everything
+make stop                # Stop containers without removing them
+make down                # Stop and remove containers/network, but keep volumes and persisted data
+make restart             # Recreate the stack by running down then up
+make ps                  # Show running services
 make up-flink            # Start with Flink overlay
+make down-flink          # Stop and remove the Flink overlay stack
+make topics              # Create Kafka topics
+make minio-buckets       # Create required MinIO buckets
 make demo                # Run full end-to-end demo
 make spark-streaming     # Launch Spark Structured Streaming
 make spark-batch         # Run Spark batch ingest
@@ -354,10 +361,13 @@ make qdrant-ingest       # Ingest vectors into Qdrant
 make ge-validate         # Run data quality validation
 make api-test            # Run API tests
 make logs SVC=<name>     # Tail service logs
-make clean               # Stop and remove volumes
+make clean               # Remove containers, volumes, and persisted data
+make prune               # Remove containers, volumes/data, and prune images
 ```
 
 ### Stopping vs Cleaning Up
+
+`make stop` stops running containers without removing them. This is the safest option if you want to pause the stack and resume it later with `make up`.
 
 `make down` only stops and removes the Compose containers and network. It does not remove volumes or persisted data.
 
@@ -368,7 +378,9 @@ The destructive targets are:
 
 In practice:
 
-- `make down` — safe stop; data should remain
+- `make up` — starts the stack and also restarts containers that were previously stopped with `make stop`
+- `make stop` — safe stop; containers remain and can be restarted with `make up`
+- `make down` — stops and removes containers/network, but keeps volumes and persisted data
 - `make clean` — removes volumes/data
 - `make prune` — removes volumes/data and prunes images
 
