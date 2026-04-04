@@ -47,10 +47,6 @@ mlruns/
 airflow/logs/
 airflow/plugins/__pycache__/
 
-# Compiled PlantUML
-architecture/*.png
-architecture/*.svg
-
 # Pytest
 .pytest_cache/
 htmlcov/
