@@ -10,7 +10,7 @@
 COMPOSE       = docker compose
 COMPOSE_FLINK = docker compose -f docker-compose.yml -f docker-compose.flink.yml
 ENV_FILE      = .env
-SHELL         = bash
+SHELL         = sh
 
 .PHONY: help env up stop down restart logs ps \
         up-flink down-flink \
@@ -68,11 +68,11 @@ up: env ## Start core stack (Kafka + Spark streaming)
 
 stop: ## Stop running services without removing containers
 	$(COMPOSE) --env-file $(ENV_FILE) stop
-	-$(COMPOSE_FLINK) --env-file $(ENV_FILE) stop 2>/dev/null
+	$(COMPOSE_FLINK) --env-file $(ENV_FILE) stop || exit 0
 
 down: ## Stop all services
 	$(COMPOSE) --env-file $(ENV_FILE) down
-	-$(COMPOSE_FLINK) --env-file $(ENV_FILE) down 2>/dev/null
+	$(COMPOSE_FLINK) --env-file $(ENV_FILE) down || exit 0
 
 restart: down up ## Restart everything
 
