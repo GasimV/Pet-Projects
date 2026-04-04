@@ -1,0 +1,81 @@
+@startuml C4_Deployment
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Deployment.puml
+
+LAYOUT_WITH_LEGEND()
+title FactoryPulse — Deployment Diagram (Docker Compose)
+
+Deployment_Node(docker, "Docker Compose Host", "Local Machine") {
+
+    Deployment_Node(ingest, "Ingest Layer") {
+        Container(zookeeper, "Zookeeper", "confluentinc/cp-zookeeper:7.6.0", "Kafka coordination")
+        Container(kafka, "Kafka", "confluentinc/cp-kafka:7.6.0", "Message broker\nPorts: 9092, 29092")
+        Container(simulator, "IoT Simulator", "Python 3.11", "Generates telemetry\n& incidents")
+    }
+
+    Deployment_Node(storage, "Storage Layer") {
+        Container(minio, "MinIO", "minio/minio:RELEASE.2024", "S3-compatible storage\nPorts: 9000, 9001")
+        Container(iceberg, "Iceberg REST", "tabulario/iceberg-rest:1.5.0", "Table catalog\nPort: 8181")
+        Container(clickhouse, "ClickHouse", "clickhouse-server:24.2", "OLAP warehouse\nPorts: 8123, 9000")
+        Container(redis, "Redis", "redis:7-alpine", "Feature online store\nPort: 6379")
+        Container(qdrant, "Qdrant", "qdrant/qdrant:v1.8.3", "Vector database\nPorts: 6333, 6334")
+    }
+
+    Deployment_Node(processing, "Processing Layer") {
+        Container(spark, "Spark Master", "bitnami/spark:3.5.1", "Batch + Streaming\nPorts: 8080, 7077, 4040")
+        Container(flink_jm, "Flink JobManager", "flink:1.18", "Alternative streaming\nPort: 8081")
+        Container(flink_tm, "Flink TaskManager", "flink:1.18", "Flink worker")
+    }
+
+    Deployment_Node(transform, "Transform Layer") {
+        Container(dbt, "dbt-core", "Python 3.11", "ELT transformations\ndbt-clickhouse")
+        Container(feast, "Feast", "Python 3.11", "Feature definitions\n& materialization")
+    }
+
+    Deployment_Node(orchestration, "Orchestration") {
+        ContainerDb(airflow_pg, "Airflow DB", "PostgreSQL 15", "Metadata store")
+        Container(airflow_web, "Airflow Webserver", "apache/airflow:2.8.3", "DAG UI\nPort: 8082")
+        Container(airflow_sched, "Airflow Scheduler", "apache/airflow:2.8.3", "DAG execution")
+    }
+
+    Deployment_Node(serving, "Serving Layer") {
+        Container(api, "FastAPI", "Python 3.11", "REST API\nPort: 8000")
+        Container(mlflow, "MLflow", "Python 3.11", "Experiment tracking\nPort: 5050")
+    }
+
+    Deployment_Node(governance, "Governance Layer") {
+        ContainerDb(marquez_pg, "Marquez DB", "PostgreSQL 15", "Lineage store")
+        Container(marquez_api, "Marquez API", "marquezproject/marquez:0.47", "OpenLineage backend\nPort: 5001")
+        Container(marquez_web, "Marquez Web", "marquezproject/marquez-web:0.47", "Lineage UI\nPort: 3001")
+    }
+
+    Deployment_Node(observe, "Observability Layer") {
+        Container(prometheus, "Prometheus", "prom/prometheus:v2.50.1", "Metrics store\nPort: 9090")
+        Container(grafana, "Grafana", "grafana/grafana:10.3.3", "Dashboards\nPort: 3000")
+    }
+}
+
+' ---- Data Flows ----
+Rel(simulator, kafka, "Publishes telemetry", "Kafka protocol")
+Rel(simulator, minio, "Uploads CSV/Parquet", "S3 API")
+Rel(kafka, spark, "Consumes stream", "Kafka protocol")
+Rel(kafka, flink_jm, "Consumes stream", "Kafka protocol")
+Rel(spark, iceberg, "Writes Iceberg tables", "REST catalog")
+Rel(spark, minio, "Reads/writes data", "S3A")
+Rel(spark, clickhouse, "Writes results", "JDBC/HTTP")
+Rel(iceberg, minio, "Stores table data", "S3A")
+Rel(dbt, clickhouse, "ELT transforms", "HTTP")
+Rel(feast, clickhouse, "Reads features", "HTTP")
+Rel(feast, redis, "Writes online features", "Redis protocol")
+Rel(api, clickhouse, "Queries data", "HTTP")
+Rel(api, redis, "Reads features", "Redis protocol")
+Rel(api, qdrant, "Vector search", "gRPC/HTTP")
+Rel(api, mlflow, "Reads experiments", "HTTP")
+Rel(mlflow, minio, "Stores artifacts", "S3 API")
+Rel(airflow_sched, spark, "Submits jobs", "spark-submit")
+Rel(airflow_sched, dbt, "Runs transforms", "CLI")
+Rel(airflow_sched, marquez_api, "Reports lineage", "OpenLineage HTTP")
+Rel(prometheus, api, "Scrapes /metrics", "HTTP")
+Rel(grafana, prometheus, "Queries metrics", "PromQL")
+Rel(grafana, clickhouse, "Queries data", "ClickHouse plugin")
+
+@enduml

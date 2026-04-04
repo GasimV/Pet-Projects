@@ -6,6 +6,7 @@ apiVersion: 1
 datasources:
   # --- Prometheus (default) ---
   - name: Prometheus
+    uid: prometheus
     type: prometheus
     access: proxy
     url: http://prometheus:9090
@@ -16,6 +17,7 @@ datasources:
 
   # --- ClickHouse (grafana-clickhouse-datasource plugin) ---
   - name: ClickHouse
+    uid: clickhouse
     type: grafana-clickhouse-datasource
     access: proxy
     editable: false

@@ -15,7 +15,8 @@ devices as (
 latest_alerts as (
     select
         device_id,
-        argMax(severity, alert_timestamp) as latest_alert_severity
+        argMax(severity, alert_timestamp) as latest_alert_severity,
+        count() as alert_count
     from {{ ref('stg_alerts') }}
     group by device_id
 ),
@@ -36,7 +37,9 @@ health as (
         ds.avg_pressure,
         ds.avg_power_usage,
         ds.reading_count,
+        coalesce(la.alert_count, 0) as alert_count,
         la.latest_alert_severity,
+        ds.reading_date as last_reading,
 
         -- Health score: start at 100, subtract penalty points
         greatest(0, least(100,

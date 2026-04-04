@@ -36,9 +36,12 @@ select
     location,
     zone,
     status,
-    maintenance_due,
-    latest_health_score,
+    maintenance_due          as overdue,
+    latest_health_score      as health_score,
     last_reading_date,
+    -- Columns for API compatibility (devices router expects these)
+    0                        as days_since_maintenance,
+    0                        as maintenance_interval_days,
     multiIf(
         maintenance_due = 1 and latest_health_score < 50,
             'URGENT: Maintenance overdue and health score critically low. Schedule immediate maintenance and inspection.',
@@ -49,5 +52,12 @@ select
         latest_health_score < 50,
             'WARNING: Health score below acceptable threshold. Investigate anomalous readings and plan maintenance.',
         'No action required.'
-    ) as recommended_action
+    ) as recommendation,
+    multiIf(
+        maintenance_due = 1 and latest_health_score < 50, 'critical',
+        maintenance_due = 1, 'high',
+        latest_health_score < 25, 'critical',
+        latest_health_score < 50, 'high',
+        'low'
+    ) as priority
 from devices_needing_action
