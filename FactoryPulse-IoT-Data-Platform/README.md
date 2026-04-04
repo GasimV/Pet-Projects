@@ -146,6 +146,49 @@ This runs the entire pipeline end-to-end:
 | Prometheus | http://localhost:9090 | — |
 | Iceberg REST | http://localhost:8181 | — |
 
+### 4. What To Expect In These Services
+
+This project is primarily an architecture demo stack, not a polished UI-heavy app. Several of these services are infrastructure or control-plane tools, so "mostly empty" is expected unless you specifically drive data or workflows through them.
+
+What should usually have visible content:
+
+- **FastAPI Docs** — should show working endpoints.
+- **Grafana** — should show metrics and dashboards after the pipeline has been running for a bit; refresh if needed.
+- **Spark Job UI** — only looks interesting while jobs are actively running; this is the main place to watch streaming activity.
+- **MLflow** — should show anomaly-scoring runs if `make spark-anomaly` has been run.
+- **Qdrant Dashboard** — should at least show the `incidents` collection.
+- **Prometheus** — should show targets and metrics, but it is still a technical UI rather than a business dashboard.
+
+What is often sparse by design:
+
+- **Airflow** — usually looks empty unless you trigger DAGs inside Airflow itself. This repo does not depend on Airflow runs for the main demo flow.
+- **Marquez** — may stay mostly empty unless lineage events are emitted through Airflow or DAG execution.
+- **ClickHouse HTTP** — this is an HTTP interface, not a dashboard.
+- **Iceberg REST** — this is an API endpoint, not a browser UI.
+
+If you want to see more happen in the stack:
+
+```bash
+mingw32-make spark-anomaly
+mingw32-make dbt-run
+mingw32-make qdrant-ingest
+mingw32-make ge-validate
+```
+
+If you want the full end-to-end demo again:
+
+```bash
+mingw32-make demo
+```
+
+If your goal is interactive exploration, the most useful browser entry points are:
+
+- FastAPI Docs for API behavior
+- Grafana for metrics and dashboards
+- Spark UI while streaming is running
+- MLflow for anomaly-scoring runs
+- Qdrant Dashboard for vectors and collections
+
 [Back to Contents](#contents)
 
 <a id="iot-domain"></a>
@@ -313,6 +356,21 @@ make api-test            # Run API tests
 make logs SVC=<name>     # Tail service logs
 make clean               # Stop and remove volumes
 ```
+
+### Stopping vs Cleaning Up
+
+`make down` only stops and removes the Compose containers and network. It does not remove volumes or persisted data.
+
+The destructive targets are:
+
+- `make clean` — runs `docker compose down -v` and removes volumes/data
+- `make prune` — removes volumes/data and also prunes images
+
+In practice:
+
+- `make down` — safe stop; data should remain
+- `make clean` — removes volumes/data
+- `make prune` — removes volumes/data and prunes images
 
 [Back to Contents](#contents)
 
