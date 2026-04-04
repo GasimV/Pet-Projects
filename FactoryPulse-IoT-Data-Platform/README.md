@@ -2,34 +2,52 @@
 
 A fully local, open-source, Dockerised IoT data engineering platform that demonstrates modern data architecture patterns: **batch + streaming**, **ETL + ELT**, **Data Lake + Lakehouse + Warehouse**, **Lambda + Kappa**, feature stores, vector search, data quality, lineage tracking, and ML experiment management.
 
+<a id="contents"></a>
+## Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Tech Stack](#tech-stack)
+- [Quick Start](#quick-start)
+- [IoT Domain](#iot-domain)
+- [Data Model](#data-model)
+- [Flink Alternative](#flink-alternative-kappa-architecture)
+- [Project Structure](#project-structure)
+- [Makefile Commands](#makefile-commands)
+- [Lineage Tracking](#lineage-tracking)
+- [Monitoring](#monitoring)
+- [Runbook](#runbook)
+- [License](#license)
+
+<a id="architecture-overview"></a>
 ## Architecture Overview
 
 ```
-┌──────────────┐
-│ IoT Simulator │──→ Kafka ──→ Spark Structured Streaming ──→ Iceberg/MinIO  (Speed Layer)
-│  (10 devices) │                   or Flink (Kappa)
-└──────┬───────┘
+┌───────────────┐
+│ IoT Simulator │──→ Kafka ──→ Spark Structured Streaming ──→ Iceberg/MinIO
+│  (10 devices) │                                 │
+└──────┬────────┘                                 └──────────────→ ClickHouse
+       │                                                        (Speed Layer)
        │
-       └──→ MinIO (CSV/Parquet) ──→ Spark Batch ──→ Iceberg ──→ ClickHouse  (Batch Layer)
-                                                                      │
-                                          dbt-core (ELT) ◄───────────┘
-                                              │
-                      ┌───────────────────────┼───────────────────┐
-                      ▼                       ▼                   ▼
-               Feast + Redis          ClickHouse Marts      Qdrant (Vectors)
-              (Feature Store)         (Analytics)         (Semantic Search)
-                      │                       │                   │
-                      └───────────────────────┼───────────────────┘
-                                              ▼
-                                         FastAPI  ◄── Prometheus ──→ Grafana
-                                        (Serving)
+       └──→ MinIO (CSV/Parquet) ──→ Spark Batch ──→ Iceberg ──→ ClickHouse
+                                                                       │
+                                           dbt-core (ELT) ◄───────────┘
+                                               │
+                       ┌───────────────────────┼───────────────────┐
+                       ▼                       ▼                   ▼
+                Feast + Redis          ClickHouse Marts      Qdrant (Vectors)
+               (Feature Store)         (Analytics)         (Semantic Search)
+                       │                       │                   │
+                       └───────────────────────┼───────────────────┘
+                                               ▼
+                                          FastAPI  ◄── Prometheus ──→ Grafana
+                                         (Serving)
 ```
 
 ### Architecture Patterns Demonstrated
 
 | Pattern | Implementation |
 |---------|---------------|
-| **Lambda Architecture** | Batch layer (Spark Batch → Iceberg → ClickHouse) + Speed layer (Spark Structured Streaming → Iceberg) merge at the serving layer (FastAPI) |
+| **Lambda Architecture** | Batch layer (Spark Batch → Iceberg → ClickHouse) + Speed layer (Spark Structured Streaming → Iceberg + ClickHouse) merge at the serving layer (FastAPI) |
 | **Kappa Architecture** | Flink alternative — all processing through a single stream pipeline (use `make up-flink`) |
 | **ETL** | Spark reads raw data, transforms, loads into Iceberg (extract-transform-load) |
 | **ELT** | dbt-core transforms data already loaded in ClickHouse (extract-load-transform) |
@@ -42,6 +60,9 @@ A fully local, open-source, Dockerised IoT data engineering platform that demons
 | **Data Lineage** | Marquez/OpenLineage tracks pipeline lineage via Airflow integration |
 | **Distributed Processing** | Spark (batch + streaming) and Flink (streaming) |
 
+[Back to Contents](#contents)
+
+<a id="tech-stack"></a>
 ## Tech Stack
 
 | Layer | Technology |
@@ -63,6 +84,9 @@ A fully local, open-source, Dockerised IoT data engineering platform that demons
 | Monitoring | Prometheus + Grafana |
 | Embeddings | sentence-transformers/all-MiniLM-L6-v2 (CPU) |
 
+[Back to Contents](#contents)
+
+<a id="quick-start"></a>
 ## Quick Start
 
 ### Prerequisites
@@ -83,12 +107,15 @@ make up                  # Linux / macOS / Git Bash
 mingw32-make up          # Windows (cmd/PowerShell with MinGW)
 ```
 
-This starts ~20 containers: Kafka, MinIO, Iceberg, Spark, ClickHouse, Redis, Qdrant, Airflow, FastAPI, Marquez, MLflow, Prometheus, Grafana, and the IoT simulator.
+This starts the infrastructure and simulator stack: Kafka, MinIO, Iceberg, Spark, ClickHouse, Redis, Qdrant, Airflow, FastAPI, Marquez, MLflow, Prometheus, Grafana, and the IoT simulator.
+
+`make up` does not fully execute the processing pipeline by itself. To populate the warehouse, alerts, vectors, and dbt models end-to-end, run `make demo` or the individual Spark/dbt commands below.
 
 ### 2. Run the Full Demo
 
 ```bash
-make demo
+make demo                # Linux / macOS / Git Bash
+mingw32-make demo        # Windows with MinGW
 ```
 
 This runs the entire pipeline end-to-end:
@@ -109,7 +136,8 @@ This runs the entire pipeline end-to-end:
 | FastAPI Docs | http://localhost:8000/docs | — |
 | Grafana | http://localhost:3000 | admin / admin |
 | Airflow | http://localhost:8082 | admin / admin |
-| Spark UI | http://localhost:8080 | — |
+| Spark Master UI | http://localhost:8080 | — |
+| Spark Job UI | http://localhost:4040 | — |
 | MinIO Console | http://localhost:9001 | minioadmin / minioadmin |
 | MLflow | http://localhost:5050 | — |
 | Marquez (Lineage) | http://localhost:3001 | — |
@@ -118,6 +146,9 @@ This runs the entire pipeline end-to-end:
 | Prometheus | http://localhost:9090 | — |
 | Iceberg REST | http://localhost:8181 | — |
 
+[Back to Contents](#contents)
+
+<a id="iot-domain"></a>
 ## IoT Domain
 
 ### Simulated Factory Sensors
@@ -134,10 +165,10 @@ The simulator generates telemetry from 10 factory devices across 5 types:
 
 ### Data Produced
 
-- **Streaming telemetry** → Kafka → Spark/Flink → Iceberg (every 2 seconds)
+- **Streaming telemetry** → Kafka → Spark/Flink → Iceberg + ClickHouse (every 2 seconds)
 - **Batch reference files** → MinIO (devices.csv, historical Parquet, incident_manuals.json)
 - **Alerts** → ClickHouse (anomaly scoring produces CRITICAL/WARNING/NORMAL)
-- **Incidents** → Kafka + ClickHouse → Qdrant (for semantic search)
+- **Semantic search documents** → Qdrant (maintenance manuals by default, incident text when available)
 
 ### Anomaly Scoring (Rule-Based)
 
@@ -151,6 +182,9 @@ The simulator generates telemetry from 10 factory devices across 5 types:
 
 Classification: **CRITICAL** (≥50), **WARNING** (≥30), **NORMAL** (<30)
 
+[Back to Contents](#contents)
+
+<a id="data-model"></a>
 ## Data Model
 
 ### ClickHouse Schema (factory_pulse database)
@@ -171,12 +205,15 @@ Classification: **CRITICAL** (≥50), **WARNING** (≥30), **NORMAL** (<30)
 - `int_device_daily_stats` — daily aggregates per device
 - `int_alert_summary` — daily alert counts by device/type/severity
 
-#### Marts (dbt tables — MergeTree)
+#### Marts (dbt tables/views)
 - `dim_devices` — device dimension with `maintenance_due` flag
-- `fct_device_health` — health scores per device (0–100 scale)
+- `fct_device_health` — device health scores per day (currently materialized as a view)
 - `fct_alerts` — alerts enriched with device info
-- `fct_maintenance_recommendations` — devices needing maintenance with priority/action
+- `fct_maintenance_recommendations` — maintenance-oriented recommendation view for overdue devices
 
+[Back to Contents](#contents)
+
+<a id="flink-alternative-kappa-architecture"></a>
 ## Flink Alternative (Kappa Architecture)
 
 To use Flink instead of Spark for streaming:
@@ -191,11 +228,14 @@ make flink-streaming
 
 The Flink job reads from the same Kafka topic and writes to MinIO, demonstrating the Kappa approach where **all processing goes through the stream** — no separate batch layer.
 
+[Back to Contents](#contents)
+
+<a id="project-structure"></a>
 ## Project Structure
 
 ```
 FactoryPulse-IoT-Data-Platform/
-├── docker-compose.yml           # Core stack (Kafka + Spark streaming)
+├── docker-compose.yml           # Core stack (infra + simulator; processing jobs run via commands/demo)
 ├── docker-compose.flink.yml     # Flink overlay (Kappa architecture)
 ├── .env.example                 # Environment configuration
 ├── Makefile                     # All commands
@@ -206,7 +246,7 @@ FactoryPulse-IoT-Data-Platform/
 │
 ├── spark/                       # Spark processing
 │   ├── streaming/
-│   │   └── telemetry_stream.py  # Structured Streaming (speed layer)
+│   │   └── telemetry_stream.py  # Structured Streaming (speed layer → Iceberg + ClickHouse)
 │   └── batch/
 │       ├── ingest_reference.py  # Batch ingest (batch layer)
 │       └── anomaly_scoring.py   # Rule-based anomaly detection + MLflow
@@ -224,7 +264,7 @@ FactoryPulse-IoT-Data-Platform/
 ├── dbt/                         # ClickHouse transformations (ELT)
 │   ├── models/staging/          # Staging views
 │   ├── models/intermediate/     # Intermediate views
-│   └── models/marts/            # Materialized tables
+│   └── models/marts/            # dbt marts (tables + views)
 │
 ├── feast/                       # Feature store
 │   ├── features.py              # Feature definitions
@@ -232,7 +272,7 @@ FactoryPulse-IoT-Data-Platform/
 │
 ├── api/                         # FastAPI serving layer
 │   ├── routers/                 # Endpoint modules
-│   ├── qdrant_ingest.py         # Vector ingestion script
+│   ├── qdrant_ingest.py         # Vector ingestion script (manuals + incidents when present)
 │   └── ge_validate.py           # Data quality validation
 │
 ├── clickhouse/init.sql          # Warehouse schema
@@ -248,6 +288,9 @@ FactoryPulse-IoT-Data-Platform/
 └── docs/                        # Additional documentation
 ```
 
+[Back to Contents](#contents)
+
+<a id="makefile-commands"></a>
 ## Makefile Commands
 
 ```bash
@@ -271,6 +314,9 @@ make logs SVC=<name>     # Tail service logs
 make clean               # Stop and remove volumes
 ```
 
+[Back to Contents](#contents)
+
+<a id="lineage-tracking"></a>
 ## Lineage Tracking
 
 Pipeline lineage is tracked via **Marquez** (OpenLineage backend). Airflow DAGs automatically emit OpenLineage events to Marquez, creating a visual lineage graph of:
@@ -281,6 +327,9 @@ Pipeline lineage is tracked via **Marquez** (OpenLineage backend). Airflow DAGs 
 
 View lineage at http://localhost:3001.
 
+[Back to Contents](#contents)
+
+<a id="monitoring"></a>
 ## Monitoring
 
 Two pre-configured Grafana dashboards:
@@ -290,6 +339,9 @@ Two pre-configured Grafana dashboards:
 
 Prometheus scrapes metrics from: FastAPI, Kafka (JMX), Spark, ClickHouse, Flink, Airflow, MLflow.
 
+[Back to Contents](#contents)
+
+<a id="runbook"></a>
 ## Runbook
 
 ### Common Operations
@@ -319,10 +371,10 @@ docker compose exec clickhouse clickhouse-client --password clickhouse \
 | Symptom | Check | Fix |
 |---------|-------|-----|
 | Kafka not ready | `make logs SVC=kafka` | Wait 30s, check Zookeeper |
-| No telemetry data | `make logs SVC=simulator` | Restart simulator |
-| Spark job fails | `make logs SVC=spark-master` | Check Iceberg REST, MinIO |
-| dbt fails | Check ClickHouse raw tables | Run `make spark-batch` first |
-| Empty Qdrant | Run `make qdrant-ingest` | Check MinIO for manuals file |
+| No telemetry data | `make logs SVC=simulator` and `make logs SVC=spark-master` | Ensure simulator is producing and rerun `make spark-streaming` |
+| Spark job fails | `make logs SVC=spark-master` | Check Iceberg REST, MinIO, and Kafka connectivity |
+| dbt fails | Check ClickHouse raw tables | Run `make spark-batch` and `make spark-anomaly` first |
+| Empty Qdrant | Run `make qdrant-ingest` | Check MinIO for `incident_manuals.json` and API logs |
 | Grafana no data | Check ClickHouse connection | Verify datasource config |
 
 ### Resource Requirements
@@ -332,6 +384,11 @@ The full stack uses ~12 GB RAM. To reduce footprint:
 - Use `profiles` to skip optional services (dbt, feast run on-demand)
 - Reduce `SIMULATOR_DEVICE_COUNT` in `.env`
 
+[Back to Contents](#contents)
+
+<a id="license"></a>
 ## License
 
 Open source — all components use permissive or open-source licenses.
+
+[Back to Contents](#contents)

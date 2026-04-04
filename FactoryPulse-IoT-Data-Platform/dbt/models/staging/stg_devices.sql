@@ -13,4 +13,4 @@ select
     cast(status as String)                      as status,
     updated_at,
     dateDiff('day', last_maintenance_date, today()) as days_since_maintenance
-from {{ source('factory_pulse', 'raw_devices') }}
+from {{ source('factory_pulse', 'raw_devices') }} FINAL

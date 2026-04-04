@@ -7,7 +7,7 @@ BATCH LAYER (Lambda architecture)
    and writes it to Iceberg ``factory_db.dim_devices`` **and** ClickHouse
    ``factory_pulse.raw_devices``.
 
-2. Reads historical telemetry Parquet from ``s3a://factory-raw/historical/``
+2. Reads historical telemetry Parquet from ``s3a://factory-raw/telemetry/historical/``
    and appends it to Iceberg ``factory_db.raw_telemetry`` **and** ClickHouse
    ``factory_pulse.raw_telemetry``.
 
@@ -38,7 +38,7 @@ MINIO_ENDPOINT = "http://minio:9000"
 ICEBERG_REST_URI = "http://iceberg-rest:8181"
 
 DEVICES_CSV_PATH = "s3a://factory-raw/reference/devices.csv"
-HISTORICAL_PARQUET_PATH = "s3a://factory-raw/historical/"
+HISTORICAL_PARQUET_PATH = "s3a://factory-raw/telemetry/historical/"
 
 CLICKHOUSE_JDBC_URL = "jdbc:clickhouse://clickhouse:8123/factory_pulse"
 CLICKHOUSE_USER = os.getenv("CLICKHOUSE_USER", "default")
@@ -169,6 +169,22 @@ def _write_to_clickhouse(df: DataFrame, table: str) -> None:
     log.info("Wrote %d rows to ClickHouse %s.", len(rows), table)
 
 
+def _truncate_clickhouse_table(table: str) -> None:
+    """Clear a ClickHouse table before writing a full replacement dataset."""
+    from clickhouse_driver import Client
+
+    client = Client(
+        host="clickhouse",
+        port=9000,
+        user=CLICKHOUSE_USER,
+        password=CLICKHOUSE_PASSWORD,
+        database="factory_pulse",
+    )
+    short_table = table.split(".")[-1]
+    client.execute(f"TRUNCATE TABLE {short_table}")
+    log.info("Truncated ClickHouse table %s.", table)
+
+
 # ---------------------------------------------------------------------------
 #  Ingest device reference data
 # ---------------------------------------------------------------------------
@@ -195,6 +211,7 @@ def ingest_devices(spark: SparkSession) -> None:
     log.info("Wrote dim_devices to Iceberg.")
 
     # -- ClickHouse -----------------------------------------------------------
+    _truncate_clickhouse_table("factory_pulse.raw_devices")
     _write_to_clickhouse(devices_df, "factory_pulse.raw_devices")
 
 

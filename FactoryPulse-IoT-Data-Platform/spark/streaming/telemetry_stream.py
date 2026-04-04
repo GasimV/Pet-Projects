@@ -17,7 +17,7 @@ AWS_SECRET_ACCESS_KEY   MinIO / S3 secret key
 import os
 import logging
 
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql import functions as F
 from pyspark.sql.types import (
     StructType,
@@ -41,6 +41,8 @@ AWS_SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "minioadmin")
 
 MINIO_ENDPOINT = "http://minio:9000"
 ICEBERG_REST_URI = "http://iceberg-rest:8181"
+CLICKHOUSE_USER = os.getenv("CLICKHOUSE_USER", "default")
+CLICKHOUSE_PASSWORD = os.getenv("CLICKHOUSE_PASSWORD", "clickhouse")
 
 CHECKPOINT_LOCATION = "s3a://factory-curated/checkpoints/telemetry_stream"
 
@@ -131,6 +133,58 @@ def _ensure_namespace_and_table(spark: SparkSession) -> None:
     log.info("Iceberg namespace and table factory_db.factory_db.raw_telemetry are ready.")
 
 
+def _write_to_clickhouse(df: DataFrame, table: str) -> None:
+    """Append a static DataFrame into a ClickHouse table."""
+    from clickhouse_driver import Client
+
+    rows = [row.asDict() for row in df.collect()]
+    if not rows:
+        return
+
+    client = Client(
+        host="clickhouse",
+        port=9000,
+        user=CLICKHOUSE_USER,
+        password=CLICKHOUSE_PASSWORD,
+        database="factory_pulse",
+    )
+    columns = list(rows[0].keys())
+    values = [[row[c] for c in columns] for row in rows]
+    col_str = ", ".join(columns)
+    short_table = table.split(".")[-1]
+    client.execute(f"INSERT INTO {short_table} ({col_str}) VALUES", values)
+
+
+def _write_microbatch(batch_df: DataFrame, batch_id: int) -> None:
+    """Persist each micro-batch to both Iceberg and ClickHouse."""
+    projected = batch_df.select(
+        "event_id",
+        "device_id",
+        "device_type",
+        "location",
+        "timestamp",
+        "temperature",
+        "vibration",
+        "pressure",
+        "humidity",
+        "power_usage",
+        "rpm",
+        "error_code",
+        "ingested_at",
+    ).cache()
+
+    row_count = projected.count()
+    if row_count == 0:
+        log.info("Streaming micro-batch %s is empty.", batch_id)
+        projected.unpersist()
+        return
+
+    projected.writeTo("factory_db.factory_db.raw_telemetry").append()
+    _write_to_clickhouse(projected, "factory_pulse.raw_telemetry")
+    projected.unpersist()
+    log.info("Streaming micro-batch %s wrote %d rows.", batch_id, row_count)
+
+
 def main() -> None:
     log.info("Starting FactoryPulse telemetry streaming job (speed layer).")
 
@@ -167,11 +221,10 @@ def main() -> None:
     # -----------------------------------------------------------------
     query = (
         parsed.writeStream
-        .format("iceberg")
         .outputMode("append")
-        .option("path", "factory_db.factory_db.raw_telemetry")
         .option("checkpointLocation", CHECKPOINT_LOCATION)
         .trigger(processingTime="10 seconds")
+        .foreachBatch(_write_microbatch)
         .start()
     )
 

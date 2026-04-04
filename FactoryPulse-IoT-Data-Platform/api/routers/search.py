@@ -1,10 +1,9 @@
 """Search router — semantic search over incidents and manuals via Qdrant."""
 
 import os
-from typing import Optional
+import requests
 
 from fastapi import APIRouter, HTTPException
-from qdrant_client import QdrantClient
 
 from models import SearchRequest, SearchResult
 
@@ -26,12 +25,10 @@ def _get_embedding_model():
         _model = SentenceTransformer(model_name)
     return _model
 
-
-def _get_qdrant_client():
-    return QdrantClient(
-        host=os.environ.get("QDRANT_HOST", "qdrant"),
-        port=int(os.environ.get("QDRANT_PORT", 6333)),
-    )
+def _get_qdrant_search_url() -> str:
+    host = os.environ.get("QDRANT_HOST", "qdrant")
+    port = int(os.environ.get("QDRANT_PORT", 6333))
+    return f"http://{host}:{port}/collections/incidents/points/search"
 
 
 @router.post("/semantic", response_model=list[SearchResult])
@@ -45,23 +42,27 @@ async def semantic_search(request: SearchRequest):
         model = _get_embedding_model()
         query_vector = model.encode(request.query).tolist()
 
-        client = _get_qdrant_client()
-        results = client.search(
-            collection_name="incidents",
-            query_vector=query_vector,
-            limit=request.limit,
-            with_payload=True,
+        response = requests.post(
+            _get_qdrant_search_url(),
+            json={
+                "vector": query_vector,
+                "limit": request.limit,
+                "with_payload": True,
+            },
+            timeout=30,
         )
+        response.raise_for_status()
+        results = response.json().get("result", [])
 
         return [
             SearchResult(
-                id=str(hit.id),
-                title=hit.payload.get("title", ""),
-                text=hit.payload.get("text", ""),
-                device_id=hit.payload.get("device_id"),
-                severity=hit.payload.get("severity"),
-                source=hit.payload.get("source", "unknown"),
-                score=hit.score,
+                id=str(hit.get("id")),
+                title=(hit.get("payload") or {}).get("title", ""),
+                text=(hit.get("payload") or {}).get("text", ""),
+                device_id=(hit.get("payload") or {}).get("device_id"),
+                severity=(hit.get("payload") or {}).get("severity"),
+                source=(hit.get("payload") or {}).get("source", "unknown"),
+                score=float(hit.get("score", 0.0)),
             )
             for hit in results
         ]

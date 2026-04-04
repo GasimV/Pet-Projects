@@ -36,7 +36,7 @@ async def list_devices():
                 maintenance_interval_days,
                 toString(last_maintenance_date) AS last_maintenance_date,
                 status
-            FROM raw_devices
+            FROM raw_devices FINAL
             ORDER BY device_id
             """
         )
@@ -182,16 +182,17 @@ async def get_maintenance_recommendation(device_id: str):
             )
             if fct.result_rows:
                 row = fct.result_rows[0]
-                return MaintenanceRecommendation(
-                    device_id=row[0],
-                    device_type=row[1],
-                    days_since_maintenance=row[2],
-                    maintenance_interval_days=row[3],
-                    overdue=bool(row[4]),
-                    health_score=row[5],
-                    recommendation=row[6],
-                    priority=row[7],
-                )
+                if row[5] is not None:
+                    return MaintenanceRecommendation(
+                        device_id=row[0],
+                        device_type=row[1],
+                        days_since_maintenance=row[2],
+                        maintenance_interval_days=row[3],
+                        overdue=bool(row[4]),
+                        health_score=row[5],
+                        recommendation=row[6],
+                        priority=row[7],
+                    )
         except Exception:
             pass  # table may not exist yet
 
@@ -203,7 +204,7 @@ async def get_maintenance_recommendation(device_id: str):
                 maintenance_interval_days,
                 last_maintenance_date,
                 dateDiff('day', last_maintenance_date, today()) AS days_since
-            FROM raw_devices
+            FROM raw_devices FINAL
             WHERE device_id = {device_id:String}
             """,
             parameters={"device_id": device_id},
@@ -239,13 +240,15 @@ async def get_maintenance_recommendation(device_id: str):
             )
             priority = "low"
 
+        live_health = await get_device_health(device_id)
+
         return MaintenanceRecommendation(
             device_id=device_id,
             device_type=device_type,
             days_since_maintenance=days_since,
             maintenance_interval_days=interval_days,
             overdue=overdue,
-            health_score=None,
+            health_score=live_health.health_score,
             recommendation=recommendation,
             priority=priority,
         )
