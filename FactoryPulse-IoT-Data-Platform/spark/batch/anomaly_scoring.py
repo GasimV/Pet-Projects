@@ -81,6 +81,10 @@ def _build_spark_session() -> SparkSession:
         )
         .config("spark.sql.catalog.factory_db.s3.endpoint", MINIO_ENDPOINT)
         .config("spark.sql.catalog.factory_db.s3.path-style-access", "true")
+        .config("spark.sql.catalog.factory_db.s3.access-key-id", AWS_ACCESS_KEY)
+        .config("spark.sql.catalog.factory_db.s3.secret-access-key", AWS_SECRET_KEY)
+        .config("spark.sql.catalog.factory_db.s3.region", "us-east-1")
+        .config("spark.sql.catalog.factory_db.client.region", "us-east-1")
         # ---- S3A / Hadoop ----------------------------------------------------
         .config("spark.hadoop.fs.s3a.endpoint", MINIO_ENDPOINT)
         .config("spark.hadoop.fs.s3a.access.key", AWS_ACCESS_KEY)
@@ -259,15 +263,20 @@ def _write_alerts_to_clickhouse(scores_df: DataFrame) -> None:
         log.info("No alerts to write to ClickHouse.")
         return
 
-    (
-        alerts.write
-        .format("jdbc")
-        .option("url", CLICKHOUSE_JDBC_URL)
-        .option("dbtable", "factory_pulse.raw_alerts")
-        .options(**CLICKHOUSE_JDBC_PROPERTIES)
-        .mode("append")
-        .save()
+    from clickhouse_driver import Client as CHClient
+
+    ch = CHClient(
+        host="clickhouse",
+        port=9000,
+        user=CLICKHOUSE_USER,
+        password=CLICKHOUSE_PASSWORD,
+        database="factory_pulse",
     )
+    rows = [row.asDict() for row in alerts.collect()]
+    columns = list(rows[0].keys())
+    values = [[row[c] for c in columns] for row in rows]
+    col_str = ", ".join(columns)
+    ch.execute(f"INSERT INTO raw_alerts ({col_str}) VALUES", values)
     log.info("Wrote %d alerts to ClickHouse raw_alerts.", alert_count)
 
 

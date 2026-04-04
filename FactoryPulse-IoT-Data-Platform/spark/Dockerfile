@@ -1,17 +1,17 @@
 # FactoryPulse — Spark Processing Layer
 # ======================================
-# Runs as Spark master (default) or worker depending on SPARK_MODE.
-# Contains both streaming (speed layer) and batch jobs.
+# Runs as Spark master. Contains both streaming (speed layer) and batch jobs.
 
-FROM bitnami/spark:3.5.1
+FROM apache/spark:3.5.1
 
 USER root
 
 # -----------------------------------------------------------
 #  Install additional Python dependencies
 # -----------------------------------------------------------
+RUN pip3 install --upgrade pip
 COPY requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
+RUN pip3 install --no-cache-dir -r /tmp/requirements.txt && \
     rm /tmp/requirements.txt
 
 # -----------------------------------------------------------
@@ -20,15 +20,18 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
 COPY . /opt/spark-apps
 
 # -----------------------------------------------------------
-#  Spark mode (master | worker) — overridable at runtime
+#  Expose Spark master ports
 # -----------------------------------------------------------
-ENV SPARK_MODE=${SPARK_MODE:-master}
+EXPOSE 8080 7077 4040
 
 # -----------------------------------------------------------
-#  Default entrypoint: start the Spark master
+#  Start Spark master
 # -----------------------------------------------------------
-# The bitnami image already has an entrypoint script that reads
-# SPARK_MODE and launches the correct daemon. We simply ensure
-# the default mode is "master".
-ENTRYPOINT ["/opt/bitnami/scripts/spark/entrypoint.sh"]
-CMD ["/opt/bitnami/scripts/spark/run.sh"]
+ENV SPARK_HOME=/opt/spark
+ENV PATH=$SPARK_HOME/bin:$SPARK_HOME/sbin:$PATH
+ENV SPARK_MASTER_HOST=0.0.0.0
+ENV SPARK_MASTER_PORT=7077
+ENV SPARK_MASTER_WEBUI_PORT=8080
+ENV SPARK_NO_DAEMONIZE=true
+
+CMD ["/opt/spark/sbin/start-master.sh"]

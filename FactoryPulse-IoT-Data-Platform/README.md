@@ -68,6 +68,7 @@ A fully local, open-source, Dockerised IoT data engineering platform that demons
 ### Prerequisites
 
 - Docker & Docker Compose v2
+- GNU Make (`make`) — or `mingw32-make` on Windows (ships with MSYS2/MinGW)
 - 16 GB RAM recommended (8 GB minimum)
 - ~15 GB disk space
 
@@ -78,7 +79,8 @@ A fully local, open-source, Dockerised IoT data engineering platform that demons
 cd FactoryPulse-IoT-Data-Platform
 
 # Copy env file and start all services
-make up
+make up                  # Linux / macOS / Git Bash
+mingw32-make up          # Windows (cmd/PowerShell with MinGW)
 ```
 
 This starts ~20 containers: Kafka, MinIO, Iceberg, Spark, ClickHouse, Redis, Qdrant, Airflow, FastAPI, Marquez, MLflow, Prometheus, Grafana, and the IoT simulator.

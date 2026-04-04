@@ -68,6 +68,10 @@ def _build_spark_session() -> SparkSession:
         )
         .config("spark.sql.catalog.factory_db.s3.endpoint", MINIO_ENDPOINT)
         .config("spark.sql.catalog.factory_db.s3.path-style-access", "true")
+        .config("spark.sql.catalog.factory_db.s3.access-key-id", AWS_ACCESS_KEY)
+        .config("spark.sql.catalog.factory_db.s3.secret-access-key", AWS_SECRET_KEY)
+        .config("spark.sql.catalog.factory_db.s3.region", "us-east-1")
+        .config("spark.sql.catalog.factory_db.client.region", "us-east-1")
         # ---- S3A / Hadoop ----------------------------------------------------
         .config("spark.hadoop.fs.s3a.endpoint", MINIO_ENDPOINT)
         .config("spark.hadoop.fs.s3a.access.key", AWS_ACCESS_KEY)
@@ -143,17 +147,26 @@ def _ensure_iceberg_tables(spark: SparkSession) -> None:
 #  Write helpers
 # ---------------------------------------------------------------------------
 def _write_to_clickhouse(df: DataFrame, table: str) -> None:
-    """Append a DataFrame into a ClickHouse table via JDBC."""
-    (
-        df.write
-        .format("jdbc")
-        .option("url", CLICKHOUSE_JDBC_URL)
-        .option("dbtable", table)
-        .options(**CLICKHOUSE_JDBC_PROPERTIES)
-        .mode("append")
-        .save()
+    """Append a DataFrame into a ClickHouse table via Python clickhouse-driver."""
+    from clickhouse_driver import Client
+
+    client = Client(
+        host="clickhouse",
+        port=9000,
+        user=CLICKHOUSE_USER,
+        password=CLICKHOUSE_PASSWORD,
+        database="factory_pulse",
     )
-    log.info("Wrote %d rows to ClickHouse %s.", df.count(), table)
+    rows = [row.asDict() for row in df.collect()]
+    if not rows:
+        log.warning("No rows to write to %s", table)
+        return
+    columns = list(rows[0].keys())
+    values = [[row[c] for c in columns] for row in rows]
+    col_str = ", ".join(columns)
+    short_table = table.split(".")[-1]
+    client.execute(f"INSERT INTO {short_table} ({col_str}) VALUES", values)
+    log.info("Wrote %d rows to ClickHouse %s.", len(rows), table)
 
 
 # ---------------------------------------------------------------------------

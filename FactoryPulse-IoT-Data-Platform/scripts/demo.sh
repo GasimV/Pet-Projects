@@ -31,18 +31,18 @@ echo -e "${GREEN}✓ Reference data uploaded to MinIO${NC}"
 
 # ------------------------------------------------------------------
 step 3 "Running Spark batch ingest (batch layer — Lambda)"
-$COMPOSE exec -T spark-master spark-submit \
+$COMPOSE exec -T spark-master /opt/spark/bin/spark-submit \
   --master local[*] \
-  --packages org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.5.2,org.apache.hadoop:hadoop-aws:3.3.4 \
+  --packages org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.5.2,org.apache.iceberg:iceberg-aws-bundle:1.5.2,org.apache.hadoop:hadoop-aws:3.3.4 \
   /opt/spark-apps/batch/ingest_reference.py || echo "(Spark batch ingest completed or skipped)"
 echo -e "${GREEN}✓ Batch data ingested into Iceberg + ClickHouse${NC}"
 
 # ------------------------------------------------------------------
 step 4 "Launching Spark Structured Streaming (speed layer — Lambda)"
 echo "Starting streaming in background..."
-$COMPOSE exec -d spark-master spark-submit \
+$COMPOSE exec -d spark-master /opt/spark/bin/spark-submit \
   --master local[*] \
-  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.5.2,org.apache.hadoop:hadoop-aws:3.3.4 \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.5.2,org.apache.iceberg:iceberg-aws-bundle:1.5.2,org.apache.hadoop:hadoop-aws:3.3.4 \
   /opt/spark-apps/streaming/telemetry_stream.py
 echo "Letting streaming run for 30 s to accumulate data..."
 sleep 30
@@ -50,9 +50,9 @@ echo -e "${GREEN}✓ Streaming pipeline running${NC}"
 
 # ------------------------------------------------------------------
 step 5 "Running anomaly scoring (batch ML — Lambda)"
-$COMPOSE exec -T spark-master spark-submit \
+$COMPOSE exec -T spark-master /opt/spark/bin/spark-submit \
   --master local[*] \
-  --packages org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.5.2,org.apache.hadoop:hadoop-aws:3.3.4 \
+  --packages org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.5.2,org.apache.iceberg:iceberg-aws-bundle:1.5.2,org.apache.hadoop:hadoop-aws:3.3.4 \
   /opt/spark-apps/batch/anomaly_scoring.py || echo "(Anomaly scoring completed or skipped)"
 echo -e "${GREEN}✓ Anomaly scores computed${NC}"
 

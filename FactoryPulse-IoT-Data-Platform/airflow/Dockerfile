@@ -11,8 +11,7 @@ USER airflow
 #  Install extra Python dependencies
 # -----------------------------------------------------------
 COPY requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
-    rm /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 # -----------------------------------------------------------
 #  Copy DAGs and plugins into the image (also mounted at runtime)

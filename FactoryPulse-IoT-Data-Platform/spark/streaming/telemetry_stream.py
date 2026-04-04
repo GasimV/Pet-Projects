@@ -80,6 +80,10 @@ def _build_spark_session() -> SparkSession:
         )
         .config("spark.sql.catalog.factory_db.s3.endpoint", MINIO_ENDPOINT)
         .config("spark.sql.catalog.factory_db.s3.path-style-access", "true")
+        .config("spark.sql.catalog.factory_db.s3.access-key-id", AWS_ACCESS_KEY)
+        .config("spark.sql.catalog.factory_db.s3.secret-access-key", AWS_SECRET_KEY)
+        .config("spark.sql.catalog.factory_db.s3.region", "us-east-1")
+        .config("spark.sql.catalog.factory_db.client.region", "us-east-1")
         # ---- S3A / Hadoop ----------------------------------------------------
         .config("spark.hadoop.fs.s3a.endpoint", MINIO_ENDPOINT)
         .config("spark.hadoop.fs.s3a.access.key", AWS_ACCESS_KEY)
