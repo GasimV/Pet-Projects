@@ -1,0 +1,215 @@
+# ============================================================================
+# GraphQL AI Lab — Sample Queries
+# Open GraphiQL at http://localhost:8008/graphql and copy any block in.
+# Each block is independently runnable.
+# ============================================================================
+
+
+# ----------------------------------------------------------------------------
+# 1. Basic query — health + model catalog (interface with inline fragments)
+# ----------------------------------------------------------------------------
+query Health {
+  health {
+    status
+    ollamaConnected
+    chatModel
+    embedModel
+  }
+  models {
+    id
+    name
+    provider
+    ... on ChatModel { contextWindow supportsStreaming }
+    ... on EmbeddingModel { dimensions }
+  }
+}
+
+
+# ----------------------------------------------------------------------------
+# 2. Deeply nested query — exercises DataLoader batching
+#    (single round-trip for users, models, and messages-by-conversation)
+# ----------------------------------------------------------------------------
+query DeepNesting {
+  conversations(limit: 3) {
+    id
+    title
+    user { id name email }
+    messages(limit: 5) {
+      role
+      content
+      tokensUsed
+      model {
+        id
+        name
+        ... on ChatModel { contextWindow }
+      }
+    }
+  }
+}
+
+
+# ----------------------------------------------------------------------------
+# 3. Aliases + named fragment + Relay-style pagination
+# ----------------------------------------------------------------------------
+fragment DocCore on Document {
+  id
+  title
+  createdAt
+}
+
+query PaginatedDocs {
+  page1: documents(first: 2) {
+    edges { node { ...DocCore } cursor }
+    pageInfo { hasNextPage endCursor }
+    totalCount
+  }
+  page2: documents(first: 2, after: "d2") {
+    edges { node { ...DocCore } cursor }
+    pageInfo { hasNextPage endCursor }
+  }
+}
+
+
+# ----------------------------------------------------------------------------
+# 4. Variables + @include / @skip directives
+#    Variables panel:
+#    { "withChunks": true, "skipTags": false }
+# ----------------------------------------------------------------------------
+query WithDirectives($withChunks: Boolean!, $skipTags: Boolean!) {
+  documents(first: 2) {
+    edges {
+      node {
+        id
+        title
+        chunks @include(if: $withChunks) {
+          id
+          content
+          embedding { dimensions metadata }
+        }
+        tags @skip(if: $skipTags) { name }
+      }
+    }
+  }
+}
+
+
+# ----------------------------------------------------------------------------
+# 5. Union return — search across documents and chunks
+# ----------------------------------------------------------------------------
+query Search {
+  search(query: "embed", limit: 5) {
+    __typename
+    ... on Document { id title }
+    ... on Chunk { id content documentId }
+  }
+}
+
+
+# ----------------------------------------------------------------------------
+# 6. Mutation — create a conversation, then send a message
+#    sendMessage returns a union: ChatSuccess | RateLimitError | ModelUnavailableError
+# ----------------------------------------------------------------------------
+mutation NewChat {
+  createConversation(title: "My new chat") {
+    id
+    title
+    createdAt
+    user { name }
+  }
+}
+
+mutation Send {
+  sendMessage(input: { conversationId: "c1", content: "What is RAG?" }) {
+    __typename
+    ... on ChatSuccess {
+      message { id role content tokensUsed }
+      conversation { id title }
+    }
+    ... on RateLimitError { retryAfterSeconds errorMessage }
+    ... on ModelUnavailableError { modelName reason }
+  }
+}
+
+# Magic word "rate-limit" triggers the RateLimitError branch
+mutation TriggerRateLimit {
+  sendMessage(input: { conversationId: "c1", content: "rate-limit" }) {
+    __typename
+    ... on RateLimitError { retryAfterSeconds errorMessage }
+  }
+}
+
+
+# ----------------------------------------------------------------------------
+# 7. Mutation — embedText and uploadDocument (input type with list of strings)
+# ----------------------------------------------------------------------------
+mutation Embed {
+  embedText(text: "Hello world") {
+    dimensions
+    metadata
+  }
+}
+
+mutation Upload {
+  uploadDocument(input: {
+    title: "Test doc",
+    content: "First sentence. Second sentence. Third sentence.",
+    tags: ["test", "graphql"]
+  }) {
+    id
+    title
+    chunks { id content }
+    tags { name }
+  }
+}
+
+
+# ----------------------------------------------------------------------------
+# 8. Subscription — token streaming (run in GraphiQL or the / page)
+#    Variables: { "msg": "Explain GraphQL in one sentence." }
+# ----------------------------------------------------------------------------
+subscription Stream($msg: String!) {
+  tokenStream(conversationId: "c1", message: $msg) {
+    token
+    done
+  }
+}
+
+
+# ----------------------------------------------------------------------------
+# 9. Subscription — document ingestion progress (4 events ~0.4s apart)
+# ----------------------------------------------------------------------------
+subscription Ingest {
+  ingestionStatus(documentId: "d1") {
+    status
+    progress
+    message
+  }
+}
+
+
+# ----------------------------------------------------------------------------
+# 10. Introspection — discover the schema
+# ----------------------------------------------------------------------------
+query Introspect {
+  __schema {
+    queryType { name }
+    mutationType { name }
+    subscriptionType { name }
+    types {
+      name
+      kind
+    }
+  }
+}
+
+
+# ----------------------------------------------------------------------------
+# 11. Deprecated field — `summary` is marked @deprecated; clients should use
+#     `title`, but both still resolve.
+# ----------------------------------------------------------------------------
+query DeprecatedField {
+  conversation(id: "c1") {
+    title
+    summary  # deprecated
+  }
+}

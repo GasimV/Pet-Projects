@@ -1,0 +1,21 @@
+@startuml architecture
+!include <C4/C4_Container>
+
+title 08 - GraphQL AI Inference + Knowledge Graph
+
+Person(user, "User", "Browser or API client")
+
+System_Boundary(sys, "GraphQL AI Lab") {
+    Container(client, "Browser Client", "HTML / JS", "Demo page at /, GraphiQL at /graphql")
+    Container(api, "GraphQL Server", "Python / FastAPI / Strawberry", "Single endpoint serving query, mutation, and subscription")
+    ContainerDb(store, "In-memory Store", "Python dicts", "Users, conversations, messages, documents, chunks, embeddings")
+}
+
+System_Ext(ollama, "Ollama", "gemma4:e2b LLM + bge-m3 embeddings (with mock fallback)")
+
+Rel(user, client, "Uses")
+Rel(client, api, "GraphQL queries / mutations", "HTTP POST /graphql")
+Rel(client, api, "Subscriptions", "WebSocket graphql-transport-ws")
+Rel(api, store, "Reads / writes via DataLoaders")
+Rel(api, ollama, "Inference, embedding, streaming", "HTTP")
+@enduml

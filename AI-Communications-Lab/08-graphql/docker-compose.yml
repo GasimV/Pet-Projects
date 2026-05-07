@@ -1,0 +1,14 @@
+services:
+  graphql:
+    build: .
+    container_name: ai-comms-graphql
+    ports:
+      - "8008:8008"
+    environment:
+      # Reach Ollama running on the host. On Windows/macOS Docker Desktop
+      # provides host.docker.internal automatically; on Linux the extra_hosts
+      # entry below maps it to the host gateway.
+      - OLLAMA_BASE=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
